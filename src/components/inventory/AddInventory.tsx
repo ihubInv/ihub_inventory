@@ -5,11 +5,14 @@ import CustomDatePicker from '../common/DatePicker';
 import { Save, X, Package, Calendar, DollarSign, MapPin } from 'lucide-react';
 import { InventoryItem } from '../../types';
 
+import UploadDropzone from '../common/UploadDropzone';
+
 const AddInventory: React.FC = () => {
   const { addInventoryItem } = useInventory();
   const { categories } = useInventory();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+const [uploadSuccess, setUploadSuccess] = useState(false)
 
   const [formData, setFormData] = useState({
     uniqueid: '',
@@ -18,7 +21,7 @@ const AddInventory: React.FC = () => {
     dateofentry: new Date(),
     invoicenumber: '',
     assetcategory: '',
-    assetcategoryid:"",
+    assetcategoryid: "",
     assetname: '',
     specification: '',
     makemodel: '',
@@ -38,7 +41,7 @@ const AddInventory: React.FC = () => {
     warrantyinformation: '',
     maintenanceschedule: '',
     conditionofasset: 'excellent' as const,
-    status: 'available' as const,
+    status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
     minimumstocklevel: 5,
     purchaseordernumber: '',
     expectedlifespan: '',
@@ -52,8 +55,8 @@ const AddInventory: React.FC = () => {
       [name]: type === 'number' ? parseFloat(value) || 0 : value
     }));
 
-    
-    
+
+
     // Auto-calculate total cost
     if (name === 'quantityperitem' || name === 'rateinclusivetax') {
       const quantity = name === 'quantityperitem' ? parseFloat(value) || 0 : formData.quantityperitem;
@@ -75,13 +78,23 @@ const AddInventory: React.FC = () => {
   //   }));
   // };
 
+
+
+
+  const handleFile = (file?: File) => {
+  if (file) {
+    // upload logic...
+    setUploadSuccess(true)
+     console.log('File selected:', file);
+  }
+}
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     debugger
     const selectedName = e.target.value;
-  
+
     // Find the full category object by name
     const selectedCategory = availableCategories.find(cat => cat.name === selectedName);
-  
+
     if (selectedCategory) {
       setFormData(prev => ({
         ...prev,
@@ -90,7 +103,7 @@ const AddInventory: React.FC = () => {
       }));
     }
   };
-  
+
 
   // const handleSubmit = async (e: React.FormEvent) => {
   //   debugger
@@ -166,7 +179,7 @@ const AddInventory: React.FC = () => {
     };
     try {
       await addInventoryItem(payload);
-  
+
       // Reset form
       setFormData({
         uniqueid: '',
@@ -195,22 +208,25 @@ const AddInventory: React.FC = () => {
         warrantyinformation: '',
         maintenanceschedule: '',
         conditionofasset: 'excellent',
-        status: 'available',
+        status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
         minimumstocklevel: 5,
         purchaseordernumber: '',
         expectedlifespan: '',
         assettag: ''
       });
-  
+
       alert('Inventory item added successfully!');
     } catch (error) {
       alert('Error adding inventory item. Please try again.');
     }
-  
+
     setIsSubmitting(false);
   };
+
+
   
-  
+
+
   const availableCategories = categories.filter(cat => cat.isactive);
   const units = ['Pieces', 'Kg', 'Liters', 'Meters', 'Sets', 'Boxes'];
   const conditions = ['excellent', 'good', 'fair', 'poor', 'damaged'];
@@ -280,28 +296,15 @@ const AddInventory: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Category</option>
-            
+
                 {availableCategories.map(category => (
                   <option key={category.id} value={category.name}>{category.name}</option>
                 ))}
               </select>
             </div>
-   {/* <select
-  name="assetcategory"
-  value={formData.assetcategory}
-  onChange={handleCategoryChange}
-  required
-  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
->
-  <option value="">Select Category</option>
-  {availableCategories.map(category => (
-    <option key={category.id} value={category.id}>
-      {category.name}
-    </option>
-  ))}
-</select> */}
 
-   
+
+
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Asset Name *
@@ -521,6 +524,7 @@ const AddInventory: React.FC = () => {
                 </select>
               </div>
 
+              {/* Status Dropdown */}
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
                   Status
@@ -538,7 +542,6 @@ const AddInventory: React.FC = () => {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
                   Minimum Stock Level
@@ -552,13 +555,33 @@ const AddInventory: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
+              {formData.status === "issued" && (
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Issued To
+                  </label>
+                  <input
+                    type="text"
+                    name="issuedto"
+                    value={formData.issuedto || ""}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Rohit Kumar"
+                  />
+                </div>
+              )}
+
+
+
             </div>
           </div>
 
           {/* Additional Information */}
           <div className="pt-6 border-t border-gray-200">
             <h3 className="mb-4 text-lg font-semibold text-gray-900">Additional Information</h3>
-            
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -630,6 +653,32 @@ const AddInventory: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
+            </div>
+          </div>
+
+
+
+          <div className="pt-6 border-t border-gray-200">
+            <div className="flex items-center mb-4 space-x-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Location & Status</h3>
+            </div>
+            <div className="pt-6 border-t border-gray-200">
+              {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Your File</h3> */}
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Upload Your File
+              </label>
+
+              <UploadDropzone
+                label="Upload File"
+                subtext="Accepted: PNG, JPG, PDF"
+                height="h-20"
+                acceptedTypes="image/png, image/jpeg, application/pdf"
+                onFileChange={handleFile}
+              />
             </div>
           </div>
         </div>

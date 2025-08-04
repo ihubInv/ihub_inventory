@@ -7,7 +7,6 @@ A modern inventory management system developed for the **iHub & HCI Foundation, 
 ## 🚀 Tech Stack
 - ⚛️ **Frontend**: React.js + Tailwind CSS  
 - 🛠️ **Backend**: Supabase (PostgreSQL + Auth + Storage)  
-- ☁️ **Hosting**: Vercel / Netlify
 
 ---
 
@@ -37,5 +36,5 @@ A modern inventory management system developed for the **iHub & HCI Foundation, 
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/ihub-inventory-system.git
+git clone https://github.com/ihubInv/ihub_inventory.git
 cd ihub-inventory-system

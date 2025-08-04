@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ihub-inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ihub-inventory
+  template:
+    metadata:
+      labels:
+        app: ihub-inventory
+    spec:
+      containers:
+      - name: ihub-inventory
+        image: ihubinv/ihub-inventory:latest
+        ports:
+        - containerPort: 80

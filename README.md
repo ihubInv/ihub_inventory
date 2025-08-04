@@ -7,7 +7,6 @@ A modern inventory management system developed for the **iHub & HCI Foundation, 
 ## 🚀 Tech Stack
 - ⚛️ **Frontend**: React.js + Tailwind CSS  
 - 🛠️ **Backend**: Supabase (PostgreSQL + Auth + Storage)  
-- ☁️ **Hosting**: Vercel / Netlify
 
 ---
 

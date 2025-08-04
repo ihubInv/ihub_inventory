@@ -206,7 +206,7 @@ const Login: React.FC = () => {
               onClick={() => navigate('/register')}
               className="font-medium text-blue-600 hover:text-blue-500 hover:underline"
             >
-              Register here
+              Register heres
             </button>
           </p>
         </div>

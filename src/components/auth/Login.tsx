@@ -96,16 +96,20 @@ const Login: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
-            <span className="text-2xl font-bold text-white">IM</span>
-          </div>
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your inventory management account</p>
-        </div>
+       
+
 
         {/* Form */}
         <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-2xl">
+           <div className="mb-8 text-center">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
+            <span className="text-2xl font-bold text-white">IM</span>
+          </div>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">iHub & HCi Foundation</h1>
+          <h4 className="mb-2 text-2xl font-bold text-gray-900">Inventory Management System</h4>
+
+          <p className="text-gray-600">Sign in to your Account</p>
+        </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
@@ -164,8 +168,21 @@ const Login: React.FC = () => {
             >
               {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
-          </form>
 
+          </form>
+              {/* Registration Link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className="font-medium text-blue-600 hover:text-blue-500 hover:underline"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
           {/* Demo Accounts */}
           <div className="pt-6 mt-8 border-t border-gray-200">
             <p className="mb-3 text-sm font-medium text-gray-700">Demo Accounts:</p>
@@ -194,22 +211,10 @@ const Login: React.FC = () => {
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">Inventory Management System © 2025</p>
+          <p className="text-sm text-gray-600">Inventory Management System © {new Date().getFullYear()}</p>
         </div>
 
-        {/* Registration Link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/register')}
-              className="font-medium text-blue-600 hover:text-blue-500 hover:underline"
-            >
-              Register heres
-            </button>
-          </p>
-        </div>
+       
       </div>
     </div>
   );

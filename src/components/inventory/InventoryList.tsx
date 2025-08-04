@@ -3,7 +3,7 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
 import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap } from 'lucide-react';
-import UpdateInventory from './updateInventory';
+// import UpdateInventory from './updateInventory';
 
 const InventoryList: React.FC = () => {
   const { inventoryItems,addInventoryItem, deleteInventoryItem, updateInventoryItem } = useInventory();

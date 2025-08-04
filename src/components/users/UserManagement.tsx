@@ -1,14 +1,54 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { validateEmail } from '../../utils/validation';
+import { supabase } from '../../lib/supabaseClient';
 
+
+
+
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  department:string
+}
 const UserManagement: React.FC = () => {
   const { users, addUser, updateUser, deleteUser } = useInventory();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [viewingCategory, setViewingCategory] = useState<any>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+const [updateModel, setUpdateModel] = useState(false);
+
+  
+  
+const [formData, setFormData] = useState<FormData>({
+        name: '',
+        email: '',
+        password: '',
+        role: 'employee',
+        department:""
+       
+      });
+  const [showPassword, setShowPassword] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const roleOptions = [
+  { value: 'employee', label: 'Employee '},
+  { value: 'stock-manager', label: 'Stock Manager ' },
+  { value: 'admin', label: 'Administrator' }
+];
+
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,6 +101,157 @@ const UserManagement: React.FC = () => {
     employees: users.filter(u => u.role === 'employee').length
   };
 
+
+
+  
+
+    const validateForm = (): string[] => {
+    const newErrors: { [key: string]: string } = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors);
+  };
+  
+  
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    const allowedDomain = "@ihubiitmandi.in";
+    if (!formData.email.endsWith(allowedDomain)) {
+      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
+        autoClose: 5000,
+        position: 'top-right'
+      });
+      return;
+    }
+  
+    if (!validateForm()) return;
+    setIsLoading(true);
+  
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            role: formData.role
+          }
+        }
+      });
+  
+      if (error) throw error;
+  
+      const userId = data.user?.id;
+      const { error: insertError } = await supabase.from('users').insert({
+        id: userId,
+        email: formData.email,
+        name: formData.name,
+        role: formData.role,
+        department: formData.department || null,
+        isactive: true,
+        createdat: new Date().toISOString(),
+        lastlogin: new Date().toISOString()
+      });
+  
+      if (insertError) throw insertError;
+  
+      toast.success('Registration successful!.', {
+        autoClose: 5000,
+        position: 'top-right',
+      });
+  
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(`Registration failed: ${error.message || 'An unexpected error occurred'}`, {
+        autoClose: 5000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+  
+
+
+
+
+
+const handleUpdateUser = async (userId: string, updatedData: Partial<{
+  name: string;
+  role: string;
+  department: string;
+  isactive: boolean;
+}>) => {
+  debugger
+  try {
+    console.log('Updating user:', userId, updatedData);
+    const { error } = await supabase
+      .from('users')
+      .update({
+        ...updatedData,
+        lastlogin: new Date().toISOString() // auto-update login time
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
+
+    toast.success('User details updated successfully!', {
+      autoClose: 4000,
+      position: 'top-right',
+    });
+  } catch (error: any) {
+    console.error('Update error:', error);
+    toast.error(`Update failed: ${error.message || 'Something went wrong.'}`, {
+      autoClose: 5000,
+      position: 'top-right',
+    });
+  }
+};
+
+
+
+const handleUserUpdate = (user:any) => {
+  // Load selected user data into formData for editing
+  setFormData({
+    name: user.name || '',
+    email: user.email || '',
+    password: '', // Do not prefill password for security
+    role: user.role || 'employee',
+    department: user.department || ''
+  });
+  setEditingCategory(user);
+  setUpdateModel(true);
+}
+
+
+
+
+
+
+
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -71,7 +262,7 @@ const UserManagement: React.FC = () => {
         </div>
         {currentUser?.role === 'admin' && (
           <button 
-          
+          onClick={() => setShowAddModal(true)}
           className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
             <Plus size={16} />
             <span>Add User</span>
@@ -260,7 +451,14 @@ const UserManagement: React.FC = () => {
                         </button>
                         {currentUser?.role === 'admin' && (
                           <>
-                            <button className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900">
+                            <button 
+                          
+                            onClick={() => {
+                      
+                              handleUserUpdate(user);
+                              
+                            }}
+                            className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900">
                               <Edit size={16} />
                             </button>
                             {user.id !== currentUser.id && (
@@ -288,6 +486,195 @@ const UserManagement: React.FC = () => {
           </div>
         )}
       </div>
+
+
+{showAddModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
+    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
+      <h3 className="mb-6 text-2xl font-semibold text-gray-900">
+        Add New Employes 
+      </h3>
+
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        {/* Row 1 - Column 1 */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Name</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, assetname: e.target.value }))}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            placeholder="e.g., Rohit Kumar"
+          />
+        </div>
+
+        {/* Row 1 - Column 2 */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            placeholder="rohit@ihubiitmandi.in"
+          />
+        </div>
+
+        {/* Row 2 - Column 1 */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            placeholder="password"
+          />
+        </div>
+
+        {/* Row 2 - Column 2 */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-gray-700">Department</label>
+          <input
+            type="text"
+            value={formData.department}
+            onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            placeholder="e.g.,IT Department"
+          />
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end pt-4 space-x-3 md:col-span-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddModal(false);
+            }}
+            className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100"
+          >
+            <X size={16} className="mr-1" />
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+          >
+            <Save size={16} className="mr-1" />
+         Add User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+
+
+{updateModel && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
+    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
+      <h3 className="mb-6 text-2xl font-semibold text-gray-900">
+  Update User Details
+      </h3>
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+    // Call update logic with the selected user id and updated formData
+    if (editingCategory && editingCategory.id) {
+      handleUpdateUser(editingCategory.id, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password, // Password should be handled securely
+        role: formData.role,
+        department: formData.department
+      });
+      setUpdateModel(false);
+    }
+  }}
+  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+>
+  {/* Row 1 - Column 1 */}
+  <div>
+    <label className="block mb-1 text-sm font-medium text-gray-700">Name</label>
+    <input
+      type="text"
+      value={formData.name}
+      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+      required
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="e.g., Rohit Kumar"
+    />
+  </div>
+
+  {/* Row 1 - Column 2 */}
+  <div>
+    <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+    <input
+      type="email"
+      value={formData.email}
+      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="rohit@ihubiitmandi.in"
+    />
+  </div>
+
+  {/* Row 2 - Column 1 */}
+  {/* <div>
+    <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
+    <input
+      type="password"
+      value={formData.password}
+      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="password"
+    />
+  </div> */}
+
+  {/* Row 2 - Column 2 */}
+  <div>
+    <label className="block mb-1 text-sm font-medium text-gray-700">Department</label>
+    <input
+      type="text"
+      value={formData.department}
+      onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="e.g., IT Department"
+    />
+  </div>
+
+  {/* Buttons */}
+  <div className="flex justify-end pt-4 space-x-3 md:col-span-2">
+    <button
+      type="button"
+      onClick={() => setUpdateModel(false)}
+      className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100"
+    >
+      <X size={16} className="mr-1" />
+      Cancel
+    </button>
+
+    <button
+      type="submit"
+      className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+    >
+      <Save size={16} className="mr-1" />
+      Update User
+    </button>
+  </div>
+</form>
+
+    </div>
+  </div>
+)}
+
+
+
     </div>
   );
 };

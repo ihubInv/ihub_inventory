@@ -37,4 +37,4 @@ A modern inventory management system developed for the **iHub & HCI Foundation, 
 ### 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/ihubInv/ihub_inventory.git
-cd ihub-inventory-system
+cd ihub-inventory

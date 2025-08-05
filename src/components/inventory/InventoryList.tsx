@@ -3,10 +3,12 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
 import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap } from 'lucide-react';
+import ViewInventory from './ViewInventory';
+import UpdateInventory from './UpdateInventory';
 // import UpdateInventory from './updateInventory';
 
 const InventoryList: React.FC = () => {
-  const { inventoryItems,addInventoryItem, deleteInventoryItem, updateInventoryItem } = useInventory();
+  const { inventoryItems, addInventoryItem, deleteInventoryItem, updateInventoryItem } = useInventory();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -21,7 +23,7 @@ const InventoryList: React.FC = () => {
     dateofentry: new Date(),
     invoicenumber: '',
     assetcategory: '',
-    assetcategoryid:"",
+    assetcategoryid: "",
     assetname: '',
     specification: '',
     makemodel: '',
@@ -49,16 +51,16 @@ const InventoryList: React.FC = () => {
   });
 
 
-  
+
 
   const filteredItems = inventoryItems.filter(item => {
     const matchesSearch = item.assetname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.uniqueid.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.vendorname.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      item.uniqueid.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.vendorname.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || item.assetcategory === filterCategory;
-    
+
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
@@ -103,44 +105,44 @@ const InventoryList: React.FC = () => {
     setFormData({
       // const now = new Date();
 
-   
-        uniqueid: item.uniqueid,
-        financialyear: item.financialyear,
-        dateofinvoice: item.dateofinvoice,
-        dateofentry: item.dateofentry,
-        invoicenumber: item.invoicenumber,
-        assetcategory: item.assetcategory,
-        assetcategoryid: item.assetcategoryid,
-        assetname: item.assetname,
-        specification: item.specification,
-        makemodel: item.makemodel,
-        productserialnumber: item.productserialnumber,
-        vendorname: item.vendorname,
-        quantityperitem: item.quantityperitem,
-        rateinclusivetax: item.rateinclusivetax,
-        totalcost: item.totalcost,
-        locationofitem: item.locationofitem,
-        issuedto: item.issuedto,
-        dateofissue: item.dateofissue ?? null,
-        expectedreturndate: item.expectedreturndate ?? null,
-        balancequantityinstock: item.balancequantityinstock,
-        description: item.description,
-        unitofmeasurement: item.unitofmeasurement,
-        depreciationmethod: item.depreciationmethod,
-        warrantyinformation: item.warrantyinformation,
-        maintenanceschedule: item.maintenanceschedule,
-        conditionofasset: item.conditionofasset,
-        status: item.status,
-        minimumstocklevel: item.minimumstocklevel,
-        purchaseordernumber: item.purchaseordernumber,
-        expectedlifespan: item.expectedlifespan,
-        assettag: item.assettag,
-        attachments: item.attachments ?? [],
-        lastmodifiedby: user?.id || 'unknown',
-        lastmodifieddate: item.lastmodifieddate,
-        createdat: item.createdat,
-   
-      
+
+      uniqueid: item.uniqueid,
+      financialyear: item.financialyear,
+      dateofinvoice: item.dateofinvoice,
+      dateofentry: item.dateofentry,
+      invoicenumber: item.invoicenumber,
+      assetcategory: item.assetcategory,
+      assetcategoryid: item.assetcategoryid,
+      assetname: item.assetname,
+      specification: item.specification,
+      makemodel: item.makemodel,
+      productserialnumber: item.productserialnumber,
+      vendorname: item.vendorname,
+      quantityperitem: item.quantityperitem,
+      rateinclusivetax: item.rateinclusivetax,
+      totalcost: item.totalcost,
+      locationofitem: item.locationofitem,
+      issuedto: item.issuedto,
+      dateofissue: item.dateofissue ?? null,
+      expectedreturndate: item.expectedreturndate ?? null,
+      balancequantityinstock: item.balancequantityinstock,
+      description: item.description,
+      unitofmeasurement: item.unitofmeasurement,
+      depreciationmethod: item.depreciationmethod,
+      warrantyinformation: item.warrantyinformation,
+      maintenanceschedule: item.maintenanceschedule,
+      conditionofasset: item.conditionofasset,
+      status: item.status,
+      minimumstocklevel: item.minimumstocklevel,
+      purchaseordernumber: item.purchaseordernumber,
+      expectedlifespan: item.expectedlifespan,
+      assettag: item.assettag,
+      attachments: item.attachments ?? [],
+      lastmodifiedby: user?.id || 'unknown',
+      lastmodifieddate: item.lastmodifieddate,
+      createdat: item.createdat,
+
+
     });
     setShowAddModal(true);
   };
@@ -157,7 +159,7 @@ const InventoryList: React.FC = () => {
         dateofentry: new Date(),
         invoicenumber: '',
         assetcategory: '',
-        assetcategoryid:"",
+        assetcategoryid: "",
         assetname: '',
         specification: '',
         makemodel: '',
@@ -189,7 +191,7 @@ const InventoryList: React.FC = () => {
 
 
 
-  
+
 
   const handleAddCategory = async (e: React.FormEvent) => {
     debugger
@@ -198,7 +200,7 @@ const InventoryList: React.FC = () => {
       debugger;
       await addInventoryItem({
         ...formData,
-        createdBy: user?.id || 'unknown'
+        createdby: user?.id || 'unknown'
       });
       setFormData({
         uniqueid: '',
@@ -207,7 +209,7 @@ const InventoryList: React.FC = () => {
         dateofentry: new Date(),
         invoicenumber: '',
         assetcategory: '',
-        assetcategoryid:"",
+        assetcategoryid: "",
         assetname: '',
         specification: '',
         makemodel: '',
@@ -239,13 +241,9 @@ const InventoryList: React.FC = () => {
       // Optional: show toast or error message
     }
   };
-  
-  // const handleDeleteCategory = (categoryId: string) => {
-  //   if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-  //     // deleteCategory(categoryId);
-  //   }
-  // };
-  
+
+ 
+
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       deleteInventoryItem(id);
@@ -431,14 +429,14 @@ const InventoryList: React.FC = () => {
                     <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <button className="p-1 text-blue-600 rounded hover:text-blue-900"
-                         onClick={() => setViewingCategory(item)}
+                          onClick={() => setViewingCategory(item)}
                         >
                           <Eye size={16} />
                         </button>
                         {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                           <>
                             <button className="p-1 text-green-600 rounded hover:text-green-900"
-                            onClick={() => handleEditCategory(item)}
+                              onClick={() => handleEditCategory(item)}
                             >
                               <Edit size={16} />
                             </button>
@@ -467,281 +465,33 @@ const InventoryList: React.FC = () => {
           </div>
         )}
       </div>
-  {/* Add/Edit Category Modal */}
-  {showAddModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
-    <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
-      <h3 className="mb-6 text-2xl font-semibold text-gray-900">
-        {editingCategory ? 'Edit Inventory Asset' : 'Add New Inventory Asset'}
-      </h3>
-
-      <form
-        onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory}
-        className="grid grid-cols-1 gap-6 md:grid-cols-3"
-      >
-        {/* Row 1 */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Asset Name *</label>
-          <input
-            type="text"
-            value={formData.assetname}
-            onChange={(e) => setFormData(prev => ({ ...prev, assetname: e.target.value }))}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="e.g., Computer Mouse"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Asset Category</label>
-          <input
-            type="text"
-            value={formData.assetcategory}
-            onChange={(e) => setFormData(prev => ({ ...prev, assetcategory: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="Category"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Invoice Number</label>
-          <input
-            type="text"
-            value={formData.invoicenumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, invoicenumber: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="Invoice #"
-          />
-        </div>
-
-        {/* Row 2 */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Specification</label>
-          <input
-            type="text"
-            value={formData.specification}
-            onChange={(e) => setFormData(prev => ({ ...prev, specification: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Make/Model</label>
-          <input
-            type="text"
-            value={formData.makemodel}
-            onChange={(e) => setFormData(prev => ({ ...prev, makemodel: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Product Serial Number</label>
-          <input
-            type="text"
-            value={formData.productserialnumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, productserialnumber: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          />
-        </div>
-
-        {/* Row 3 */}
-        <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Asset Type</label>
-          <select
-            value={formData.type}
-            onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="tangible">Tangible</option>
-            <option value="intangible">Intangible</option>
-          </select>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block mb-1 text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="Brief description of this asset..."
-          />
-        </div>
-
-        {/* Active checkbox */}
-        <div className="flex items-center mt-2 md:col-span-3">
-          <input
-            type="checkbox"
-            id="isActive"
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded"
-          />
-          <label htmlFor="isActive" className="ml-2 text-sm text-gray-900">Active Asset</label>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end pt-4 space-x-3 md:col-span-3">
-          <button
-            type="button"
-            onClick={() => {
-              setShowAddModal(false);
-              setEditingCategory(null);
-            }}
-            className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100"
-          >
-            <X size={16} className="mr-1" />
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
-
-          >
-            <Save size={16} className="mr-1" />
-            {editingCategory ? 'Update' : 'Add'} Inventory Asset
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
-       
-       
-      
-        
-  
-       
-      
+      {/* Add/Edit Category Modal */}
+      {showAddModal && (
+        <UpdateInventory
+          showAddModal={showAddModal}
+          setShowAddModal={setShowAddModal}
+          editingCategory={editingCategory}
+          setEditingCategory={setEditingCategory}
+          formData={formData}
+          setFormData={setFormData}
+          handleAddCategory={handleAddCategory}
+          handleUpdateCategory={handleUpdateCategory}
+        />
+      )}
 
       {/* View Category Modal */}
       {viewingCategory && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
-    <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-semibold text-gray-900">Inventory Asset Details</h3>
-        <button onClick={() => setViewingCategory(null)} className="text-gray-500 hover:text-gray-700">
-          <X size={24} />
-        </button>
-      </div>
+        <ViewInventory
+          viewingCategory={viewingCategory}
+          onClose={() => setViewingCategory(null)}
+          onEdit={handleEditCategory}
+        />
+      )}
 
-      <div className="grid grid-cols-1 gap-6 text-sm text-gray-800 md:grid-cols-3">
-        {/* Row 1 */}
-        <div>
-          <label className="block mb-1 font-medium">Asset Name</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.assetname || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Asset Category</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.assetcategory || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Invoice Number</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.invoicenumber || '—'}</p>
-        </div>
 
-        {/* Row 2 */}
-        <div>
-          <label className="block mb-1 font-medium">Specification</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.specification || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Make/Model</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.makemodel || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Serial Number</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.productserialnumber || '—'}</p>
-        </div>
 
-        {/* Row 3 */}
-        <div>
-          <label className="block mb-1 font-medium">Location</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.locationofitem || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Vendor</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.vendorname || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Status</label>
-          <p className="p-3 capitalize bg-gray-100 rounded-lg">{viewingCategory.status || '—'}</p>
-        </div>
-
-        {/* Row 4 */}
-        <div>
-          <label className="block mb-1 font-medium">Condition</label>
-          <p className="p-3 capitalize bg-gray-100 rounded-lg">{viewingCategory.conditionofasset || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Quantity In Stock</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.balancequantityinstock ?? '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Unit</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.unitofmeasurement || '—'}</p>
-        </div>
-
-        {/* Row 5 */}
-        <div>
-          <label className="block mb-1 font-medium">Description</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.description || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Purchase Order #</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.purchaseordernumber || '—'}</p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Expected Lifespan</label>
-          <p className="p-3 bg-gray-100 rounded-lg">{viewingCategory.expectedlifespan || '—'}</p>
-        </div>
-
-        {/* Row 6 */}
-        <div>
-          <label className="block mb-1 font-medium">Created At</label>
-          <p className="p-3 bg-gray-100 rounded-lg">
-            {new Date(viewingCategory.createdat).toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Last Updated</label>
-          <p className="p-3 bg-gray-100 rounded-lg">
-            {new Date(viewingCategory.lastmodifieddate).toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Asset ID</label>
-          <p className="p-3 font-mono bg-gray-100 rounded-lg">{viewingCategory.id}</p>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 mt-8 border-t">
-        <button
-          onClick={() => {
-            setViewingCategory(null);
-            handleEditCategory(viewingCategory);
-          }}
-          className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
-        >
-          <Edit size={16} className="inline mr-1" />
-          Edit Asset
-        </button>
-        <button
-          onClick={() => setViewingCategory(null)}
-          className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-100"
-        >
-          Close
-        </button>
-      </div>
     </div>
-  </div>
-)}
 
-      
-    </div>
-  
   );
 };
 

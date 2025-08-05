@@ -43,7 +43,7 @@ export interface InventoryItem {
   purchaseordernumber?: string;
   expectedlifespan?: string;
   assettag?: string;
-  attachments?: string[];  // JSONB in DB
+  attachments: File[]; // ⬅️ Store raw File objects until submit
   lastmodifiedby: string;
   lastmodifieddate: Date;
   createdat: Date;

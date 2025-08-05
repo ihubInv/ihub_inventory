@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import CustomDatePicker from '../common/DatePicker';
-import { Save, X, Package, Calendar, DollarSign, MapPin } from 'lucide-react';
+import { Save, X, Package, Calendar, DollarSign, MapPin, Image } from 'lucide-react';
 import { InventoryItem } from '../../types';
 
 import UploadDropzone from '../common/UploadDropzone';
+import { supabase } from '../../lib/supabaseClient';
 
 const AddInventory: React.FC = () => {
   const { addInventoryItem } = useInventory();
@@ -77,17 +78,17 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
   //     assetcategory: assetcategory // Make sure this matches your form schema
   //   }));
   // };
-
-
-
-
-  const handleFile = (file?: File) => {
+const handleFile = (file?: File) => {
   if (file) {
-    // upload logic...
-    setUploadSuccess(true)
-     console.log('File selected:', file);
+    setFormData(prev => ({
+      ...prev,
+      attachments: [...(prev?.attachments || []), file],
+    }));
+    setUploadSuccess(true);
   }
-}
+};
+
+
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     debugger
     const selectedName = e.target.value;
@@ -105,21 +106,23 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
   };
 
 
+
   // const handleSubmit = async (e: React.FormEvent) => {
   //   debugger
   //   e.preventDefault();
   //   setIsSubmitting(true);
-
+  //   const payload: any = {
+  //     ...formData,
+  //     assetcategoryid: formData.assetcategoryid, // ✅ explicitly include ID
+  //     dateofinvoice: formData.dateofinvoice || new Date(),
+  //     dateofentry: formData.dateofentry,
+  //     dateofissue: formData.dateofissue,
+  //     expectedreturndate: formData.expectedreturndate,
+  //     lastmodifiedby: user?.id || 'unknown',
+  //     attachments: []
+  //   };
   //   try {
-  //     await addInventoryItem({
-  //       ...formData,
-  //       dateofinvoice: formData.dateofinvoice || new Date(),
-  //       dateofentry: formData.dateofentry,
-  //       dateofissue: formData.dateofissue,
-  //       expectedreturndate: formData.expectedreturndate,
-  //       lastModifiedBy: user?.id || 'unknown',
-  //       attachments: []
-  //     });
+  //     await addInventoryItem(payload);
 
   //     // Reset form
   //     setFormData({
@@ -129,6 +132,7 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
   //       dateofentry: new Date(),
   //       invoicenumber: '',
   //       assetcategory: '',
+  //       assetcategoryid: '', // ✅ reset ID too
   //       assetname: '',
   //       specification: '',
   //       makemodel: '',
@@ -148,11 +152,11 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
   //       warrantyinformation: '',
   //       maintenanceschedule: '',
   //       conditionofasset: 'excellent',
-  //       status: 'available',
+  //       status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
   //       minimumstocklevel: 5,
   //       purchaseordernumber: '',
   //       expectedlifespan: '',
-  //       assettag: '',
+  //       assettag: ''
   //     });
 
   //     alert('Inventory item added successfully!');
@@ -163,65 +167,71 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
   //   setIsSubmitting(false);
   // };
 
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     debugger
-    e.preventDefault();
-    setIsSubmitting(true);
-    const payload: any = {
-      ...formData,
-      assetcategoryid: formData.assetcategoryid, // ✅ explicitly include ID
-      dateofinvoice: formData.dateofinvoice || new Date(),
-      dateofentry: formData.dateofentry,
-      dateofissue: formData.dateofissue,
-      expectedreturndate: formData.expectedreturndate,
-      lastmodifiedby: user?.id || 'unknown',
-      attachments: []
-    };
-    try {
-      await addInventoryItem(payload);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-      // Reset form
-      setFormData({
-        uniqueid: '',
-        financialyear: '2024-25',
-        dateofinvoice: null,
-        dateofentry: new Date(),
-        invoicenumber: '',
-        assetcategory: '',
-        assetcategoryid: '', // ✅ reset ID too
-        assetname: '',
-        specification: '',
-        makemodel: '',
-        productserialnumber: '',
-        vendorname: '',
-        quantityperitem: 1,
-        rateinclusivetax: 0,
-        totalcost: 0,
-        locationofitem: '',
-        issuedto: '',
-        dateofissue: null,
-        expectedreturndate: null,
-        balancequantityinstock: 0,
-        description: '',
-        unitofmeasurement: 'Pieces',
-        depreciationmethod: '',
-        warrantyinformation: '',
-        maintenanceschedule: '',
-        conditionofasset: 'excellent',
-        status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
-        minimumstocklevel: 5,
-        purchaseordernumber: '',
-        expectedlifespan: '',
-        assettag: ''
-      });
+  // 1. Upload files to Supabase
+  const uploadedFiles: { name: string; url: string }[] = [];
 
-      alert('Inventory item added successfully!');
-    } catch (error) {
-      alert('Error adding inventory item. Please try again.');
+  for (const file of formData.attachments || []) {
+    const filePath = `attachments/${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('inventory-invoice-images')
+      .upload(filePath, file);
+
+    if (error) {
+      console.error('File upload error:', error.message);
+      alert(`Failed to upload file: ${file.name}`);
+      setIsSubmitting(false);
+      return;
     }
 
-    setIsSubmitting(false);
+    const { data: urlData } = supabase
+      .storage
+      .from('inventory-invoice-images')
+      .getPublicUrl(filePath);
+
+    if (urlData?.publicUrl) {
+      uploadedFiles.push({
+        name: file.name,
+        url: urlData.publicUrl,
+      });
+    }
+  }
+
+  // 2. Build the payload
+  const payload: any = {
+    ...formData,
+    assetcategoryid: formData.assetcategoryid,
+    dateofinvoice: formData.dateofinvoice || new Date(),
+    dateofentry: formData.dateofentry,
+    dateofissue: formData.dateofissue,
+    expectedreturndate: formData.expectedreturndate,
+    lastmodifiedby: user?.id || 'unknown',
+    attachments: uploadedFiles, // ✅ use uploaded URLs instead of raw files
   };
+
+  try {
+    await addInventoryItem(payload);
+
+    // 3. Reset form
+    setFormData({
+      // reset all other fields...
+      attachments: [],
+    });
+
+    alert('Inventory item added successfully!');
+  } catch (error) {
+    console.error(error);
+    alert('Error adding inventory item. Please try again.');
+  }
+
+  setIsSubmitting(false);
+};
 
 
   
@@ -407,6 +417,19 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                Purchase Order Number
+                </label>
+                <input
+                  type="text"
+                  name="purchaseordernumber"
+                  value={formData.purchaseordernumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
 
@@ -556,7 +579,7 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
                 />
               </div>
 
-              {formData.status === "issued" && (
+              {formData.status === "issued" && (         <>
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
                     Issued To
@@ -571,7 +594,31 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
                     placeholder="e.g., Rohit Kumar"
                   />
                 </div>
-              )}
+               
+                 <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                 Date of Issue
+                </label>
+                <CustomDatePicker
+                  selected={formData.dateofissue}
+                  onChange={(date) => setFormData(prev => ({ ...prev, dateofissue: date || new Date() }))}
+                  placeholder="Select issue date"
+                  maxDate={new Date()}
+                />
+              </div>
+
+               <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Expected Return Date
+                  </label>
+                  <CustomDatePicker
+                    selected={formData.expectedreturndate}
+                    onChange={(date) => setFormData(prev => ({ ...prev, expectedreturndate: date || new Date() }))}
+                    placeholder="Select return date"
+                    minDate={new Date()}
+                  />
+                  </div>
+     </>)}
 
 
 
@@ -662,9 +709,9 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
               <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
-                <MapPin className="w-5 h-5 text-white" />
+                <Image className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Location & Status</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Upload Your File</h3>
             </div>
             <div className="pt-6 border-t border-gray-200">
               {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Your File</h3> */}
@@ -678,6 +725,7 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
                 height="h-20"
                 acceptedTypes="image/png, image/jpeg, application/pdf"
                 onFileChange={handleFile}
+                
               />
             </div>
           </div>

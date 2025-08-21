@@ -397,6 +397,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
         fetchUsers(),
         fetchCategories()
       ]);
+    ]
+    )
     setUsers(usrs);
     setCategories(cats);
   };

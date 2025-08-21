@@ -391,12 +391,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const loadAll = async () => {
     const [items, reqs, usrs, cats] = await Promise.all([
       fetchInventoryItems(),
-      fetchRequests(),
-      fetchUsers(),
-      fetchCategories()
-    ]);
-    setInventoryItems(items);
-    setRequests(reqs);
+      const [inventoryData, requestsData, usersData, categoriesData] = await Promise.allSettled([
+        fetchInventoryItems(),
+        fetchRequests(),
+        fetchUsers(),
+        fetchCategories()
+      ]);
     setUsers(usrs);
     setCategories(cats);
   };
@@ -465,11 +465,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const addCategory = async (category: Omit<Category, 'id' | 'createdat' | 'updatedat'>) => {
     debugger
     try {
-      debugger;
-      await insertCategory(category);
-      const updated = await fetchCategories();
-      setCategories(updated);
-    } catch (error) {
+      setInventoryItems(inventoryData.status === 'fulfilled' ? inventoryData.value : []);
+      setRequests(requestsData.status === 'fulfilled' ? requestsData.value : []);
+      setUsers(usersData.status === 'fulfilled' ? usersData.value : []);
+      setCategories(categoriesData.status === 'fulfilled' ? categoriesData.value : []);
+      console.warn('Some data could not be loaded:', error);
       console.error('Error inserting category:', error);
       throw error; // propagate back to handler
     }

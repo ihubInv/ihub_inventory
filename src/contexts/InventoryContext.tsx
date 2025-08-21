@@ -389,18 +389,17 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [categories, setCategories] = useState<Category[]>([]);
 
   const loadAll = async () => {
-    const [items, reqs, usrs, cats] = await Promise.all([
+    const [inventoryData, requestsData, usersData, categoriesData] = await Promise.allSettled([
       fetchInventoryItems(),
-      const [inventoryData, requestsData, usersData, categoriesData] = await Promise.allSettled([
-        fetchInventoryItems(),
-        fetchRequests(),
-        fetchUsers(),
-        fetchCategories()
-      ]);
-    ]
-    )
-    setUsers(usrs);
-    setCategories(cats);
+      fetchRequests(),
+      fetchUsers(),
+      fetchCategories()
+    ]);
+    
+    setInventoryItems(inventoryData.status === 'fulfilled' ? inventoryData.value : []);
+    setRequests(requestsData.status === 'fulfilled' ? requestsData.value : []);
+    setUsers(usersData.status === 'fulfilled' ? usersData.value : []);
+    setCategories(categoriesData.status === 'fulfilled' ? categoriesData.value : []);
   };
 
   useEffect(() => {
@@ -465,13 +464,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   // };
 
   const addCategory = async (category: Omit<Category, 'id' | 'createdat' | 'updatedat'>) => {
-    debugger
     try {
-      setInventoryItems(inventoryData.status === 'fulfilled' ? inventoryData.value : []);
-      setRequests(requestsData.status === 'fulfilled' ? requestsData.value : []);
-      setUsers(usersData.status === 'fulfilled' ? usersData.value : []);
-      setCategories(categoriesData.status === 'fulfilled' ? categoriesData.value : []);
-      console.warn('Some data could not be loaded:', error);
+      await insertCategory(category);
+      const updated = await fetchCategories();
+      setCategories(updated);
+    } catch (error) {
       console.error('Error inserting category:', error);
       throw error; // propagate back to handler
     }

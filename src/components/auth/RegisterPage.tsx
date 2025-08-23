@@ -1,8 +1,7 @@
-
-
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Facebook, ArrowRight, Check, X } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { validateEmail } from '../../utils/validation';
@@ -35,96 +34,161 @@ const RegisterPage: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  
   const roleOptions = [
-  { value: 'employee', label: 'Employee '},
-  { value: 'stock-manager', label: 'Stock Manager ' },
-  { value: 'admin', label: 'Administrator' }
-];
+    { value: 'employee', label: 'Employee' },
+    { value: 'stock-manager', label: 'Stock Manager' },
+    { value: 'admin', label: 'Administrator' }
+  ];
 
 
     const validateForm = (): string[] => {
-    const newErrors: { [key: string]: string } = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors);
-  };
+      const newErrors: { [key: string]: string } = {};
+      
+      if (!formData.name.trim()) {
+        newErrors.name = 'Name is required';
+      }
+      
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+      
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
+      
+      if (!formData.department.trim()) {
+        newErrors.department = 'Department is required';
+      }
+      
+      setErrors(newErrors);
+      return Object.keys(newErrors);
+    };
   
   
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    const allowedDomain = "@ihubiitmandi.in";
-    if (!formData.email.endsWith(allowedDomain)) {
-      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
-        autoClose: 5000,
-        position: 'top-right'
+    
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      toast.error('Please fix the form errors before submitting.', {
+        position: 'top-right',
+        autoClose: 3000,
       });
       return;
     }
-  
-    if (!validateForm()) return;
+
+    // Check email domain
+    const allowedDomain = "@ihubiitmandi.in";
+    if (!formData.email.endsWith(allowedDomain)) {
+      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
+      return;
+    }
+
     setIsLoading(true);
-  
+
     try {
+      // First, check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', formData.email)
+        .single();
+
+      if (existingUser) {
+        toast.error('An account with this email already exists.', {
+          position: 'top-right',
+          autoClose: 5000,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Create auth user
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
             name: formData.name,
-            role: formData.role
+            role: formData.role,
+            department: formData.department
           }
         }
       });
-  
+
       if (error) throw error;
-  
+
+      // Insert user data into users table
       const userId = data.user?.id;
-      const { error: insertError } = await supabase.from('users').insert({
-        id: userId,
-        email: formData.email,
-        name: formData.name,
-        role: formData.role,
-        department: formData.department || null,
-        isactive: true,
-        createdat: new Date().toISOString(),
-        lastlogin: new Date().toISOString()
-      });
-  
-      if (insertError) throw insertError;
-  
+      if (userId) {
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: formData.email,
+            name: formData.name,
+            role: formData.role,
+            department: formData.department,
+            isactive: true,
+            createdat: new Date().toISOString(),
+            lastlogin: null
+          });
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          // If user table insert fails, we should clean up the auth user
+          await supabase.auth.admin.deleteUser(userId);
+          throw new Error('Failed to create user profile. Please try again.');
+        }
+      }
+
       toast.success('Registration successful! Please check your email to confirm.', {
-        autoClose: 5000,
         position: 'top-right',
+        autoClose: 5000,
       });
-  
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'employee',
+        department: ''
+      });
+
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-  
+
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(`Registration failed: ${error.message || 'An unexpected error occurred'}`, {
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message?.includes('Password')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage, {
+        position: 'top-right',
         autoClose: 5000,
-        position: 'top-right'
       });
     } finally {
       setIsLoading(false);
@@ -136,24 +200,27 @@ const RegisterPage: React.FC = () => {
 
 
 const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-          ...prev,
-          [name]: value
-        }));
-        if (errors[name]) {
-          setErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors[name];
-            return newErrors;
-          });
-        }
-      };
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
 
 
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-12">
+      <ToastContainer />
       <div className="w-full max-w-md">
         {/* Header */}
       
@@ -187,6 +254,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
+                  required
                   className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                   }`}
@@ -216,6 +284,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                   }`}
@@ -245,6 +314,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  required
                   className={`block w-full pl-10 pr-10 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                   }`}
@@ -287,6 +357,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
+                  required
                   className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     errors.department ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                   }`}
@@ -314,6 +385,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
       name="role"
       value={formData.role}
       onChange={handleChange}
+      required
       className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
         errors.role ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
       }`}

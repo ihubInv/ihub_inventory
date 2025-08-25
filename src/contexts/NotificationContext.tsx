@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Notification } from '../types';
+import { useInventory } from './InventoryContext';
+import { useAuth } from './AuthContext';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -8,6 +10,7 @@ interface NotificationContextType {
   pendingNotifications: Notification[];
   approvedNotifications: Notification[];
   rejectedNotifications: Notification[];
+  unreadCount: number;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -22,6 +25,8 @@ export const useNotifications = () => {
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { requests } = useInventory();
+  const { user } = useAuth();
 
   const addNotification = (notification: Notification) => {
     setNotifications(prev => [notification, ...prev]);
@@ -31,7 +36,21 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setNotifications(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Calculate unread count based on user role and pending requests
+  const getUnreadCount = () => {
+    if (!user) return 0;
+    
+    if (user.role === 'employee') {
+      // Employees see count of their own pending requests
+      return requests.filter(req => req.employeeid === user.id && req.status === 'pending').length;
+    } else if (user.role === 'admin' || user.role === 'stock-manager') {
+      // Admins and stock managers see count of all pending requests
+      return requests.filter(req => req.status === 'pending').length;
+    }
+    return 0;
+  };
 
+  const unreadCount = getUnreadCount();
   
   const pendingNotifications = notifications.filter(n => n.status === 'pending');
   const approvedNotifications = notifications.filter(n => n.status === 'approved');
@@ -44,7 +63,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       deleteNotification,
       pendingNotifications,
       approvedNotifications,
-      rejectedNotifications
+      rejectedNotifications,
+      unreadCount
     }}>
       {children}
     </NotificationContext.Provider>

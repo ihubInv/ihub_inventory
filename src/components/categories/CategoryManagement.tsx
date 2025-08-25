@@ -19,6 +19,8 @@ import {
   Save,
   X
 } from 'lucide-react';
+import { CRUDToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 
 const CategoryManagement: React.FC = () => {
   const { categories, addCategory, updateCategory, deleteCategory } = useInventory();
@@ -63,11 +65,12 @@ const CategoryManagement: React.FC = () => {
     debugger
     e.preventDefault();
     try {
-      debugger;
+      const loadingToast = CRUDToasts.creating('category');
       await addCategory({
         ...newCategory,
         createdby: user?.id || 'unknown'
       });
+      toast.dismiss(loadingToast);
       setNewCategory({
         name: '',
         type: 'tangible',
@@ -75,9 +78,11 @@ const CategoryManagement: React.FC = () => {
         isactive: true
       });
       setShowAddModal(false);
+      CRUDToasts.created('category');
     } catch (err) {
       console.error('Failed to add category:', err);
-      // Optional: show toast or error message
+      toast.dismiss(loadingToast);
+      CRUDToasts.createError('category', 'Please try again');
     }
   };
   
@@ -92,24 +97,42 @@ const CategoryManagement: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const handleUpdateCategory = (e: React.FormEvent) => {
+  const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCategory) {
-      updateCategory(editingCategory.id, newCategory);
-      setEditingCategory(null);
-      setNewCategory({
-        name: '',
-        type: 'tangible',
-        description: '',
-        isactive: true
-      });
-      setShowAddModal(false);
+      try {
+        const loadingToast = CRUDToasts.updating('category');
+        await updateCategory(editingCategory.id, newCategory);
+        toast.dismiss(loadingToast);
+        setEditingCategory(null);
+        setNewCategory({
+          name: '',
+          type: 'tangible',
+          description: '',
+          isactive: true
+        });
+        setShowAddModal(false);
+        CRUDToasts.updated('category');
+      } catch (err) {
+        console.error('Failed to update category:', err);
+        toast.dismiss(loadingToast);
+        CRUDToasts.updateError('category', 'Please try again');
+      }
     }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-      deleteCategory(categoryId);
+      try {
+        const loadingToast = CRUDToasts.deleting('category');
+        await deleteCategory(categoryId);
+        toast.dismiss(loadingToast);
+        CRUDToasts.deleted('category');
+      } catch (err) {
+        console.error('Failed to delete category:', err);
+        toast.dismiss(loadingToast);
+        CRUDToasts.deleteError('category', 'Please try again');
+      }
     }
   };
 

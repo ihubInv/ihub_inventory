@@ -3,6 +3,8 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
 import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square } from 'lucide-react';
+import { CRUDToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 import ViewInventory from './ViewInventory';
 import UpdateInventory from './UpdateInventory';
 import StatusDropdown from '../common/StatusDropdown';
@@ -28,6 +30,10 @@ const InventoryList: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  
+  // Update functionality states
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [itemToUpdate, setItemToUpdate] = useState<any>(null);
   const [formData, setFormData] = useState({
     uniqueid: '',
     financialyear: '2024-25',
@@ -271,16 +277,30 @@ const InventoryList: React.FC = () => {
     
     setIsDeleting(true);
     try {
+      const loadingToast = CRUDToasts.deleting('inventory item');
       await deleteInventoryItem(itemToDelete.id);
+      toast.dismiss(loadingToast);
       setShowDeleteModal(false);
       setItemToDelete(null);
-      // You can add a success toast notification here if you have a notification system
+      CRUDToasts.deleted('inventory item');
     } catch (error) {
       console.error('Error deleting item:', error);
-      // You can add an error toast notification here
+      CRUDToasts.deleteError('inventory item', 'Please try again');
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleUpdate = (item: any) => {
+    setItemToUpdate(item);
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdateSuccess = (updatedItem: any) => {
+    // Update the item in the local state
+    updateInventoryItem(updatedItem.id, updatedItem);
+    setShowUpdateModal(false);
+    setItemToUpdate(null);
   };
 
   // Bulk delete functionality
@@ -308,15 +328,17 @@ const InventoryList: React.FC = () => {
   const handleConfirmBulkDelete = async () => {
     setIsDeleting(true);
     try {
+      const loadingToast = CRUDToasts.bulkDeleting(selectedItems.length);
       for (const itemId of selectedItems) {
         await deleteInventoryItem(itemId);
       }
+      toast.dismiss(loadingToast);
       setShowBulkDeleteModal(false);
       setSelectedItems([]);
-      // You can add a success toast notification here
+      CRUDToasts.bulkDeleted(selectedItems.length);
     } catch (error) {
       console.error('Error deleting items:', error);
-      // You can add an error toast notification here
+      CRUDToasts.bulkDeleteError('Please try again');
     } finally {
       setIsDeleting(false);
     }
@@ -451,70 +473,70 @@ const InventoryList: React.FC = () => {
         <div className="p-6">
           {activeTab === 'list' ? (
             <div className="space-y-6">
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Asset Condition Chart */}
+                <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Asset Condition Overview</h3>
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
+                  </div>
+                  <div className="h-64">
+                    <AssetConditionChart data={conditionData} />
+                  </div>
+                </div>
+
+                {/* Category Distribution Chart */}
+                <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Category Distribution</h3>
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
+                  </div>
+                  <div className="h-64">
+                    <CategoryDistributionChart data={categoryChartData} />
+                  </div>
+                </div>
+              </div>
+
               {/* Filters */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="relative">
-            <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={16} />
-            <input
-              type="text"
-              placeholder="Search inventory..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+                  <div className="relative">
+                    <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Search inventory..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
 
-          <div className="min-w-48">
-            <StatusDropdown
-              value={filterStatus === 'all' ? '' : filterStatus}
-              onChange={(value) => setFilterStatus(value || 'all')}
-              type="inventory"
-              placeholder="All Status"
-              size="sm"
-            />
-          </div>
+                  <div className="min-w-48">
+                    <StatusDropdown
+                      value={filterStatus === 'all' ? '' : filterStatus}
+                      onChange={(value) => setFilterStatus(value || 'all')}
+                      type="inventory"
+                      placeholder="All Status"
+                      size="sm"
+                    />
+                  </div>
 
-          <CategoryDropdown
-            value={filterCategory}
-            onChange={setFilterCategory}
-            categories={['All Categories', ...categories]}
-            placeholder="Filter by category"
-            size="sm"
-            searchable
-          />
+                  <CategoryDropdown
+                    value={filterCategory}
+                    onChange={setFilterCategory}
+                    categories={['All Categories', ...categories]}
+                    placeholder="Filter by category"
+                    size="sm"
+                    searchable
+                  />
 
-          <div className="flex items-center space-x-2">
-            <Filter size={16} className="text-gray-400" />
-            <span className="text-sm text-gray-600">{filteredItems.length} items</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Asset Condition Chart */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Asset Condition Overview</h3>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
-          </div>
-          <div className="h-64">
-            <AssetConditionChart data={conditionData} />
-          </div>
-        </div>
-
-        {/* Category Distribution Chart */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Category Distribution</h3>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
-          </div>
-          <div className="h-64">
-            <CategoryDistributionChart data={categoryChartData} />
-          </div>
-        </div>
-      </div>
+                  <div className="flex items-center space-x-2">
+                    <Filter size={16} className="text-gray-400" />
+                    <span className="text-sm text-gray-600">{filteredItems.length} items</span>
+                  </div>
+                </div>
+              </div>
 
       {/* Inventory Table */}
       <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
@@ -622,7 +644,7 @@ const InventoryList: React.FC = () => {
                         {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                           <>
                             <button className="p-1 text-green-600 rounded hover:text-green-900"
-                              onClick={() => handleEditCategory(item)}
+                              onClick={() => handleUpdate(item)}
                             >
                               <Edit size={16} />
                             </button>
@@ -666,12 +688,22 @@ const InventoryList: React.FC = () => {
         />
       )}
 
+      {/* Update Inventory Modal */}
+      {showUpdateModal && itemToUpdate && (
+        <UpdateInventory
+          item={itemToUpdate}
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          onUpdate={handleUpdateSuccess}
+        />
+      )}
+
       {/* View Category Modal */}
       {viewingCategory && (
         <ViewInventory
           viewingCategory={viewingCategory}
           onClose={() => setViewingCategory(null)}
-          onEdit={handleEditCategory}
+          onEdit={handleUpdate}
         />
       )}
             </div>

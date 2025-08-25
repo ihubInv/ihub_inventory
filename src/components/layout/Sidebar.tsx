@@ -27,7 +27,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const { user, logout } = useAuth();
-  // const { unreadCount } = useNotifications();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: LayoutDashboard, label: 'Dashboard', path: `${baseUrl}` },
           { icon: FileText, label: 'Request Status', path: `${baseUrl}/requests` },
           { icon: ClipboardList, label: 'Create Request', path: `${baseUrl}/create-request` },
+          { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];
       
@@ -126,10 +127,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         {!collapsed && (
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500">
-                <span className="text-sm font-medium text-white">
-                  {user.name.split(' ').map(n => n[0]).join('')}
-                </span>
+              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-white">
+                    {user.name.split(' ').map(n => n[0]).join('')}
+                  </span>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -205,10 +214,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         {/* User Info */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500">
-              <span className="text-sm font-medium text-white">
-                {user.name.split(' ').map(n => n[0]).join('')}
-              </span>
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
+              {user.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-medium text-white">
+                  {user.name.split(' ').map(n => n[0]).join('')}
+                </span>
+              )}
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{user.name}</p>

@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { sendNotificationEmail } from '../../services/emailService';
 import { Send, X, FileText, Package } from 'lucide-react';
+import { CRUDToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 import RequestItemDropdown from '../common/RequestItemDropdown';
 import PurposeDropdown from '../common/PurposeDropdown';
 
@@ -36,6 +38,7 @@ const CreateRequest: React.FC = () => {
     const data =user
     console.log(data)
     try {
+      const loadingToast = CRUDToasts.creating('request');
       await submitRequest({
         employeeid: user?.id || '',
         employeename: user?.name || '',
@@ -71,9 +74,11 @@ const CreateRequest: React.FC = () => {
         justification: '',
       });
 
-      alert('Request submitted successfully! You will be notified once it is reviewed.');
+      toast.dismiss(loadingToast);
+      CRUDToasts.created('request');
     } catch (error) {
-      alert('Error submitting request. Please try again.');
+      toast.dismiss(loadingToast);
+      CRUDToasts.createError('request', 'Please try again');
     }
 
     setIsSubmitting(false);

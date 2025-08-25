@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { AuthToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
   debugger
@@ -61,10 +63,13 @@ const Login: React.FC = () => {
     setError('');
   
     try {
+      const loadingToast = AuthToasts.loggingIn();
       const { success, error: loginError } = await login(formData.email, formData.password);
   
       if (!success) {
+        toast.dismiss(loadingToast);
         setError(loginError || 'Invalid email or password');
+        AuthToasts.loginError(loginError || 'Invalid email or password');
         return;
       }
   
@@ -73,16 +78,23 @@ const Login: React.FC = () => {
       const role = storedUser?.role;
   
       if (!role) {
+        toast.dismiss(loadingToast);
         setError('User role not found. Please contact support.');
+        AuthToasts.loginError('User role not found');
         return;
       }
   
+      // Show success toast and redirect
+      toast.dismiss(loadingToast);
+      AuthToasts.loginSuccess(storedUser?.name || storedUser?.email);
+      
       // Redirect to role-based dashboard
       const from = location.state?.from?.pathname || `/${role}`;
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again later.');
+      AuthToasts.loginError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }

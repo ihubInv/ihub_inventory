@@ -6,6 +6,7 @@ import {
   Navigate,
   Outlet
 } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { InventoryProvider } from './contexts/InventoryContext';
@@ -99,6 +100,7 @@ const App: React.FC = () => {
         <NotificationProvider>
           <Router>
             <AppContent />
+            <Toaster />
           </Router>
         </NotificationProvider>
       </InventoryProvider>

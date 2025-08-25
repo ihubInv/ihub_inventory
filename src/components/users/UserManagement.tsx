@@ -5,7 +5,8 @@ import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, E
 import RoleDropdown from '../common/RoleDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
 import { supabase } from '../../lib/supabaseClient';
-import { toast } from 'react-toastify';
+import { CRUDToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../utils/validation';
 
@@ -175,10 +176,7 @@ const [formData, setFormData] = useState<FormData>({
   
     const allowedDomain = "@ihubiitmandi.in";
     if (!formData.email.endsWith(allowedDomain)) {
-      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
-        autoClose: 5000,
-        position: 'top-right'
-      });
+      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`);
       return;
     }
   
@@ -186,6 +184,7 @@ const [formData, setFormData] = useState<FormData>({
     setIsLoading(true);
   
     try {
+      const loadingToast = CRUDToasts.creating('employee account');
       const result = await createEmployeeAccount(formData);
       
       if (!result.success) {
@@ -206,17 +205,13 @@ const [formData, setFormData] = useState<FormData>({
   
       if (insertError) throw insertError;
   
-      toast.success('Registration successful!.', {
-        autoClose: 5000,
-        position: 'top-right',
-      });
+      toast.dismiss(loadingToast);
+      CRUDToasts.created('employee account');
   
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(`Registration failed: ${error.message || 'An unexpected error occurred'}`, {
-        autoClose: 5000,
-        position: 'top-right'
-      });
+      toast.dismiss(loadingToast);
+      CRUDToasts.createError('employee account', error.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -238,6 +233,7 @@ const handleUpdateUser = async (userId: string, updatedData: Partial<{
   debugger
   try {
     console.log('Updating user:', userId, updatedData);
+    const loadingToast = CRUDToasts.updating('user');
     const { error } = await supabase
       .from('users')
       .update({
@@ -248,16 +244,12 @@ const handleUpdateUser = async (userId: string, updatedData: Partial<{
 
     if (error) throw error;
 
-    toast.success('User details updated successfully!', {
-      autoClose: 4000,
-      position: 'top-right',
-    });
+    toast.dismiss(loadingToast);
+    CRUDToasts.updated('user');
   } catch (error: any) {
     console.error('Update error:', error);
-    toast.error(`Update failed: ${error.message || 'Something went wrong.'}`, {
-      autoClose: 5000,
-      position: 'top-right',
-    });
+    toast.dismiss(loadingToast);
+    CRUDToasts.updateError('user', error.message || 'Something went wrong.');
   }
 };
 

@@ -7,6 +7,10 @@ export interface User {
   isactive: boolean;
   createdat: Date;
   lastlogin?: Date;
+  profilePicture?: string;
+  phone?: string;
+  address?: string;
+  bio?: string;
 }
 
 

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Facebook, ArrowRight, Check, X } from 'lucide-react';
 import RoleDropdown from '../common/RoleDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { AuthToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { validateEmail } from '../../utils/validation';
@@ -80,10 +80,7 @@ const RegisterPage: React.FC = () => {
     // Validate form
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
-      toast.error('Please fix the form errors before submitting.', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+      toast.error('Please fix the form errors before submitting.');
       return;
     }
 
@@ -108,10 +105,7 @@ const RegisterPage: React.FC = () => {
         .single();
 
       if (existingUser) {
-        toast.error('An account with this email already exists.', {
-          position: 'top-right',
-          autoClose: 5000,
-        });
+        toast.error('An account with this email already exists.');
         setIsLoading(false);
         return;
       }
@@ -155,10 +149,7 @@ const RegisterPage: React.FC = () => {
         }
       }
 
-      toast.success('Registration successful! Please check your email to confirm.', {
-        position: 'top-right',
-        autoClose: 5000,
-      });
+      toast.success('Registration successful! Please check your email to confirm.');
 
       // Reset form
       setFormData({
@@ -188,10 +179,7 @@ const RegisterPage: React.FC = () => {
         errorMessage = error.message;
       }
       
-      toast.error(errorMessage, {
-        position: 'top-right',
-        autoClose: 5000,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +210,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-12">
-      <ToastContainer />
+
       <div className="w-full max-w-md">
         {/* Header */}
       

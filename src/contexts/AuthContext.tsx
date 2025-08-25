@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User } from '../types';
 import { supabase } from '../lib/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { AuthToasts } from '../services/toastService';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -124,9 +126,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Logout error:', error);
+    const loadingToast = AuthToasts.loggingOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        toast.dismiss(loadingToast);
+        AuthToasts.logoutError(error.message);
+      } else {
+        toast.dismiss(loadingToast);
+        AuthToasts.logoutSuccess();
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+      toast.dismiss(loadingToast);
+      AuthToasts.logoutError('An unexpected error occurred');
     }
   };
 

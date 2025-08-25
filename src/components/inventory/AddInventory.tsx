@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import CustomDatePicker from '../common/DatePicker';
-import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon } from 'lucide-react';
+import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon, Upload } from 'lucide-react';
 import { InventoryItem } from '../../types';
 
 import UploadDropzone from '../common/UploadDropzone';
@@ -14,6 +14,10 @@ import ConditionDropdown from '../common/ConditionDropdown';
 import UnitDropdown from '../common/UnitDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
+import BulkUpload from './BulkUpload';
+import { bulkUploadInventory } from '../../services/bulkUploadService';
+import { CRUDToasts } from '../../services/toastService';
+import toast from 'react-hot-toast';
 
 const AddInventory: React.FC = () => {
   const { addInventoryItem, categories, inventoryItems } = useInventory();
@@ -21,6 +25,7 @@ const AddInventory: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFinancialYearPicker, setShowFinancialYearPicker] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Function to convert date to financial year format (e.g., 2025-26)
   const getFinancialYearFromDate = (date: Date): string => {
@@ -163,6 +168,35 @@ const AddInventory: React.FC = () => {
       }));
     }
   }, [formData.financialyear, formData.assetname, formData.locationofitem, inventoryItems]);
+
+  // Handle bulk upload
+  const handleBulkUpload = async (data: any[]) => {
+    try {
+      const loadingToast = CRUDToasts.bulkUploading(data.length);
+      const result = await bulkUploadInventory(data);
+      toast.dismiss(loadingToast);
+      
+      if (result.success) {
+        // Show success message
+        CRUDToasts.bulkUploaded(result.successCount);
+        
+        // Refresh the inventory items (assuming you have a refresh function in context)
+        // You might want to call a refresh function here to update the inventory list
+        
+        setShowBulkUpload(false);
+      } else {
+        // Show error message with details
+        let errorMessage = result.message;
+        if (result.errors.length > 0) {
+          errorMessage += '\n\nErrors:\n' + result.errors.map(err => `Row ${err.row}: ${err.error}`).join('\n');
+        }
+        CRUDToasts.bulkUploadError(errorMessage);
+      }
+    } catch (error) {
+      console.error('Bulk upload error:', error);
+      CRUDToasts.bulkUploadError('An unexpected error occurred during bulk upload. Please try again.');
+    }
+  };
 
   // Close financial year picker when clicking outside
   React.useEffect(() => {
@@ -351,8 +385,11 @@ const handleFile = (file?: File) => {
     attachments: uploadedFiles, // ✅ use uploaded URLs instead of raw files
   };
 
+  let loadingToast: string | undefined;
   try {
+    loadingToast = CRUDToasts.creating('inventory item');
     await addInventoryItem(payload);
+    toast.dismiss(loadingToast);
 
     // 3. Reset form
     setFormData({
@@ -391,10 +428,11 @@ const handleFile = (file?: File) => {
       attachments: [] as File[],
     });
 
-    alert('Inventory item added successfully!');
+    CRUDToasts.created('inventory item');
   } catch (error) {
     console.error(error);
-    alert('Error adding inventory item. Please try again.');
+    toast.dismiss(loadingToast);
+    CRUDToasts.createError('inventory item', 'Please try again');
   }
 
   setIsSubmitting(false);
@@ -417,6 +455,18 @@ const handleFile = (file?: File) => {
           <h1 className="text-3xl font-bold text-gray-900">Add Inventory Item</h1>
           <p className="mt-1 text-gray-600">Add new assets to your inventory system</p>
         </div>
+        
+        {/* Bulk Upload Button - only show for admins and stock managers */}
+        {(user?.role === 'admin' || user?.role === 'stock-manager') && (
+          <button
+            type="button"
+            onClick={() => setShowBulkUpload(true)}
+            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
+          >
+            <Upload size={16} />
+            <span>Bulk Upload</span>
+          </button>
+        )}
       </div>
 
       {/* Form */}
@@ -1132,6 +1182,14 @@ const handleFile = (file?: File) => {
           </div>
         </div>
       </form>
+
+      {/* Bulk Upload Modal */}
+      {showBulkUpload && (
+        <BulkUpload
+          onUpload={handleBulkUpload}
+          onClose={() => setShowBulkUpload(false)}
+        />
+      )}
     </div>
   );
 };

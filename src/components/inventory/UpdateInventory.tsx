@@ -105,15 +105,15 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
       const uploadedFiles: { name: string; url: string }[] = [];
       
       for (const file of newAttachments) {
-        const filePath = `attachments/${Date.now()}-${file.name}`;
+        const filePath = `${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage
-          .from('inventory-invoice-images')
+          .from('profile-pictures')
           .upload(filePath, file);
 
         if (error) throw error;
 
         const { data: urlData } = supabase.storage
-          .from('inventory-invoice-images')
+          .from('profile-pictures')
           .getPublicUrl(filePath);
 
         uploadedFiles.push({
@@ -186,8 +186,8 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
-      <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-2xl mx-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-2xl font-semibold text-gray-900">
             Edit Inventory Item
@@ -600,7 +600,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Date of Issue
               </label>
               <CustomDatePicker
-                selected={formData.dateofissue || undefined}
+                selected={formData.dateofissue}
                 onChange={(date) => handleDateChange('dateofissue', date)}
                 placeholderText="Select date"
               />
@@ -634,21 +634,25 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   {item.attachments.map((attachment, index) => (
                     <div key={index} className="relative group">
-                      <img
-                        src={attachment.url}
-                        alt={attachment.name}
-                        className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                      />
-                      {!removedAttachments.includes(attachment.url) && (
-                        <button
-                          type="button"
-                          onClick={() => removeExistingAttachment(attachment.url)}
-                          className="absolute top-1 right-1 p-1 text-white bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Remove attachment"
-                        >
-                          <X size={12} />
-                        </button>
+                      {attachment instanceof File ? (
+                        <img
+                          src={URL.createObjectURL(attachment)}
+                          alt={attachment.name}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-full h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                          <span className="text-sm text-gray-500">File</span>
+                        </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => removeExistingAttachment(attachment instanceof File ? attachment.name : String(attachment))}
+                        className="absolute top-1 right-1 p-1 text-white bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove attachment"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   ))}
                 </div>

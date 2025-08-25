@@ -348,10 +348,10 @@ const handleFile = (file?: File) => {
   const uploadedFiles: { name: string; url: string }[] = [];
 
   for (const file of formData.attachments || []) {
-    const filePath = `attachments/${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
-      .from('inventory-invoice-images')
-      .upload(filePath, file);
+          const filePath = `${Date.now()}-${file.name}`;
+            const { data, error } = await supabase.storage
+          .from('profile-pictures')
+          .upload(filePath, file);
 
     if (error) {
       console.error('File upload error:', error.message);
@@ -362,7 +362,7 @@ const handleFile = (file?: File) => {
 
     const { data: urlData } = supabase
       .storage
-      .from('inventory-invoice-images')
+      .from('profile-pictures')
       .getPublicUrl(filePath);
 
     if (urlData?.publicUrl) {

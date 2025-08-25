@@ -180,45 +180,6 @@ const DashboardHome: React.FC = () => {
         )}
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <RecentActivity />
-        
-        {/* Quick Actions */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <h3 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h3>
-          <div className="space-y-3">
-            {(isAdmin || isStockManager) && (
-              <>
-                <button
-                onClick={handleNavigateAddInventory}
-                 className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                  <span className="font-medium">Add New Inventory Item</span>
-                  <Package size={20} />
-                </button>
-                
-                <button className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700">
-                  <span className="font-medium">Review Pending Requests</span>
-                  <ClipboardList size={20} />
-                </button>
-              </>
-            )}
-            
-            {user?.role === 'employee' && (
-              <button className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
-                <span className="font-medium">Create New Request</span>
-                <ClipboardList size={20} />
-              </button>
-            )}
-            
-            <button className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700">
-              <span className="font-medium">Generate Report</span>
-              <TrendingUp size={20} />
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Inventory Trend Chart */}
@@ -275,16 +236,80 @@ const DashboardHome: React.FC = () => {
         </div>
 
         {/* Monthly Activity */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl lg:col-span-2 xl:col-span-1">
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Monthly Activity</h3>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500"></div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-400 to-red-500"></div>
           </div>
           <div className="h-64">
             <MonthlyActivityChart data={monthlyActivityData} />
           </div>
         </div>
       </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <RecentActivity />
+        
+        {/* Quick Actions */}
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+          <h3 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h3>
+          <div className="space-y-3">
+            {(isAdmin || isStockManager) && (
+              <>
+                <button
+                onClick={handleNavigateAddInventory}
+                 className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                  <span className="font-medium">Add New Inventory Item</span>
+                  <Package size={20} />
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    if (user?.role === 'admin') {
+                      navigate('/admin/requests');
+                    } else {
+                      navigate('/stock-manager/requests');
+                    }
+                  }}
+                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                >
+                  <span className="font-medium">Review Pending Requests</span>
+                  <ClipboardList size={20} />
+                </button>
+              </>
+            )}
+            
+            {user?.role === 'employee' && (
+              <button 
+                onClick={() => navigate('/employee/create-request')}
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+              >
+                <span className="font-medium">Create New Request</span>
+                <ClipboardList size={20} />
+              </button>
+            )}
+            
+            <button 
+              onClick={() => {
+                if (user?.role === 'admin') {
+                  navigate('/admin/reports');
+                } else if (user?.role === 'stock-manager') {
+                  navigate('/stock-manager/reports');
+                } else {
+                  navigate('/employee/reports');
+                }
+              }}
+              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+            >
+              <span className="font-medium">Generate Report</span>
+              <TrendingUp size={20} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+
     </div>
   );
 };

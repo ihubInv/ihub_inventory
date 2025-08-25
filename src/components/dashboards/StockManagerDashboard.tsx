@@ -8,6 +8,7 @@ import NotificationCenter from '../notifications/NotificationCenter';
 import Profile from '../profile/Profile';
 import CategoryManagement from '../categories/CategoryManagement';
 import DepreciationReport from '../reports/DepreciationReport';
+import RequestStatus from '../requests/RequestStatus';
 
 const StockManagerDashboard: React.FC = () => {
   return (
@@ -20,6 +21,8 @@ const StockManagerDashboard: React.FC = () => {
       <Route path="/notifications" element={<NotificationCenter />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/depreciation-report" element={<DepreciationReport />} />
+      <Route path="/requests" element={<RequestStatus />} />
+      <Route path="/reports" element={<DepreciationReport />} />
     </Routes>
   );
 };

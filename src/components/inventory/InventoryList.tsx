@@ -83,7 +83,18 @@ const InventoryList: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const categories = [...new Set(inventoryItems.map(item => item.assetcategory))];
+  // Create categories array for the dropdown
+  const categoryNames = [...new Set(inventoryItems.map(item => item.assetcategory))].filter(Boolean);
+  const categories = categoryNames.map(name => ({
+    id: name,
+    name: name,
+    type: 'tangible' as const,
+    description: `${name} category`,
+    isactive: true,
+    createdat: new Date(),
+    updatedat: new Date(),
+    createdby: 'system'
+  }));
   const statuses = ['available', 'issued', 'maintenance', 'retired'];
 
   const getStatusColor = (status: string) => {
@@ -378,8 +389,8 @@ const InventoryList: React.FC = () => {
   };
 
   const categoryChartData = {
-    categories: categories,
-    counts: categories.map(cat => filteredItems.filter(item => item.assetcategory === cat).length),
+    categories: categoryNames,
+    counts: categoryNames.map(cat => filteredItems.filter(item => item.assetcategory === cat).length),
   };
 
   return (
@@ -523,9 +534,9 @@ const InventoryList: React.FC = () => {
                   </div>
 
                   <CategoryDropdown
-                    value={filterCategory}
-                    onChange={setFilterCategory}
-                    categories={['All Categories', ...categories]}
+                    value={filterCategory === 'all' ? '' : filterCategory}
+                    onChange={(value) => setFilterCategory(value || 'all')}
+                    categories={categories}
                     placeholder="Filter by category"
                     size="sm"
                     searchable

@@ -38,10 +38,10 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
     if (item) {
       setFormData({
         ...item,
-        dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : null,
-        dateofentry: item.dateofentry ? new Date(item.dateofentry) : null,
-        dateofissue: item.dateofissue ? new Date(item.dateofissue) : null,
-        expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : null,
+        dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
+        dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
+        dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
+        expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
       });
       setNewAttachments([]);
       setRemovedAttachments([]);
@@ -66,7 +66,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
     }));
   };
 
-  const handleDateChange = (field: string, date: Date | null) => {
+  const handleDateChange = (field: string, date: Date | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: date
@@ -127,11 +127,8 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
         ...formData,
         lastmodifiedby: user.id,
         lastmodifieddate: new Date(),
-        // Keep existing attachments that weren't removed, add new ones
-        attachments: [
-          ...(item.attachments || []).filter(att => !removedAttachments.includes(att)),
-          ...uploadedFiles
-        ]
+        // For now, just use the new attachments as Files
+        attachments: newAttachments
       };
 
       // Update in database
@@ -395,6 +392,183 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Asset Category ID
+              </label>
+              <input
+                type="text"
+                name="assetcategoryid"
+                value={formData.assetcategoryid || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Specification
+              </label>
+              <input
+                type="text"
+                name="specification"
+                value={formData.specification || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Balance Quantity in Stock
+              </label>
+              <input
+                type="number"
+                name="balancequantityinstock"
+                value={formData.balancequantityinstock || 0}
+                onChange={handleNumberChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Minimum Stock Level
+              </label>
+              <input
+                type="number"
+                name="minimumstocklevel"
+                value={formData.minimumstocklevel || 0}
+                onChange={handleNumberChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Purchase Order Number
+              </label>
+              <input
+                type="text"
+                name="purchaseordernumber"
+                value={formData.purchaseordernumber || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Expected Lifespan
+              </label>
+              <input
+                type="text"
+                name="expectedlifespan"
+                value={formData.expectedlifespan || ''}
+                onChange={handleInputChange}
+                placeholder="e.g., 5 years"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Asset Tag
+              </label>
+              <input
+                type="text"
+                name="assettag"
+                value={formData.assettag || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Salvage Value
+              </label>
+              <input
+                type="number"
+                name="salvagevalue"
+                value={formData.salvagevalue || 0}
+                onChange={handleNumberChange}
+                step="0.01"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Depreciation Method
+              </label>
+              <DepreciationMethodDropdown
+                value={formData.depreciationmethod || 'straight-line'}
+                onChange={(value) => handleDropdownChange('depreciationmethod', value)}
+              />
+            </div>
+
+
+          </div>
+
+          {/* Additional Information */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Warranty Information
+              </label>
+              <textarea
+                name="warrantyinformation"
+                value={formData.warrantyinformation || ''}
+                onChange={handleInputChange}
+                rows={3}
+                placeholder="Enter warranty details..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Maintenance Schedule
+              </label>
+              <textarea
+                name="maintenanceschedule"
+                value={formData.maintenanceschedule || ''}
+                onChange={handleInputChange}
+                rows={3}
+                placeholder="Enter maintenance schedule..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Issuance Information */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Issued To
+              </label>
+              <input
+                type="text"
+                name="issuedto"
+                value={formData.issuedto || ''}
+                onChange={handleInputChange}
+                placeholder="Enter employee name or department"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Expected Return Date
+              </label>
+              <CustomDatePicker
+                selected={formData.expectedreturndate}
+                onChange={(date) => handleDateChange('expectedreturndate', date)}
+                placeholderText="Select expected return date"
+              />
+            </div>
           </div>
 
           {/* Dates */}
@@ -426,7 +600,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Date of Issue
               </label>
               <CustomDatePicker
-                selected={formData.dateofissue}
+                selected={formData.dateofissue || undefined}
                 onChange={(date) => handleDateChange('dateofissue', date)}
                 placeholderText="Select date"
               />

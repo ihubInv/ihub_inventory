@@ -145,6 +145,37 @@ const EmployeeDashboardHome: React.FC = () => {
           )}
         </div>
 
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Request Status Chart */}
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">My Request Status</h3>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
+              <span className="text-sm text-gray-600">All time</span>
+            </div>
+          </div>
+          <div className="h-80">
+            <RequestStatusChart data={requestStatusData} />
+          </div>
+        </div>
+
+        {/* Monthly Request Activity */}
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">Request Activity</h3>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500"></div>
+              <span className="text-sm text-gray-600">Last 6 months</span>
+            </div>
+          </div>
+          <div className="h-80">
+            <MonthlyActivityChart data={monthlyActivityData} />
+          </div>
+        </div>
+      </div>
+
         {/* Quick Actions */}
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <h3 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h3>
@@ -183,37 +214,6 @@ const EmployeeDashboardHome: React.FC = () => {
               <li>• Allow 2-3 business days for approval</li>
               <li>• Contact admin for urgent requests</li>
             </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Request Status Chart */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">My Request Status</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
-              <span className="text-sm text-gray-600">All time</span>
-            </div>
-          </div>
-          <div className="h-80">
-            <RequestStatusChart data={requestStatusData} />
-          </div>
-        </div>
-
-        {/* Monthly Request Activity */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Request Activity</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500"></div>
-              <span className="text-sm text-gray-600">Last 6 months</span>
-            </div>
-          </div>
-          <div className="h-80">
-            <MonthlyActivityChart data={monthlyActivityData} />
           </div>
         </div>
       </div>

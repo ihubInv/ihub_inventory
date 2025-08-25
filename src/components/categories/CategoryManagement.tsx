@@ -3,6 +3,8 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import DateRangePicker from '../common/DateRangePicker';
 import { CategoryDistributionChart } from '../charts/ChartComponents';
+import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
+import FilterDropdown, { categoryTypeFilters, statusFilters } from '../common/FilterDropdown';
 import { 
   FolderPlus, 
   Plus, 
@@ -253,25 +255,21 @@ console.log("viewingCategory",viewingCategory)
             />
           </div>
 
-          <select
+          <FilterDropdown
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">All Types</option>
-            <option value="tangible">Tangible</option>
-            <option value="intangible">Intangible</option>
-          </select>
+            onChange={setFilterType}
+            options={categoryTypeFilters}
+            placeholder="Filter by type"
+            size="sm"
+          />
 
-          <select
+          <FilterDropdown
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            onChange={setFilterStatus}
+            options={statusFilters}
+            placeholder="Filter by status"
+            size="sm"
+          />
 
 
           <div className="sm:col-span-2">
@@ -438,15 +436,14 @@ console.log("viewingCategory",viewingCategory)
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Category Type *</label>
-                <select
+                <CategoryTypeDropdown
+                  label="Category Type *"
                   value={newCategory.type}
-                  onChange={(e:any) => setNewCategory((prev:any) => ({ ...prev, type: e.target.value as 'tangible' | 'intangible' }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="tangible">Tangible (Physical Items)</option>
-                  <option value="intangible">Intangible (Digital/Virtual Items)</option>
-                </select>
+                  onChange={(value) => setNewCategory((prev:any) => ({ ...prev, type: value as 'tangible' | 'intangible' }))}
+                  placeholder="Select category type"
+                  required
+                  size="sm"
+                />
               </div>
 
               <div>

@@ -34,7 +34,7 @@ export interface InventoryItem {
   balancequantityinstock: number;
   description: string;
   unitofmeasurement: string;
-  depreciationmethod?: string;
+  depreciationmethod?: 'straight-line' | 'declining-balance' | 'sum-of-years';
   warrantyinformation?: string;
   maintenanceschedule?: string;
   conditionofasset: 'excellent' | 'good' | 'fair' | 'poor' | 'damaged';
@@ -43,6 +43,7 @@ export interface InventoryItem {
   purchaseordernumber?: string;
   expectedlifespan?: string;
   assettag?: string;
+  salvagevalue?: number;
   attachments: File[]; // ⬅️ Store raw File objects until submit
   lastmodifiedby: string;
   lastmodifieddate: Date;

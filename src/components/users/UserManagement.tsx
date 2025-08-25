@@ -1,12 +1,51 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, Eye, EyeOff } from 'lucide-react';
+import RoleDropdown from '../common/RoleDropdown';
+import DepartmentDropdown from '../common/DepartmentDropdown';
+import { supabase } from '../../lib/supabaseClient';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../utils/validation';
-import { supabase } from '../../lib/supabaseClient';
 
+// Function to create employee account in Supabase Auth
+const createEmployeeAccount = async (userData: FormData) => {
+  try {
+    // Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          name: userData.name,
+          role: userData.role,
+          department: userData.department
+        }
+      }
+    });
+
+    if (authError) {
+      throw new Error(authError.message);
+    }
+
+    if (!authData.user) {
+      throw new Error('Failed to create user account');
+    }
+
+    return {
+      success: true,
+      message: 'Employee account created successfully! Please check email for verification.',
+      user: authData.user
+    };
+  } catch (error: any) {
+    console.error('Error creating employee account:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to create employee account'
+    };
+  }
+};
 
 
 
@@ -147,20 +186,13 @@ const [formData, setFormData] = useState<FormData>({
     setIsLoading(true);
   
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: formData.role
-          }
-        }
-      });
-  
-      if (error) throw error;
-  
-      const userId = data.user?.id;
+      const result = await createEmployeeAccount(formData);
+      
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      const userId = result.user?.id;
       const { error: insertError } = await supabase.from('users').insert({
         id: userId,
         email: formData.email,
@@ -505,7 +537,7 @@ const handleUserUpdate = (user:any) => {
           <input
             type="text"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, assetname: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             placeholder="e.g., Rohit Kumar"
@@ -538,13 +570,25 @@ const handleUserUpdate = (user:any) => {
 
         {/* Row 2 - Column 2 */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Department</label>
-          <input
-            type="text"
+          <DepartmentDropdown
+            label="Department"
             value={formData.department}
-            onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="e.g.,IT Department"
+            onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+            placeholder="Select department"
+            size="sm"
+            searchable
+          />
+        </div>
+
+        {/* Row 3 - Role Dropdown */}
+        <div className="md:col-span-2">
+          <RoleDropdown
+            label="Role"
+            value={formData.role}
+            onChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+            placeholder="Select user role"
+            required
+            size="sm"
           />
         </div>
 
@@ -638,13 +682,13 @@ const handleUserUpdate = (user:any) => {
 
   {/* Row 2 - Column 2 */}
   <div>
-    <label className="block mb-1 text-sm font-medium text-gray-700">Department</label>
-    <input
-      type="text"
+    <DepartmentDropdown
+      label="Department"
       value={formData.department}
-      onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-      placeholder="e.g., IT Department"
+      onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+      placeholder="Select department"
+      size="sm"
+      searchable
     />
   </div>
 

@@ -7,6 +7,7 @@ import UserManagement from '../users/UserManagement';
 import NotificationCenter from '../notifications/NotificationCenter';
 import Profile from '../profile/Profile';
 import CategoryManagement from '../categories/CategoryManagement';
+import DepreciationReport from '../reports/DepreciationReport';
 
 const AdminDashboard: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const AdminDashboard: React.FC = () => {
       <Route path="/users" element={<UserManagement />} />
       <Route path="/notifications" element={<NotificationCenter />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/depreciation-report" element={<DepreciationReport />} />
     </Routes>
   );
 };

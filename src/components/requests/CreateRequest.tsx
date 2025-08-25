@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { sendNotificationEmail } from '../../services/emailService';
 import { Send, X, FileText, Package } from 'lucide-react';
+import RequestItemDropdown from '../common/RequestItemDropdown';
+import PurposeDropdown from '../common/PurposeDropdown';
 
 const CreateRequest: React.FC = () => {
   const { submitRequest } = useInventory();
@@ -150,21 +152,14 @@ const CreateRequest: React.FC = () => {
         <div className="p-6 space-y-6">
           {/* Item Type */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Item Type *
-            </label>
-            <select
-              name="itemtype"
+            <RequestItemDropdown
+              label="Item Type *"
               value={formData.itemtype}
-              onChange={handleInputChange}
+              onChange={(value) => setFormData(prev => ({ ...prev, itemtype: value }))}
+              placeholder="Select an item type"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select an item type</option>
-              {commonItems.map(item => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
+              searchable
+            />
             {formData.itemtype === 'Other' && (
               <input
                 type="text"
@@ -195,21 +190,14 @@ const CreateRequest: React.FC = () => {
 
           {/* Purpose */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Purpose *
-            </label>
-            <select
-              name="purpose"
+            <PurposeDropdown
+              label="Purpose *"
               value={formData.purpose}
-              onChange={handleInputChange}
+              onChange={(value) => setFormData(prev => ({ ...prev, purpose: value }))}
+              placeholder="Select purpose"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select purpose</option>
-              {commonPurposes.map(purpose => (
-                <option key={purpose} value={purpose}>{purpose}</option>
-              ))}
-            </select>
+              searchable
+            />
             {formData.purpose === 'Other' && (
               <input
                 type="text"

@@ -15,9 +15,9 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
 
   const demoAccounts = [
-    { email: 'rksaklani90@gmail.com', role: 'admin', password: 'rksaklani90@' },
-    { email: 'rksaklani9090@gmail.com', role: 'stock-manager', password: 'rksaklani9090@' },
-    { email: 'rohit@ihubiitmandi.in', role: 'employee', password: 'rohit@' },
+    { email: 'rohit@ihubiitmandi.in', role: 'admin', password: 'rohit@' },
+    { email: 'rksaklani90@gmail.com', role: 'stock-manager', password: 'rksaklani90@' },
+    { email: 'rksaklani9090@gmail.com', role: 'employee', password: 'rksaklani9090@' },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Facebook, ArrowRight, Check, X } from 'lucide-react';
+import RoleDropdown from '../common/RoleDropdown';
+import DepartmentDropdown from '../common/DepartmentDropdown';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
@@ -86,14 +88,14 @@ const RegisterPage: React.FC = () => {
     }
 
     // Check email domain
-    const allowedDomain = "@ihubiitmandi.in";
-    if (!formData.email.endsWith(allowedDomain)) {
-      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
-        position: 'top-right',
-        autoClose: 5000,
-      });
-      return;
-    }
+    // const allowedDomain = "@ihubiitmandi.in";
+    // if (!formData.email.endsWith(allowedDomain)) {
+    //   toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
+    //     position: 'top-right',
+    //     autoClose: 5000,
+    //   });
+    //   return;
+    // }
 
     setIsLoading(true);
 
@@ -344,66 +346,27 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 
             {/* department Field */}
             <div className="relative">
-              <label htmlFor="department" className="block mb-2 text-sm font-medium text-gray-700">
-              Department
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <User className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  required
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
-                    errors.department ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  placeholder="Your department"
-                  aria-describedby={errors.department ? 'name-error' : undefined}
-                />
-              </div>
-              {errors.department && (
-                <p id="name-error" className="mt-2 text-sm text-red-600" role="alert">
-                  {errors.department}
-                </p>
-              )}
+              <DepartmentDropdown
+                label="Department"
+                value={formData.department}
+                onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+                placeholder="Select your department"
+                error={errors.department}
+                required
+                searchable
+              />
             </div>
 
             <div className="relative">
-  <label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-700">
-    Role
-  </label>
-  <div className="relative">
-    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-      <User className="w-5 h-5 text-gray-400" />
-    </div>
-    <select
-      id="role"
-      name="role"
-      value={formData.role}
-      onChange={handleChange}
-      required
-      className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
-        errors.role ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
-      }`}
-      aria-describedby={errors.role ? 'role-error' : undefined}
-    >
-      {roleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-    </select>
-  </div>
-  {errors.role && (
-    <p id="role-error" className="mt-2 text-sm text-red-600" role="alert">
-      {errors.role}
-    </p>
-  )}
-</div>
+              <RoleDropdown
+                label="Role"
+                value={formData.role}
+                onChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+                placeholder="Select your role"
+                error={errors.role}
+                required
+              />
+            </div>
 
 
             {/* Register Button */}

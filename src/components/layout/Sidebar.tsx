@@ -13,7 +13,8 @@ import {
   ClipboardList,
   FolderPlus,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  TrendingDown
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -44,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
+          { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];
@@ -55,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
+          { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Clock, CheckCircle, XCircle, FileText, Search, Filter } from 'lucide-react';
+import FilterDropdown from '../common/FilterDropdown';
 
 const RequestStatus: React.FC = () => {
   debugger
@@ -153,16 +154,18 @@ const RequestStatus: React.FC = () => {
             />
           </div>
 
-          <select
+          <FilterDropdown
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
+            onChange={setFilterStatus}
+            options={[
+              { value: 'all', label: 'All Status', icon: <Filter className="w-4 h-4 text-gray-500" />, description: 'Show all requests' },
+              { value: 'pending', label: 'Pending', icon: <Clock className="w-4 h-4 text-yellow-500" />, description: 'Awaiting approval' },
+              { value: 'approved', label: 'Approved', icon: <CheckCircle className="w-4 h-4 text-green-500" />, description: 'Approved requests' },
+              { value: 'rejected', label: 'Rejected', icon: <XCircle className="w-4 h-4 text-red-500" />, description: 'Rejected requests' }
+            ]}
+            placeholder="Filter by status"
+            size="sm"
+          />
 
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-400" />

@@ -2,18 +2,40 @@ import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import CustomDatePicker from '../common/DatePicker';
-import { Save, X, Package, Calendar, DollarSign, MapPin, Image } from 'lucide-react';
+import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon } from 'lucide-react';
 import { InventoryItem } from '../../types';
 
 import UploadDropzone from '../common/UploadDropzone';
 import { supabase } from '../../lib/supabaseClient';
+import DepreciationCalculator from '../common/DepreciationCalculator';
+import CategoryDropdown from '../common/CategoryDropdown';
+import StatusDropdown from '../common/StatusDropdown';
+import ConditionDropdown from '../common/ConditionDropdown';
+import UnitDropdown from '../common/UnitDropdown';
+import DepartmentDropdown from '../common/DepartmentDropdown';
+import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
 
 const AddInventory: React.FC = () => {
-  const { addInventoryItem } = useInventory();
-  const { categories } = useInventory();
+  const { addInventoryItem, categories, inventoryItems } = useInventory();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [showFinancialYearPicker, setShowFinancialYearPicker] = useState(false);
+
+  // Function to convert date to financial year format (e.g., 2025-26)
+  const getFinancialYearFromDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-11
+    
+    // Financial year typically runs from April to March
+    // If month is April (3) or later, it's the start of financial year
+    // If month is before April (0-2), it's the end of previous financial year
+    if (month >= 3) { // April to December
+      return `${year}-${(year + 1).toString().slice(-2)}`;
+    } else { // January to March
+      return `${year - 1}-${year.toString().slice(-2)}`;
+    }
+  };
 
   const [formData, setFormData] = useState({
     uniqueid: '',
@@ -47,7 +69,115 @@ const [uploadSuccess, setUploadSuccess] = useState(false)
     purchaseordernumber: '',
     expectedlifespan: '',
     assettag: '',
+    salvagevalue: 0,
+    attachments: [] as File[],
   });
+
+  // Auto-generate unique ID functions
+  const generateAssetCode = (assetName: string): string => {
+    if (!assetName) return '';
+    // Take first 3 letters and convert to uppercase
+    return assetName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+  };
+
+  const getNextSerialNumber = (financialYear: string, assetCode: string, location: string): string => {
+    if (!financialYear || !assetCode || !location) return '001';
+    
+    // Create the prefix pattern to match existing IDs
+    const prefix = `ihub/${financialYear}/${assetCode}/${location}/`;
+    
+    // Find all items with the same prefix
+    const matchingItems = inventoryItems.filter(item => 
+      item.uniqueid && item.uniqueid.startsWith(prefix)
+    );
+    
+    if (matchingItems.length === 0) {
+      return '001';
+    }
+    
+    // Extract serial numbers and find the highest
+    const serialNumbers = matchingItems
+      .map(item => {
+        const parts = item.uniqueid.split('/');
+        const lastPart = parts[parts.length - 1];
+        return parseInt(lastPart) || 0;
+      })
+      .filter(num => !isNaN(num));
+    
+    const maxSerial = Math.max(...serialNumbers, 0);
+    const nextSerial = maxSerial + 1;
+    
+    // Pad to 3 digits
+    return nextSerial.toString().padStart(3, '0');
+  };
+
+  const generateUniqueId = (): string => {
+    const { financialyear, assetname, locationofitem } = formData;
+    
+    // Always start with ihub prefix
+    let uniqueId = 'ihub/';
+    
+    // Add financial year or placeholder
+    if (financialyear) {
+      uniqueId += financialyear;
+    } else {
+      uniqueId += '--';
+    }
+    uniqueId += '/';
+    
+    // Add asset code or placeholder
+    if (assetname) {
+      uniqueId += generateAssetCode(assetname);
+    } else {
+      uniqueId += '--';
+    }
+    uniqueId += '/';
+    
+    // Add location or placeholder
+    if (locationofitem) {
+      uniqueId += locationofitem;
+    } else {
+      uniqueId += '--';
+    }
+    uniqueId += '/';
+    
+    // Add serial number only if all required fields are present
+    if (financialyear && assetname && locationofitem) {
+      const assetCode = generateAssetCode(assetname);
+      const serialNumber = getNextSerialNumber(financialyear, assetCode, locationofitem);
+      uniqueId += serialNumber;
+    } else {
+      uniqueId += '--';
+    }
+    
+    return uniqueId;
+  };
+
+  // Update unique ID whenever relevant fields change
+  React.useEffect(() => {
+    const newUniqueId = generateUniqueId();
+    if (newUniqueId !== formData.uniqueid) {
+      setFormData(prev => ({
+        ...prev,
+        uniqueid: newUniqueId
+      }));
+    }
+  }, [formData.financialyear, formData.assetname, formData.locationofitem, inventoryItems]);
+
+  // Close financial year picker when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showFinancialYearPicker) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.financial-year-picker-container')) {
+          setShowFinancialYearPicker(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFinancialYearPicker]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -170,9 +300,15 @@ const handleFile = (file?: File) => {
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-    debugger
-  e.preventDefault();
-  setIsSubmitting(true);
+    e.preventDefault();
+    
+    // Validate that unique ID is complete (no placeholders)
+    if (formData.uniqueid.includes('--')) {
+      alert('Please fill in all required fields (Financial Year, Asset Name, and Location) to generate a complete unique ID.');
+      return;
+    }
+    
+    setIsSubmitting(true);
 
   // 1. Upload files to Supabase
   const uploadedFiles: { name: string; url: string }[] = [];
@@ -220,8 +356,39 @@ const handleFile = (file?: File) => {
 
     // 3. Reset form
     setFormData({
-      // reset all other fields...
-      attachments: [],
+      uniqueid: '',
+      financialyear: '2024-25',
+      dateofinvoice: null as Date | null,
+      dateofentry: new Date(),
+      invoicenumber: '',
+      assetcategory: '',
+      assetcategoryid: "",
+      assetname: '',
+      specification: '',
+      makemodel: '',
+      productserialnumber: '',
+      vendorname: '',
+      quantityperitem: 1,
+      rateinclusivetax: 0,
+      totalcost: 0,
+      locationofitem: '',
+      issuedto: '',
+      dateofissue: null as Date | null,
+      expectedreturndate: null as Date | null,
+      balancequantityinstock: 0,
+      description: '',
+      unitofmeasurement: 'Pieces',
+      depreciationmethod: '',
+      warrantyinformation: '',
+      maintenanceschedule: '',
+      conditionofasset: 'excellent' as const,
+      status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
+      minimumstocklevel: 5,
+      purchaseordernumber: '',
+      expectedlifespan: '',
+      assettag: '',
+      salvagevalue: 0,
+      attachments: [] as File[],
     });
 
     alert('Inventory item added successfully!');
@@ -254,63 +421,214 @@ const handleFile = (file?: File) => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white border border-gray-100 shadow-sm rounded-2xl">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Asset Information</h2>
-          </div>
-        </div>
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+                      <Package className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Asset Information</h2>
+                  </div>
+                </div>
 
-        <div className="p-6 space-y-8">
+                <div className="p-6 space-y-8">
           {/* Basic Information */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Unique ID *
+              <label className="flex items-center mb-2 text-sm font-medium text-gray-700">
+                <span>Unique ID *</span>
+                <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Auto-Generated</span>
               </label>
-              <input
-                type="text"
-                name="uniqueid"
-                value={formData.uniqueid}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., IT-LAP-001"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  name="uniqueid"
+                  value={formData.uniqueid}
+                  readOnly
+                  required
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-not-allowed"
+                  placeholder="Will be generated automatically..."
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <Package className="w-4 h-4 text-gray-400" />
+                </div>
+              </div>
+              {formData.uniqueid && (
+                <div className="mt-2 p-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-md border border-blue-200">
+                  <div className="text-xs text-blue-600 font-medium mb-2">🔄 Real-time ID Generation:</div>
+                  <div className="text-xs text-gray-700 mt-1 space-y-1">
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200 text-blue-600 font-semibold">ihub</span>
+                      <span className="text-gray-400">/</span>
+                      <span className={`font-mono px-2 py-1 rounded border ${
+                        formData.financialyear 
+                          ? 'bg-green-100 border-green-300 text-green-700' 
+                          : 'bg-red-100 border-red-300 text-red-500'
+                      }`}>
+                        {formData.financialyear || '--'}
+                      </span>
+                      <span className="text-gray-400">/</span>
+                      <span className={`font-mono px-2 py-1 rounded border ${
+                        formData.assetname 
+                          ? 'bg-green-100 border-green-300 text-green-700' 
+                          : 'bg-red-100 border-red-300 text-red-500'
+                      }`}>
+                        {generateAssetCode(formData.assetname) || '--'}
+                      </span>
+                      <span className="text-gray-400">/</span>
+                      <span className={`font-mono px-2 py-1 rounded border ${
+                        formData.locationofitem 
+                          ? 'bg-green-100 border-green-300 text-green-700' 
+                          : 'bg-red-100 border-red-300 text-red-500'
+                      }`}>
+                        {formData.locationofitem || '--'}
+                      </span>
+                      <span className="text-gray-400">/</span>
+                      <span className={`font-mono px-2 py-1 rounded border ${
+                        formData.financialyear && formData.assetname && formData.locationofitem
+                          ? 'bg-green-100 border-green-300 text-green-700' 
+                          : 'bg-red-100 border-red-300 text-red-500'
+                      }`}>
+                        {formData.uniqueid.split('/').pop()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Progress indicator */}
+                  <div className="mt-2 flex items-center space-x-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${[
+                            formData.financialyear,
+                            formData.assetname,
+                            formData.locationofitem
+                          ].filter(Boolean).length * 25 + 25}%` 
+                        }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {[formData.financialyear, formData.assetname, formData.locationofitem].filter(Boolean).length + 1}/4 Complete
+                    </span>
+                  </div>
+                  
+                  {/* Missing fields reminder */}
+                  {(!formData.financialyear || !formData.assetname || !formData.locationofitem) && (
+                    <div className="mt-2 text-xs text-amber-600">
+                      ⚠️ Missing: {[
+                        !formData.financialyear && 'Financial Year',
+                        !formData.assetname && 'Asset Name',
+                        !formData.locationofitem && 'Location'
+                      ].filter(Boolean).join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Financial Year
+                Financial Year *
               </label>
-              <input
-                type="text"
-                name="financialyear"
-                value={formData.financialyear}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <div className="relative financial-year-picker-container">
+                <input
+                  type="text"
+                  name="financialyear"
+                  value={formData.financialyear}
+                  onClick={() => setShowFinancialYearPicker(true)}
+                  readOnly
+                  required
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white"
+                  placeholder="Select Financial Year"
+                />
+                <div 
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                  onClick={() => setShowFinancialYearPicker(true)}
+                >
+                  <CalendarIcon className="w-4 h-4 text-gray-400" />
+                </div>
+                
+                {/* Financial Year Picker Dropdown */}
+                {showFinancialYearPicker && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <div className="p-4">
+                      <div className="text-sm font-medium text-gray-700 mb-3">Select a date to determine Financial Year</div>
+                      <div className="border border-gray-200 rounded-md p-2">
+                        <CustomDatePicker
+                          selected={new Date()}
+                          onChange={(date: Date | null) => {
+                            if (date) {
+                              const financialYear = getFinancialYearFromDate(date);
+                              setFormData(prev => ({
+                                ...prev,
+                                financialyear: financialYear
+                              }));
+                              setShowFinancialYearPicker(false);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="text-xs text-gray-600 mb-2">Or choose from recent years:</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            '2024-25',
+                            '2025-26',
+                            '2026-27',
+                            '2027-28'
+                          ].map(year => (
+                            <button
+                              key={year}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  financialyear: year
+                                }));
+                                setShowFinancialYearPicker(false);
+                              }}
+                              className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                            >
+                              {year}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setShowFinancialYearPicker(false)}
+                          className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                📅 Click to select date or choose from preset years • Currently: <span className="font-semibold text-blue-600">{formData.financialyear}</span>
+              </p>
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Asset Category *
-              </label>
-              <select
-                name="assetcategory"
+              <CategoryDropdown
+                label="Asset Category *"
+                categories={availableCategories}
                 value={formData.assetcategory}
-                onChange={handleCategoryChange}
+                onChange={(value) => {
+                  const category = availableCategories.find(cat => cat.name === value);
+                  setFormData(prev => ({
+                    ...prev,
+                    assetcategory: value,
+                    assetcategoryid: category?.id || ""
+                  }));
+                }}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select Category</option>
-
-                {availableCategories.map(category => (
-                  <option key={category.id} value={category.name}>{category.name}</option>
-                ))}
-              </select>
+                placeholder="Select Category"
+                searchable
+              />
             </div>
 
 
@@ -326,8 +644,11 @@ const handleFile = (file?: File) => {
                 onChange={handleInputChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Dell Laptop"
+                placeholder="e.g., Computer, Laptop, Printer"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                🔤 First 3 letters will be used as asset code: <span className="font-mono font-semibold text-blue-600">{generateAssetCode(formData.assetname) || 'XXX'}</span>
+              </p>
             </div>
 
             <div>
@@ -459,19 +780,16 @@ const handleFile = (file?: File) => {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Unit of Measurement
-                </label>
-                <select
-                  name="unitofmeasurement"
+                <UnitDropdown
+                  label="Unit of Measurement"
                   value={formData.unitofmeasurement}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {units.map(unit => (
-                    <option key={unit} value={unit}>{unit}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    unitofmeasurement: value
+                  }))}
+                  placeholder="Select unit"
+                  searchable
+                />
               </div>
 
               <div>
@@ -525,45 +843,37 @@ const handleFile = (file?: File) => {
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., IT Department"
+                  placeholder="e.g., Workstation-2, IT-Department"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  📍 Used as-is in unique ID
+                </p>
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Condition
-                </label>
-                <select
-                  name="conditionofasset"
+                <ConditionDropdown
+                  label="Condition"
                   value={formData.conditionofasset}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {conditions.map(condition => (
-                    <option key={condition} value={condition}>
-                      {condition.charAt(0).toUpperCase() + condition.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    conditionofasset: value as any
+                  }))}
+                  placeholder="Select condition"
+                />
               </div>
 
               {/* Status Dropdown */}
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <select
-                  name="status"
+                <StatusDropdown
+                  label="Status"
                   value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {statuses.map(status => (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    status: value as any
+                  }))}
+                  type="inventory"
+                  placeholder="Select status"
+                />
               </div>
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -702,9 +1012,79 @@ const handleFile = (file?: File) => {
               </div>
 
             </div>
+
+            {/* Depreciation Section */}
+            <div className="pt-6 border-t border-gray-200">
+              <div className="flex items-center mb-4 space-x-3">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600">
+                  <TrendingDown className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Depreciation Information</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+                <div>
+                  <DepreciationMethodDropdown
+                    label="Depreciation Method"
+                    value={formData.depreciationmethod}
+                    onChange={(value) => setFormData(prev => ({
+                      ...prev,
+                      depreciationmethod: value
+                    }))}
+                    placeholder="Select depreciation method"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Useful Life (Years)
+                  </label>
+                  <input
+                    type="number"
+                    name="expectedlifespan"
+                    value={formData.expectedlifespan}
+                    onChange={handleInputChange}
+                    min="1"
+                    max="50"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., 5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Salvage Value (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="salvagevalue"
+                    value={formData.salvagevalue || ''}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., 1000"
+                  />
+                </div>
+              </div>
+
+              {/* Depreciation Calculator */}
+              {formData.depreciationmethod && formData.expectedlifespan && formData.rateinclusivetax > 0 && (
+                <div className="mt-6">
+                  <DepreciationCalculator
+                    assetValue={formData.rateinclusivetax}
+                    salvageValue={formData.salvagevalue || 0}
+                    usefulLife={Number(formData.expectedlifespan)}
+                    purchaseDate={formData.dateofinvoice || new Date()}
+                    method={formData.depreciationmethod as 'straight-line' | 'declining-balance' | 'sum-of-years'}
+                    onCalculate={(depreciation) => {
+                      console.log('Depreciation calculated:', depreciation);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-
-
 
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">

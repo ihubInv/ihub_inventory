@@ -36,64 +36,17 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
   useEffect(() => {
     if (item) {
-      // Try to load saved form data first
-      const savedData = localStorage.getItem(`updateInventoryFormData_${item.id}`);
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          setFormData({
-            ...parsed,
-            dateofinvoice: parsed.dateofinvoice ? new Date(parsed.dateofinvoice) : undefined,
-            dateofentry: parsed.dateofentry ? new Date(parsed.dateofentry) : undefined,
-            dateofissue: parsed.dateofissue ? new Date(parsed.dateofissue) : undefined,
-            expectedreturndate: parsed.expectedreturndate ? new Date(parsed.expectedreturndate) : undefined,
-          });
-        } catch (error) {
-          console.error('Error parsing saved update form data:', error);
-          // Fall back to item data
-          setFormData({
-            ...item,
-            dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
-            dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
-            dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
-            expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
-          });
-        }
-      } else {
-        setFormData({
-          ...item,
-          dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
-          dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
-          dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
-          expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
-        });
-      }
+      setFormData({
+        ...item,
+        dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
+        dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
+        dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
+        expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
+      });
       setNewAttachments([]);
       setRemovedAttachments([]);
     }
   }, [item]);
-
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    if (item && formData) {
-      const dataToSave = {
-        ...formData,
-        // Convert Date objects to strings for JSON serialization
-        dateofinvoice: formData.dateofinvoice?.toISOString() || null,
-        dateofentry: formData.dateofentry?.toISOString() || null,
-        dateofissue: formData.dateofissue?.toISOString() || null,
-        expectedreturndate: formData.expectedreturndate?.toISOString() || null,
-      };
-      localStorage.setItem(`updateInventoryFormData_${item.id}`, JSON.stringify(dataToSave));
-    }
-  }, [formData, item]);
-
-  // Function to clear saved form data
-  const clearSavedFormData = () => {
-    if (item) {
-      localStorage.removeItem(`updateInventoryFormData_${item.id}`);
-    }
-  };
 
   if (!isOpen || !item) return null;
 
@@ -152,15 +105,15 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
       const uploadedFiles: { name: string; url: string }[] = [];
       
       for (const file of newAttachments) {
-        const filePath = `attachments/${Date.now()}-${file.name}`;
+        const filePath = `${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage
-          .from('inventory-invoice-images')
+          .from('profile-pictures')
           .upload(filePath, file);
 
         if (error) throw error;
 
         const { data: urlData } = supabase.storage
-          .from('inventory-invoice-images')
+          .from('profile-pictures')
           .getPublicUrl(filePath);
 
         uploadedFiles.push({
@@ -194,9 +147,6 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
       toast.dismiss(loadingToast);
       CRUDToasts.updated('inventory item');
-      
-      // Clear saved form data after successful update
-      clearSavedFormData();
       onClose();
     } catch (error: any) {
       console.error('Update error:', error);

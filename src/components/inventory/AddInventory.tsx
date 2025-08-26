@@ -388,14 +388,53 @@ const handleFile = (file?: File) => {
     
     setIsSubmitting(true);
 
+  // Function to sanitize file names for Supabase storage
+  const sanitizeFileName = (fileName: string): string => {
+    // Remove or replace invalid characters for Supabase storage keys
+    return fileName
+      .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscores
+      .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+      .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+      .toLowerCase(); // Convert to lowercase for consistency
+  };
+
+  // Function to validate file types
+  const validateFileType = (file: File): boolean => {
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
+      'application/pdf',
+      'text/plain', 'text/csv',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-powerpoint',
+      'application/zip',
+      'application/x-rar-compressed'
+    ];
+    return allowedTypes.includes(file.type);
+  };
+
   // 1. Upload files to Supabase
   const uploadedFiles: { name: string; url: string }[] = [];
 
   for (const file of formData.attachments || []) {
-          const filePath = `attachments/${Date.now()}-${file.name}`;
-            const { data, error } = await supabase.storage
-          .from('inventory-invoice-images')
-          .upload(filePath, file);
+    // Validate file type
+    if (!validateFileType(file)) {
+      alert(`File type not supported: ${file.name}. Please upload images, PDFs, or documents.`);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const sanitizedFileName = sanitizeFileName(file.name);
+    const filePath = `attachments/${Date.now()}-${sanitizedFileName}`;
+    
+    console.log(`Uploading file: ${file.name} -> ${filePath}`);
+    
+    const { data, error } = await supabase.storage
+      .from('inventory-invoice-images')
+      .upload(filePath, file);
 
     if (error) {
       console.error('File upload error:', error.message);
@@ -404,17 +443,32 @@ const handleFile = (file?: File) => {
       return;
     }
 
-    const { data: urlData } = supabase
-      .storage
-      .from('inventory-invoice-images')
-      .getPublicUrl(filePath);
+    // const { data: urlData } = supabase
+    //   .storage
+    //   .from('inventory-invoice-images')
+    //   .getPublicUrl(filePath);
 
-    if (urlData?.publicUrl) {
-      uploadedFiles.push({
-        name: file.name,
-        url: urlData.publicUrl,
-      });
-    }
+    // if (urlData?.publicUrl) {
+    //   uploadedFiles.push({
+    //     name: file.name,
+    //     url: urlData.publicUrl,
+    //   });
+    // }
+    const { data: signedUrlData, error: signedUrlError } = await supabase
+    .storage
+    .from('inventory-invoice-images')
+    .createSignedUrl(filePath, 60 * 60); // valid for 1 hour
+  
+  if (signedUrlData?.signedUrl) {
+    uploadedFiles.push({
+      name: file.name,
+      url: signedUrlData.signedUrl,
+    });
+  }
+
+
+
+    
   }
 
   // 2. Build the payload
@@ -505,9 +559,9 @@ const handleFile = (file?: File) => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex px-6 space-x-8" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('single')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -560,7 +614,7 @@ const handleFile = (file?: File) => {
             <div>
               <label className="flex items-center mb-2 text-sm font-medium text-gray-700">
                 <span>Unique ID *</span>
-                <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Auto-Generated</span>
+                <span className="px-2 py-1 ml-2 text-xs text-blue-800 bg-blue-100 rounded-full">Auto-Generated</span>
               </label>
               <div className="relative">
                 <input
@@ -569,7 +623,7 @@ const handleFile = (file?: File) => {
                   value={formData.uniqueid}
                   readOnly
                   required
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-not-allowed"
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg cursor-not-allowed bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Will be generated automatically..."
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -577,11 +631,11 @@ const handleFile = (file?: File) => {
                 </div>
               </div>
               {formData.uniqueid && (
-                <div className="mt-2 p-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-md border border-blue-200">
-                  <div className="text-xs text-blue-600 font-medium mb-2">🔄 Real-time ID Generation:</div>
-                  <div className="text-xs text-gray-700 mt-1 space-y-1">
-                    <div className="flex items-center flex-wrap gap-1">
-                      <span className="font-mono bg-white px-2 py-1 rounded border border-gray-200 text-blue-600 font-semibold">ihub</span>
+                <div className="p-2 mt-2 border border-blue-200 rounded-md bg-gradient-to-r from-blue-50 to-green-50">
+                  <div className="mb-2 text-xs font-medium text-blue-600">🔄 Real-time ID Generation:</div>
+                  <div className="mt-1 space-y-1 text-xs text-gray-700">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="px-2 py-1 font-mono font-semibold text-blue-600 bg-white border border-gray-200 rounded">ihub</span>
                       <span className="text-gray-400">/</span>
                       <span className={`font-mono px-2 py-1 rounded border ${
                         formData.financialyear 
@@ -618,10 +672,10 @@ const handleFile = (file?: File) => {
                   </div>
                   
                   {/* Progress indicator */}
-                  <div className="mt-2 flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div className="flex items-center mt-2 space-x-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                        className="h-2 transition-all duration-300 rounded-full bg-gradient-to-r from-blue-500 to-green-500"
                         style={{ 
                           width: `${[
                             formData.financialyear,
@@ -631,7 +685,7 @@ const handleFile = (file?: File) => {
                         }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-xs font-medium text-gray-500">
                       {[formData.financialyear, formData.assetname, formData.locationofitem].filter(Boolean).length + 1}/4 Complete
                     </span>
                   </div>
@@ -662,7 +716,7 @@ const handleFile = (file?: File) => {
                   onClick={() => setShowFinancialYearPicker(true)}
                   readOnly
                   required
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white"
+                  className="w-full px-4 py-2 pr-10 bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Select Financial Year"
                 />
                 <div 
@@ -674,10 +728,10 @@ const handleFile = (file?: File) => {
                 
                 {/* Financial Year Picker Dropdown */}
                 {showFinancialYearPicker && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
                     <div className="p-4">
-                      <div className="text-sm font-medium text-gray-700 mb-3">Select a date to determine Financial Year</div>
-                      <div className="border border-gray-200 rounded-md p-2">
+                      <div className="mb-3 text-sm font-medium text-gray-700">Select a date to determine Financial Year</div>
+                      <div className="p-2 border border-gray-200 rounded-md">
                         <CustomDatePicker
                           selected={new Date()}
                           onChange={(date: Date | null) => {
@@ -692,8 +746,8 @@ const handleFile = (file?: File) => {
                           }}
                         />
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="text-xs text-gray-600 mb-2">Or choose from recent years:</div>
+                      <div className="pt-3 mt-3 border-t border-gray-200">
+                        <div className="mb-2 text-xs text-gray-600">Or choose from recent years:</div>
                         <div className="grid grid-cols-2 gap-2">
                           {[
                             '2024-25',
@@ -711,14 +765,14 @@ const handleFile = (file?: File) => {
                                 }));
                                 setShowFinancialYearPicker(false);
                               }}
-                              className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                              className="px-3 py-2 text-sm transition-colors border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300"
                             >
                               {year}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end">
+                      <div className="flex justify-end pt-3 mt-3 border-t border-gray-200">
                         <button
                           type="button"
                           onClick={() => setShowFinancialYearPicker(false)}
@@ -1224,12 +1278,11 @@ const handleFile = (file?: File) => {
               </label>
 
               <UploadDropzone
-                label="Upload File"
-                subtext="Accepted: PNG, JPG, PDF"
+                label="Upload Files"
+                subtext="Accepted: Images, PDFs, Documents, Archives"
+                acceptedTypes="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.ppt,.pptx,.zip,.rar"
                 height="h-20"
-                acceptedTypes="image/png, image/jpeg, application/pdf"
                 onFileChange={handleFile}
-                
               />
             </div>
           </div>
@@ -1237,7 +1290,7 @@ const handleFile = (file?: File) => {
       </div>
 
               {/* Form Actions */}
-              <div className="flex items-center justify-end space-x-4 pt-6">
+              <div className="flex items-center justify-end pt-6 space-x-4">
                 <button
                   type="button"
                   onClick={() => {

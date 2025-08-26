@@ -668,3 +668,144 @@ export const PivotLineChart: React.FC<{ pivotData: any; config: any }> = ({ pivo
 
   return <Line options={options} data={chartData} />;
 };
+
+// Pivot Data Heatmap
+export const PivotHeatmap: React.FC<{ pivotData: any; config: any }> = ({ pivotData, config }) => {
+  // Calculate min and max values for color scaling
+  const allValues = pivotData.rows.flatMap((row: string) =>
+    pivotData.columns.map((col: string) => pivotData.data[row][col] || 0)
+  );
+  const minValue = Math.min(...allValues);
+  const maxValue = Math.max(...allValues);
+  const valueRange = maxValue - minValue;
+
+  // Color scale function
+  const getColorIntensity = (value: number) => {
+    if (valueRange === 0) return 0.1;
+    return Math.max(0.1, (value - minValue) / valueRange);
+  };
+
+  const getColor = (value: number) => {
+    const intensity = getColorIntensity(value);
+    const red = Math.floor(255 * (1 - intensity));
+    const green = Math.floor(255 * intensity);
+    const blue = 100;
+    return `rgb(${red}, ${green}, ${blue})`;
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-gray-50 to-white rounded-xl p-4">
+      {/* Enhanced Legend */}
+      <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+            <span className="font-medium text-gray-700">Low</span>
+          </div>
+          <div className="flex-1 mx-6">
+            <div className="h-6 bg-gradient-to-r from-red-300 via-yellow-300 to-green-300 rounded-full shadow-inner relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-200 via-yellow-200 to-green-200 rounded-full opacity-50"></div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-gray-700">High</span>
+            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+          </div>
+        </div>
+        <div className="mt-2 text-center">
+          <span className="text-xs text-gray-500">Color intensity represents value magnitude</span>
+        </div>
+      </div>
+
+      {/* Enhanced Heatmap Grid */}
+      <div className="flex-1 overflow-auto bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="min-w-full">
+          {/* Enhanced Header Row */}
+          <div className="flex border-b-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="w-40 p-4 text-sm font-bold text-gray-700 bg-gradient-to-r from-blue-100 to-indigo-100 border-r border-gray-300 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              Category
+            </div>
+            {pivotData.columns.map((col: string) => (
+              <div key={col} className="flex-1 p-4 text-sm font-bold text-gray-700 text-center border-r border-gray-300 flex items-center justify-center">
+                <span className="truncate">{col}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Enhanced Data Rows */}
+          {pivotData.rows.map((row: string, rowIndex: number) => (
+            <div key={row} className={`flex border-b border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+              <div className="w-40 p-4 text-sm font-semibold text-gray-900 border-r border-gray-300 flex items-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-200">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                <span className="truncate">{row}</span>
+              </div>
+              {pivotData.columns.map((col: string, colIndex: number) => {
+                const value = pivotData.data[row][col] || 0;
+                const color = getColor(value);
+                const intensity = getColorIntensity(value);
+                return (
+                  <div
+                    key={col}
+                    className="flex-1 p-4 text-sm text-center border-r border-gray-200 relative group cursor-pointer transition-all duration-200 hover:shadow-lg hover:z-10"
+                    style={{ 
+                      backgroundColor: color,
+                      boxShadow: intensity > 0.7 ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                  >
+                    <span className={`font-bold text-sm ${
+                      intensity > 0.5 ? 'text-white drop-shadow-sm' : 'text-gray-900'
+                    }`}>
+                      {config.aggregation === 'avg' ? value.toFixed(1) : value.toLocaleString()}
+                    </span>
+                    
+                    {/* Enhanced Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 shadow-xl">
+                      <div className="font-semibold">{row} × {col}</div>
+                      <div className="text-xs text-gray-300 mt-1">
+                        Value: {config.aggregation === 'avg' ? value.toFixed(2) : value.toLocaleString()}
+                      </div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Enhanced Summary Stats */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+        <div className="flex items-center space-x-2 mb-3">
+          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <h4 className="text-sm font-bold text-blue-900">Data Statistics</h4>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-white rounded-lg border border-blue-200">
+            <div className="text-xs font-semibold text-blue-700 mb-1">Minimum</div>
+            <div className="text-lg font-bold text-blue-900">
+              {config.aggregation === 'avg' ? minValue.toFixed(2) : minValue.toLocaleString()}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-white rounded-lg border border-blue-200">
+            <div className="text-xs font-semibold text-blue-700 mb-1">Maximum</div>
+            <div className="text-lg font-bold text-blue-900">
+              {config.aggregation === 'avg' ? maxValue.toFixed(2) : maxValue.toLocaleString()}
+            </div>
+          </div>
+          <div className="text-center p-3 bg-white rounded-lg border border-blue-200">
+            <div className="text-xs font-semibold text-blue-700 mb-1">Range</div>
+            <div className="text-lg font-bold text-blue-900">
+              {config.aggregation === 'avg' ? valueRange.toFixed(2) : valueRange.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

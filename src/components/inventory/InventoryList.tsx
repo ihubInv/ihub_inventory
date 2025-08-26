@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
-import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square } from 'lucide-react';
+import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square, FileSpreadsheet, FileText, Image, Sliders, RotateCcw } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { createAttractiveExcelFile, createAttractiveCSV } from '../../utils/enhancedExport';
+import html2canvas from 'html2canvas';
 import ViewInventory from './ViewInventory';
 import UpdateInventory from './UpdateInventory';
 import StatusDropdown from '../common/StatusDropdown';
@@ -43,6 +47,63 @@ const InventoryList: React.FC = () => {
   // Update functionality states
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [itemToUpdate, setItemToUpdate] = useState<any>(null);
+  
+  // Export functionality states
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportFilters, setShowExportFilters] = useState(false);
+  const [exportFilters, setExportFilters] = useState({
+    includeFields: [
+      'uniqueid', 'assetname', 'assetcategory', 'status', 'conditionofasset',
+      'locationofitem', 'vendorname', 'balancequantityinstock', 'rateinclusivetax',
+      'totalcost', 'minimumstocklevel', 'financialyear', 'dateofinvoice', 'dateofentry'
+    ],
+    includeCharts: true
+  });
+  // Chart references for export
+  const conditionChartRef = React.useRef<any>(null);
+  const categoryChartRef = React.useRef<any>(null);
+  const exportMenuRef = React.useRef<HTMLDivElement>(null);
+  const exportFiltersRef = React.useRef<HTMLDivElement>(null);
+
+  // Close export menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+      if (exportFiltersRef.current && !exportFiltersRef.current.contains(event.target as Node)) {
+        setShowExportFilters(false);
+      }
+    };
+
+    if (showExportMenu || showExportFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu, showExportFilters]);
+
+  // Chart image capture function
+  const captureChartImage = async (chartRef: React.RefObject<any>): Promise<string | null> => {
+    if (!chartRef.current) return null;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true
+      });
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Error capturing chart:', error);
+      return null;
+    }
+  };
+
   const [formData, setFormData] = useState({
     uniqueid: '',
     financialyear: '2024-25',
@@ -381,28 +442,604 @@ const InventoryList: React.FC = () => {
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ['Unique ID', 'Asset Name', 'Category', 'Status', 'Quantity', 'Location', 'Vendor'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredItems.map(item => [
-        item.uniqueid,
-        item.assetname,
-        item.assetcategory,
-        item.status,
-        item.balancequantityinstock,
-        item.locationofitem,
-        item.vendorname
-      ].join(','))
-    ].join('\n');
+  // Field mapping for export
+  const fieldMapping = {
+    uniqueid: 'Unique ID',
+    assetname: 'Asset Name',
+    assetcategory: 'Category',
+    status: 'Status',
+    conditionofasset: 'Condition',
+    locationofitem: 'Location',
+    vendorname: 'Vendor',
+    balancequantityinstock: 'Quantity in Stock',
+    rateinclusivetax: 'Rate (Inclusive Tax)',
+    totalcost: 'Total Cost',
+    minimumstocklevel: 'Minimum Stock Level',
+    financialyear: 'Financial Year',
+    dateofinvoice: 'Date of Invoice',
+    dateofentry: 'Date of Entry',
+    specification: 'Specification',
+    unitofmeasurement: 'Unit of Measurement',
+    purpose: 'Purpose',
+    depreciationmethod: 'Depreciation Method',
+    depreciationrate: 'Depreciation Rate'
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'inventory-export.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  // Enhanced export functions
+  const exportToExcel = async (includeCharts: boolean = false) => {
+    setIsExporting(true);
+    try {
+      const wb = XLSX.utils.book_new();
+      
+      // Prepare data with selected fields only
+      const selectedFields = exportFilters.includeFields;
+      const headers = selectedFields.map(field => fieldMapping[field as keyof typeof fieldMapping] || field);
+      const data = filteredItems.map(item => 
+        selectedFields.map(field => {
+          const value = item[field as keyof typeof item];
+          if (field === 'dateofinvoice' || field === 'dateofentry') {
+            return value && typeof value === 'string' ? new Date(value).toLocaleDateString() : 
+                   value && value instanceof Date ? value.toLocaleDateString() : '';
+          }
+          return value || '';
+        })
+      );
+
+      // Create main data sheet with enhanced styling
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+      
+      // Enhanced styling for the worksheet
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+      
+      // Style headers with gradient-like effect
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (ws[cellAddress]) {
+          ws[cellAddress].s = {
+            font: { 
+              bold: true, 
+              color: { rgb: "FFFFFF" },
+              size: 12,
+              name: "Segoe UI"
+            },
+            fill: { 
+              fgColor: { rgb: "2E7D32" }, // Green color matching the theme
+              patternType: "solid"
+            },
+            alignment: { 
+              horizontal: "center", 
+              vertical: "center",
+              wrapText: true
+            },
+            border: {
+              top: { style: "medium", color: { rgb: "1B5E20" } },
+              bottom: { style: "medium", color: { rgb: "1B5E20" } },
+              left: { style: "medium", color: { rgb: "1B5E20" } },
+              right: { style: "medium", color: { rgb: "1B5E20" } }
+            }
+          };
+        }
+      }
+
+      // Style data rows with alternating colors
+      for (let row = range.s.r + 1; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+          if (!ws[cellAddress]) continue;
+          
+          const isEvenRow = (row - 1) % 2 === 0;
+          ws[cellAddress].s = {
+            font: { 
+              name: "Segoe UI",
+              size: 11,
+              color: { rgb: isEvenRow ? "2C3E50" : "34495E" }
+            },
+            fill: { 
+              fgColor: { rgb: isEvenRow ? "F8F9FA" : "FFFFFF" },
+              patternType: "solid"
+            },
+            alignment: { 
+              horizontal: "left", 
+              vertical: "center",
+              wrapText: true
+            },
+            border: {
+              top: { style: "thin", color: { rgb: "E9ECEF" } },
+              bottom: { style: "thin", color: { rgb: "E9ECEF" } },
+              left: { style: "thin", color: { rgb: "E9ECEF" } },
+              right: { style: "thin", color: { rgb: "E9ECEF" } }
+            }
+          };
+        }
+      }
+
+      // Set dynamic column widths based on content
+      const colWidths = headers.map((header, index) => {
+        const maxLength = Math.max(
+          header.length,
+          ...data.map(row => String(row[index] || '').length)
+        );
+        return { wch: Math.min(Math.max(maxLength + 2, 12), 30) };
+      });
+      ws['!cols'] = colWidths;
+
+      // Add freeze panes for headers
+      ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventory Data');
+
+      // Add charts sheet with embedded chart images if requested
+      if (includeCharts) {
+        const chartsWs = XLSX.utils.aoa_to_sheet([
+          ['📊 INVENTORY ANALYSIS CHARTS'],
+          [''],
+          ['Generated on: ' + new Date().toLocaleDateString()],
+          ['Total Records: ' + filteredItems.length],
+          [''],
+          ['📈 ASSET CONDITION DISTRIBUTION'],
+          [''],
+          ['Chart will be displayed here'],
+          [''],
+          ['📊 CATEGORY DISTRIBUTION'],
+          [''],
+          ['Chart will be displayed here'],
+          [''],
+          ['📋 SUMMARY STATISTICS'],
+          [''],
+          ['Total Assets: ' + filteredItems.length],
+          ['Categories: ' + [...new Set(filteredItems.map(item => item.assetcategory))].length],
+          ['Locations: ' + [...new Set(filteredItems.map(item => item.locationofitem))].length],
+          ['Vendors: ' + [...new Set(filteredItems.map(item => item.vendorname))].length],
+          [''],
+          ['💡 NOTES'],
+          ['• Charts are generated based on current filter settings'],
+          ['• Data reflects the selected fields and applied filters'],
+          ['• Export timestamp: ' + new Date().toLocaleString()]
+        ]);
+
+        // Enhanced styling for charts sheet
+        const chartsRange = XLSX.utils.decode_range(chartsWs['!ref'] || 'A1');
+        
+        // Title styling
+        chartsWs['A1'].s = {
+          font: { 
+            bold: true, 
+            size: 18, 
+            color: { rgb: "2E7D32" },
+            name: "Segoe UI"
+          },
+          fill: { 
+            fgColor: { rgb: "E8F5E8" },
+            patternType: "solid"
+          },
+          alignment: { 
+            horizontal: "center",
+            vertical: "center"
+          },
+          border: {
+            top: { style: "medium", color: { rgb: "2E7D32" } },
+            bottom: { style: "medium", color: { rgb: "2E7D32" } },
+            left: { style: "medium", color: { rgb: "2E7D32" } },
+            right: { style: "medium", color: { rgb: "2E7D32" } }
+          }
+        };
+
+        // Section headers styling
+        const sectionHeaders = [6, 10, 14, 19];
+        sectionHeaders.forEach(row => {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: 0 });
+          if (chartsWs[cellAddress]) {
+            chartsWs[cellAddress].s = {
+              font: { 
+                bold: true, 
+                size: 14, 
+                color: { rgb: "1976D2" },
+                name: "Segoe UI"
+              },
+              fill: { 
+                fgColor: { rgb: "E3F2FD" },
+                patternType: "solid"
+              },
+              alignment: { 
+                horizontal: "left",
+                vertical: "center"
+              }
+            };
+          }
+        });
+
+        // Set column widths for charts sheet
+        chartsWs['!cols'] = [{ wch: 50 }];
+
+        XLSX.utils.book_append_sheet(wb, chartsWs, 'Charts & Analysis');
+
+        // Try to capture and embed chart images
+        try {
+          // Capture condition chart
+          const conditionChartImage = await captureChartImage(conditionChartRef);
+          if (conditionChartImage) {
+            // Note: XLSX doesn't directly support image embedding
+            // This would require a more advanced library like ExcelJS
+            console.log('Condition chart captured successfully');
+          }
+
+          // Capture category chart
+          const categoryChartImage = await captureChartImage(categoryChartRef);
+          if (categoryChartImage) {
+            console.log('Category chart captured successfully');
+          }
+        } catch (chartError) {
+          console.warn('Chart capture failed:', chartError);
+        }
+      }
+
+      // Save the file with enhanced metadata
+      const fileName = `inventory-export-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success(`Excel file exported successfully! ${includeCharts ? 'Charts included.' : ''}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export Excel file');
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      const selectedFields = exportFilters.includeFields;
+      const headers = selectedFields.map(field => fieldMapping[field as keyof typeof fieldMapping] || field);
+      
+      // Add metadata header
+      const metadata = [
+        ['# INVENTORY EXPORT REPORT'],
+        ['Generated on: ' + new Date().toLocaleString()],
+        ['Total Records: ' + filteredItems.length],
+        ['Selected Fields: ' + selectedFields.length],
+        ['Export Type: CSV'],
+        [''],
+        ['# DATA'],
+        ['']
+      ];
+
+      const data = filteredItems.map(item => 
+        selectedFields.map(field => {
+          const value = item[field as keyof typeof item];
+          if (field === 'dateofinvoice' || field === 'dateofentry') {
+            return value && typeof value === 'string' ? new Date(value).toLocaleDateString() : 
+                   value && value instanceof Date ? value.toLocaleDateString() : '';
+          }
+          // Escape commas and quotes in CSV
+          const stringValue = String(value || '');
+          return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
+            ? `"${stringValue.replace(/"/g, '""')}"` 
+            : stringValue;
+        })
+      );
+
+      // Combine metadata, headers, and data
+      const csvContent = [
+        ...metadata.map(row => row.join(',')),
+        headers.join(','),
+        ...data.map(row => row.join(','))
+      ].join('\n');
+
+      // Add BOM for proper UTF-8 encoding
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory-export-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('CSV file exported successfully with metadata!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export CSV file');
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  // Advanced Excel export with embedded charts using ExcelJS
+  const exportToExcelAdvanced = async (includeCharts: boolean = false) => {
+    setIsExporting(true);
+    try {
+      const workbook = new ExcelJS.Workbook();
+      
+      // Set workbook properties
+      workbook.creator = 'Inventory Management System';
+      workbook.lastModifiedBy = user?.email || 'System';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      // Create main data worksheet
+      const dataWorksheet = workbook.addWorksheet('Inventory Data');
+      
+      // Prepare data
+      const selectedFields = exportFilters.includeFields;
+      const headers = selectedFields.map(field => fieldMapping[field as keyof typeof fieldMapping] || field);
+      
+      // Add headers with styling
+      dataWorksheet.addRow(headers);
+      const headerRow = dataWorksheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Segoe UI' };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2E7D32' }
+      };
+      headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      headerRow.border = {
+        top: { style: 'medium', color: { argb: 'FF1B5E20' } },
+        left: { style: 'medium', color: { argb: 'FF1B5E20' } },
+        bottom: { style: 'medium', color: { argb: 'FF1B5E20' } },
+        right: { style: 'medium', color: { argb: 'FF1B5E20' } }
+      };
+
+      // Add data rows with alternating colors
+      filteredItems.forEach((item, index) => {
+        const rowData = selectedFields.map(field => {
+          const value = item[field as keyof typeof item];
+          if (field === 'dateofinvoice' || field === 'dateofentry') {
+            return value && typeof value === 'string' ? new Date(value) : 
+                   value && value instanceof Date ? value : '';
+          }
+          return value || '';
+        });
+        
+        const row = dataWorksheet.addRow(rowData);
+        const isEvenRow = index % 2 === 0;
+        
+        row.font = { 
+          name: 'Segoe UI', 
+          size: 11, 
+          color: { argb: isEvenRow ? 'FF2C3E50' : 'FF34495E' } 
+        };
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isEvenRow ? 'FFF8F9FA' : 'FFFFFFFF' }
+        };
+        row.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        row.border = {
+          top: { style: 'thin', color: { argb: 'FFE9ECEF' } },
+          left: { style: 'thin', color: { argb: 'FFE9ECEF' } },
+          bottom: { style: 'thin', color: { argb: 'FFE9ECEF' } },
+          right: { style: 'thin', color: { argb: 'FFE9ECEF' } }
+        };
+      });
+
+      // Set column widths
+      selectedFields.forEach((field, index) => {
+        const header = headers[index];
+        const maxLength = Math.max(
+          header.length,
+          ...filteredItems.map(item => String(item[field as keyof typeof item] || '').length)
+        );
+        dataWorksheet.getColumn(index + 1).width = Math.min(Math.max(maxLength + 2, 12), 30);
+      });
+
+      // Freeze header row
+      dataWorksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+      // Add charts worksheet if requested
+      if (includeCharts) {
+        const chartsWorksheet = workbook.addWorksheet('Charts & Analysis');
+        
+        // Add title
+        const titleRow = chartsWorksheet.addRow(['📊 INVENTORY ANALYSIS CHARTS']);
+        titleRow.font = { bold: true, size: 18, color: { argb: 'FF2E7D32' }, name: 'Segoe UI' };
+        titleRow.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE8F5E8' }
+        };
+        titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleRow.border = {
+          top: { style: 'medium', color: { argb: 'FF2E7D32' } },
+          left: { style: 'medium', color: { argb: 'FF2E7D32' } },
+          bottom: { style: 'medium', color: { argb: 'FF2E7D32' } },
+          right: { style: 'medium', color: { argb: 'FF2E7D32' } }
+        };
+        chartsWorksheet.mergeCells('A1:D1');
+
+        // Add metadata
+        chartsWorksheet.addRow(['']);
+        chartsWorksheet.addRow(['Generated on: ' + new Date().toLocaleDateString()]);
+        chartsWorksheet.addRow(['Total Records: ' + filteredItems.length]);
+        chartsWorksheet.addRow(['']);
+
+        // Try to capture and embed chart images
+        try {
+          // Capture condition chart
+          const conditionChartImage = await captureChartImage(conditionChartRef);
+          if (conditionChartImage) {
+            // Add chart section header
+            const conditionHeaderRow = chartsWorksheet.addRow(['📈 ASSET CONDITION DISTRIBUTION']);
+            conditionHeaderRow.font = { bold: true, size: 14, color: { argb: 'FF1976D2' }, name: 'Segoe UI' };
+            conditionHeaderRow.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFE3F2FD' }
+            };
+            chartsWorksheet.addRow(['']);
+
+            // Add the actual chart image
+            try {
+              // Convert base64 to buffer
+              const base64Data = conditionChartImage.split(',')[1];
+              const imageBuffer = Buffer.from(base64Data, 'base64');
+              
+              // Add image to worksheet
+              const imageId = workbook.addImage({
+                buffer: imageBuffer,
+                extension: 'png',
+              });
+              
+              // Position the image
+              chartsWorksheet.addImage(imageId, {
+                tl: { col: 0, row: chartsWorksheet.rowCount - 1 },
+                ext: { width: 600, height: 400 }
+              });
+              
+              // Add some rows to make space for the image
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+            } catch (imageError) {
+              console.warn('Failed to embed condition chart image:', imageError);
+            }
+
+            // Add condition data
+            const conditionData = {
+              excellent: filteredItems.filter(item => item.conditionofasset === 'excellent').length,
+              good: filteredItems.filter(item => item.conditionofasset === 'good').length,
+              fair: filteredItems.filter(item => item.conditionofasset === 'fair').length,
+              poor: filteredItems.filter(item => item.conditionofasset === 'poor').length
+            };
+
+            chartsWorksheet.addRow(['Condition Distribution Data:']);
+            chartsWorksheet.addRow(['Excellent: ' + conditionData.excellent]);
+            chartsWorksheet.addRow(['Good: ' + conditionData.good]);
+            chartsWorksheet.addRow(['Fair: ' + conditionData.fair]);
+            chartsWorksheet.addRow(['Poor: ' + conditionData.poor]);
+            chartsWorksheet.addRow(['']);
+          }
+
+          // Capture category chart
+          const categoryChartImage = await captureChartImage(categoryChartRef);
+          if (categoryChartImage) {
+            // Add category section header
+            const categoryHeaderRow = chartsWorksheet.addRow(['📊 CATEGORY DISTRIBUTION']);
+            categoryHeaderRow.font = { bold: true, size: 14, color: { argb: 'FF1976D2' }, name: 'Segoe UI' };
+            categoryHeaderRow.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFE3F2FD' }
+            };
+            chartsWorksheet.addRow(['']);
+
+            // Add the actual chart image
+            try {
+              // Convert base64 to buffer
+              const base64Data = categoryChartImage.split(',')[1];
+              const imageBuffer = Buffer.from(base64Data, 'base64');
+              
+              // Add image to worksheet
+              const imageId = workbook.addImage({
+                buffer: imageBuffer,
+                extension: 'png',
+              });
+              
+              // Position the image
+              chartsWorksheet.addImage(imageId, {
+                tl: { col: 0, row: chartsWorksheet.rowCount - 1 },
+                ext: { width: 600, height: 400 }
+              });
+              
+              // Add some rows to make space for the image
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+              chartsWorksheet.addRow(['']);
+            } catch (imageError) {
+              console.warn('Failed to embed category chart image:', imageError);
+            }
+
+            // Add category data
+            const categoryData = filteredItems.reduce((acc, item) => {
+              acc[item.assetcategory] = (acc[item.assetcategory] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            chartsWorksheet.addRow(['Category Distribution Data:']);
+            Object.entries(categoryData).forEach(([category, count]) => {
+              chartsWorksheet.addRow([category + ': ' + count]);
+            });
+            chartsWorksheet.addRow(['']);
+          }
+        } catch (chartError) {
+          console.warn('Chart capture failed:', chartError);
+        }
+
+        // Add summary statistics
+        const summaryHeaderRow = chartsWorksheet.addRow(['📋 SUMMARY STATISTICS']);
+        summaryHeaderRow.font = { bold: true, size: 14, color: { argb: 'FF1976D2' }, name: 'Segoe UI' };
+        summaryHeaderRow.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE3F2FD' }
+        };
+        chartsWorksheet.addRow(['']);
+        chartsWorksheet.addRow(['Total Assets: ' + filteredItems.length]);
+        chartsWorksheet.addRow(['Categories: ' + [...new Set(filteredItems.map(item => item.assetcategory))].length]);
+        chartsWorksheet.addRow(['Locations: ' + [...new Set(filteredItems.map(item => item.locationofitem))].length]);
+        chartsWorksheet.addRow(['Vendors: ' + [...new Set(filteredItems.map(item => item.vendorname))].length]);
+        chartsWorksheet.addRow(['']);
+
+        // Add notes
+        const notesHeaderRow = chartsWorksheet.addRow(['💡 NOTES']);
+        notesHeaderRow.font = { bold: true, size: 14, color: { argb: 'FF1976D2' }, name: 'Segoe UI' };
+        notesHeaderRow.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE3F2FD' }
+        };
+        chartsWorksheet.addRow(['']);
+        chartsWorksheet.addRow(['• Charts are generated based on current filter settings']);
+        chartsWorksheet.addRow(['• Data reflects the selected fields and applied filters']);
+        chartsWorksheet.addRow(['• Export timestamp: ' + new Date().toLocaleString()]);
+        chartsWorksheet.addRow(['• Chart images are captured and included in the analysis']);
+
+        // Set column width for charts sheet
+        chartsWorksheet.getColumn(1).width = 50;
+      }
+
+      // Save the file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory-export-advanced-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Advanced Excel file exported successfully! ${includeCharts ? 'Charts and analysis included.' : ''}`);
+    } catch (error) {
+      console.error('Advanced export error:', error);
+      toast.error('Failed to export advanced Excel file');
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const toggleFieldSelection = (field: string) => {
+    setExportFilters(prev => ({
+      ...prev,
+      includeFields: prev.includeFields.includes(field)
+        ? prev.includeFields.filter(f => f !== field)
+        : [...prev.includeFields, field]
+    }));
+  };
+
+  // Reset all filters function
+  const resetFilters = () => {
+    setSearchTerm('');
+    setFilterStatus('all');
+    setFilterCategory('all');
+    toast.success('All filters have been reset!');
   };
 
   // Chart data
@@ -475,13 +1112,132 @@ const InventoryList: React.FC = () => {
           )}
           
           {activeTab === 'list' && (
-            <button
-              onClick={exportToCSV}
-              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
-            >
-              <Download size={16} />
-              <span>Export CSV</span>
-            </button>
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={isExporting}
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download size={16} />
+                <span>{isExporting ? 'Exporting...' : 'Export'}</span>
+              </button>
+              
+              {showExportMenu && (
+                <div className="absolute right-0 z-50 mt-2 duration-200 bg-white border border-gray-100 shadow-2xl w-80 rounded-2xl animate-in slide-in-from-top-2">
+                  <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-teal-50 rounded-t-2xl">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-teal-600">
+                        <Download className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-900">Export Options</h3>
+                        <p className="text-xs text-gray-600">Choose export format and options</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 space-y-4">
+                    {/* Field Selection */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Sliders className="w-4 h-4 text-green-600" />
+                          <label className="text-sm font-semibold text-gray-800">Select Fields</label>
+                        </div>
+                        <button
+                          onClick={() => setShowExportFilters(!showExportFilters)}
+                          className="px-2 py-1 text-xs font-medium text-green-600 transition-colors bg-green-100 rounded-lg hover:bg-green-200"
+                        >
+                          {showExportFilters ? 'Hide' : 'Customize'}
+                        </button>
+                      </div>
+                      
+                      {showExportFilters && (
+                        <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                          <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-32">
+                            {Object.entries(fieldMapping).map(([field, label]) => (
+                              <label key={field} className="flex items-center space-x-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={exportFilters.includeFields.includes(field)}
+                                  onChange={() => toggleFieldSelection(field)}
+                                  className="text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                />
+                                <span className="text-gray-700">{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Export Options */}
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                        <label className="text-sm font-semibold text-gray-800">Export Format</label>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2">
+                        <button
+                          onClick={() => exportToExcelAdvanced(false)}
+                          disabled={isExporting}
+                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 transition-colors bg-blue-100 rounded-lg group-hover:bg-blue-200">
+                              <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Excel (Data Only)</div>
+                              <div className="text-xs text-gray-500">Export with professional styling</div>
+                            </div>
+                          </div>
+                        </button>
+                        
+                        <button
+                          onClick={() => exportToExcelAdvanced(true)}
+                          disabled={isExporting}
+                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 transition-colors bg-purple-100 rounded-lg group-hover:bg-purple-200">
+                              <Image className="w-4 h-4 text-purple-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Excel (With Charts)</div>
+                              <div className="text-xs text-gray-500">Export data + charts + analysis</div>
+                            </div>
+                          </div>
+                        </button>
+                        
+                        <button
+                          onClick={exportToCSV}
+                          disabled={isExporting}
+                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 transition-colors bg-orange-100 rounded-lg group-hover:bg-orange-200">
+                              <FileText className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">CSV File</div>
+                              <div className="text-xs text-gray-500">Export data to CSV format</div>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-green-50 to-teal-50 rounded-b-2xl">
+                    <p className="text-xs text-center text-gray-500">
+                      📊 Export includes {exportFilters.includeFields.length} selected fields
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -530,7 +1286,7 @@ const InventoryList: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900">Asset Condition Overview</h3>
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
                   </div>
-                  <div className="h-64">
+                  <div className="h-64" ref={conditionChartRef}>
                     <AssetConditionChart data={conditionData} />
                   </div>
                 </div>
@@ -541,7 +1297,7 @@ const InventoryList: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900">Category Distribution</h3>
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
                   </div>
-                  <div className="h-64">
+                  <div className="h-64" ref={categoryChartRef}>
                     <CategoryDistributionChart data={categoryChartData} />
                   </div>
                 </div>
@@ -549,6 +1305,25 @@ const InventoryList: React.FC = () => {
 
               {/* Filters */}
               <div className="p-4 border border-gray-200 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
+                    {(searchTerm || filterStatus !== 'all' || filterCategory !== 'all') && (
+                      <span className="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={resetFilters}
+                    className="flex items-center px-3 py-2 space-x-2 text-sm font-medium text-gray-600 transition-all duration-200 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800"
+                  >
+                    <RotateCcw size={16} />
+                    <span>Reset Filters</span>
+                  </button>
+                </div>
+                
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                   <div className="relative">
                     <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={16} />

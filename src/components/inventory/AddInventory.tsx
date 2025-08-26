@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import CustomDatePicker from '../common/DatePicker';
-import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon, Upload } from 'lucide-react';
+import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon, Upload, Plus, List } from 'lucide-react';
 import { InventoryItem } from '../../types';
 
 import UploadDropzone from '../common/UploadDropzone';
@@ -25,7 +25,7 @@ const AddInventory: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFinancialYearPicker, setShowFinancialYearPicker] = useState(false);
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
 
   // Function to convert date to financial year format (e.g., 2025-26)
   const getFinancialYearFromDate = (date: Date): string => {
@@ -42,41 +42,85 @@ const AddInventory: React.FC = () => {
     }
   };
 
-  const [formData, setFormData] = useState({
-    uniqueid: '',
-    financialyear: '2024-25',
-    dateofinvoice: null as Date | null,
-    dateofentry: new Date(),
-    invoicenumber: '',
-    assetcategory: '',
-    assetcategoryid: "",
-    assetname: '',
-    specification: '',
-    makemodel: '',
-    productserialnumber: '',
-    vendorname: '',
-    quantityperitem: 1,
-    rateinclusivetax: 0,
-    totalcost: 0,
-    locationofitem: '',
-    issuedto: '',
-    dateofissue: null as Date | null,
-    expectedreturndate: null as Date | null,
-    balancequantityinstock: 0,
-    description: '',
-    unitofmeasurement: 'Pieces',
-    depreciationmethod: '',
-    warrantyinformation: '',
-    maintenanceschedule: '',
-    conditionofasset: 'excellent' as const,
-    status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
-    minimumstocklevel: 5,
-    purchaseordernumber: '',
-    expectedlifespan: '',
-    assettag: '',
-    salvagevalue: 0,
-    attachments: [] as File[],
-  });
+  // Initialize form data with localStorage persistence
+  const getInitialFormData = () => {
+    const savedData = localStorage.getItem('addInventoryFormData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        // Convert date strings back to Date objects
+        return {
+          ...parsed,
+          dateofinvoice: parsed.dateofinvoice ? new Date(parsed.dateofinvoice) : null,
+          dateofentry: parsed.dateofentry ? new Date(parsed.dateofentry) : new Date(),
+          dateofissue: parsed.dateofissue ? new Date(parsed.dateofissue) : null,
+          expectedreturndate: parsed.expectedreturndate ? new Date(parsed.expectedreturndate) : null,
+          attachments: [] as File[], // Don't persist File objects
+        };
+      } catch (error) {
+        console.error('Error parsing saved form data:', error);
+      }
+    }
+    
+    // Default form data
+    return {
+      uniqueid: '',
+      financialyear: '2024-25',
+      dateofinvoice: null as Date | null,
+      dateofentry: new Date(),
+      invoicenumber: '',
+      assetcategory: '',
+      assetcategoryid: "",
+      assetname: '',
+      specification: '',
+      makemodel: '',
+      productserialnumber: '',
+      vendorname: '',
+      quantityperitem: 1,
+      rateinclusivetax: 0,
+      totalcost: 0,
+      locationofitem: '',
+      issuedto: '',
+      dateofissue: null as Date | null,
+      expectedreturndate: null as Date | null,
+      balancequantityinstock: 0,
+      description: '',
+      unitofmeasurement: 'Pieces',
+      depreciationmethod: '',
+      warrantyinformation: '',
+      maintenanceschedule: '',
+      conditionofasset: 'excellent' as const,
+      status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
+      minimumstocklevel: 5,
+      purchaseordernumber: '',
+      expectedlifespan: '',
+      assettag: '',
+      salvagevalue: 0,
+      attachments: [] as File[],
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    const dataToSave = {
+      ...formData,
+      // Convert Date objects to strings for JSON serialization
+      dateofinvoice: formData.dateofinvoice?.toISOString() || null,
+      dateofentry: formData.dateofentry?.toISOString() || null,
+      dateofissue: formData.dateofissue?.toISOString() || null,
+      expectedreturndate: formData.expectedreturndate?.toISOString() || null,
+      // Don't save File objects
+      attachments: undefined,
+    };
+    localStorage.setItem('addInventoryFormData', JSON.stringify(dataToSave));
+  }, [formData]);
+
+  // Function to clear saved form data
+  const clearSavedFormData = () => {
+    localStorage.removeItem('addInventoryFormData');
+  };
 
   // Auto-generate unique ID functions
   const generateAssetCode = (assetName: string): string => {
@@ -183,7 +227,7 @@ const AddInventory: React.FC = () => {
         // Refresh the inventory items (assuming you have a refresh function in context)
         // You might want to call a refresh function here to update the inventory list
         
-        setShowBulkUpload(false);
+        setActiveTab('single');
       } else {
         // Show error message with details
         let errorMessage = result.message;
@@ -348,9 +392,9 @@ const handleFile = (file?: File) => {
   const uploadedFiles: { name: string; url: string }[] = [];
 
   for (const file of formData.attachments || []) {
-          const filePath = `${Date.now()}-${file.name}`;
+          const filePath = `attachments/${Date.now()}-${file.name}`;
             const { data, error } = await supabase.storage
-          .from('profile-pictures')
+          .from('inventory-invoice-images')
           .upload(filePath, file);
 
     if (error) {
@@ -362,7 +406,7 @@ const handleFile = (file?: File) => {
 
     const { data: urlData } = supabase
       .storage
-      .from('profile-pictures')
+      .from('inventory-invoice-images')
       .getPublicUrl(filePath);
 
     if (urlData?.publicUrl) {
@@ -429,6 +473,9 @@ const handleFile = (file?: File) => {
     });
 
     CRUDToasts.created('inventory item');
+    
+    // Clear saved form data after successful submission
+    clearSavedFormData();
   } catch (error) {
     console.error(error);
     toast.dismiss(loadingToast);
@@ -452,25 +499,52 @@ const handleFile = (file?: File) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Add Inventory Item</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Add Inventory</h1>
           <p className="mt-1 text-gray-600">Add new assets to your inventory system</p>
         </div>
-        
-        {/* Bulk Upload Button - only show for admins and stock managers */}
-        {(user?.role === 'admin' || user?.role === 'stock-manager') && (
-          <button
-            type="button"
-            onClick={() => setShowBulkUpload(true)}
-            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
-          >
-            <Upload size={16} />
-            <span>Bulk Upload</span>
-          </button>
-        )}
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-100 shadow-sm rounded-2xl">
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('single')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'single'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Plus className="w-4 h-4" />
+                <span>Add Single Item</span>
+              </div>
+            </button>
+            {(user?.role === 'admin' || user?.role === 'stock-manager') && (
+              <button
+                onClick={() => setActiveTab('bulk')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'bulk'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Upload className="w-4 h-4" />
+                  <span>Bulk Upload</span>
+                </div>
+              </button>
+            )}
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {activeTab === 'single' ? (
+            /* Single Item Form */
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Asset Information Section */}
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
@@ -1160,36 +1234,73 @@ const handleFile = (file?: File) => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Form Actions */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
-          <div className="flex items-center justify-end space-x-4">
-            <button
-              type="button"
-              className="flex items-center px-6 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              <X size={16} />
-              <span>Cancel</span>
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save size={16} />
-              <span>{isSubmitting ? 'Adding...' : 'Add Item'}</span>
-            </button>
-          </div>
+              {/* Form Actions */}
+              <div className="flex items-center justify-end space-x-4 pt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      uniqueid: '',
+                      financialyear: '2024-25',
+                      dateofinvoice: null,
+                      dateofentry: new Date(),
+                      invoicenumber: '',
+                      assetcategory: '',
+                      assetcategoryid: "",
+                      assetname: '',
+                      specification: '',
+                      makemodel: '',
+                      productserialnumber: '',
+                      vendorname: '',
+                      quantityperitem: 1,
+                      rateinclusivetax: 0,
+                      totalcost: 0,
+                      locationofitem: '',
+                      issuedto: '',
+                      dateofissue: null,
+                      expectedreturndate: null,
+                      balancequantityinstock: 0,
+                      description: '',
+                      unitofmeasurement: 'Pieces',
+                      depreciationmethod: '',
+                      warrantyinformation: '',
+                      maintenanceschedule: '',
+                      conditionofasset: 'excellent',
+                      status: 'available',
+                      minimumstocklevel: 5,
+                      purchaseordernumber: '',
+                      expectedlifespan: '',
+                      assettag: '',
+                      salvagevalue: 0,
+                      attachments: [],
+                    });
+                    clearSavedFormData();
+                  }}
+                  className="flex items-center px-6 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <X size={16} />
+                  <span>Clear Form</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save size={16} />
+                  <span>{isSubmitting ? 'Adding...' : 'Add Item'}</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Bulk Upload Tab */
+            <BulkUpload
+              onUpload={handleBulkUpload}
+            />
+          )}
         </div>
-      </form>
-
-      {/* Bulk Upload Modal */}
-      {showBulkUpload && (
-        <BulkUpload
-          onUpload={handleBulkUpload}
-          onClose={() => setShowBulkUpload(false)}
-        />
-      )}
+      </div>
     </div>
   );
 };

@@ -36,17 +36,64 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
   useEffect(() => {
     if (item) {
-      setFormData({
-        ...item,
-        dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
-        dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
-        dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
-        expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
-      });
+      // Try to load saved form data first
+      const savedData = localStorage.getItem(`updateInventoryFormData_${item.id}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData({
+            ...parsed,
+            dateofinvoice: parsed.dateofinvoice ? new Date(parsed.dateofinvoice) : undefined,
+            dateofentry: parsed.dateofentry ? new Date(parsed.dateofentry) : undefined,
+            dateofissue: parsed.dateofissue ? new Date(parsed.dateofissue) : undefined,
+            expectedreturndate: parsed.expectedreturndate ? new Date(parsed.expectedreturndate) : undefined,
+          });
+        } catch (error) {
+          console.error('Error parsing saved update form data:', error);
+          // Fall back to item data
+          setFormData({
+            ...item,
+            dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
+            dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
+            dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
+            expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
+          });
+        }
+      } else {
+        setFormData({
+          ...item,
+          dateofinvoice: item.dateofinvoice ? new Date(item.dateofinvoice) : undefined,
+          dateofentry: item.dateofentry ? new Date(item.dateofentry) : undefined,
+          dateofissue: item.dateofissue ? new Date(item.dateofissue) : undefined,
+          expectedreturndate: item.expectedreturndate ? new Date(item.expectedreturndate) : undefined,
+        });
+      }
       setNewAttachments([]);
       setRemovedAttachments([]);
     }
   }, [item]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (item && formData) {
+      const dataToSave = {
+        ...formData,
+        // Convert Date objects to strings for JSON serialization
+        dateofinvoice: formData.dateofinvoice?.toISOString() || null,
+        dateofentry: formData.dateofentry?.toISOString() || null,
+        dateofissue: formData.dateofissue?.toISOString() || null,
+        expectedreturndate: formData.expectedreturndate?.toISOString() || null,
+      };
+      localStorage.setItem(`updateInventoryFormData_${item.id}`, JSON.stringify(dataToSave));
+    }
+  }, [formData, item]);
+
+  // Function to clear saved form data
+  const clearSavedFormData = () => {
+    if (item) {
+      localStorage.removeItem(`updateInventoryFormData_${item.id}`);
+    }
+  };
 
   if (!isOpen || !item) return null;
 
@@ -105,15 +152,15 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
       const uploadedFiles: { name: string; url: string }[] = [];
       
       for (const file of newAttachments) {
-        const filePath = `${Date.now()}-${file.name}`;
+        const filePath = `attachments/${Date.now()}-${file.name}`;
         const { data, error } = await supabase.storage
-          .from('profile-pictures')
+          .from('inventory-invoice-images')
           .upload(filePath, file);
 
         if (error) throw error;
 
         const { data: urlData } = supabase.storage
-          .from('profile-pictures')
+          .from('inventory-invoice-images')
           .getPublicUrl(filePath);
 
         uploadedFiles.push({
@@ -147,6 +194,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
       toast.dismiss(loadingToast);
       CRUDToasts.updated('inventory item');
+      
+      // Clear saved form data after successful update
+      clearSavedFormData();
       onClose();
     } catch (error: any) {
       console.error('Update error:', error);
@@ -638,17 +688,17 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                         <img
                           src={URL.createObjectURL(attachment)}
                           alt={attachment.name}
-                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                          className="object-cover w-full h-24 border border-gray-200 rounded-lg"
                         />
                       ) : (
-                        <div className="w-full h-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                        <div className="flex items-center justify-center w-full h-24 bg-gray-100 border border-gray-200 rounded-lg">
                           <span className="text-sm text-gray-500">File</span>
                         </div>
                       )}
                       <button
                         type="button"
                         onClick={() => removeExistingAttachment(attachment instanceof File ? attachment.name : String(attachment))}
-                        className="absolute top-1 right-1 p-1 text-white bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
                         title="Remove attachment"
                       >
                         <X size={12} />
@@ -671,7 +721,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
               />
               <label
                 htmlFor="file-upload"
-                className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                className="flex items-center justify-center w-full px-4 py-2 transition-colors border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-gray-400"
               >
                 <Upload size={20} className="mr-2 text-gray-400" />
                 <span className="text-gray-600">Add new attachments</span>
@@ -688,12 +738,12 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                       <img
                         src={URL.createObjectURL(file)}
                         alt={file.name}
-                        className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        className="object-cover w-full h-24 border border-gray-200 rounded-lg"
                       />
                       <button
                         type="button"
                         onClick={() => removeNewAttachment(index)}
-                        className="absolute top-1 right-1 p-1 text-white bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
                         title="Remove attachment"
                       >
                         <X size={12} />

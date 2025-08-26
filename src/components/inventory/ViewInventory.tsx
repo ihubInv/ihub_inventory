@@ -12,6 +12,23 @@ interface ViewInventoryProps {
 const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose, onEdit }) => {
   if (!viewingCategory) return null;
 
+  // Parse attachments if they come as a JSON string from the database
+  let attachments = viewingCategory.attachments;
+  if (typeof attachments === 'string') {
+    try {
+      attachments = JSON.parse(attachments);
+    } catch (e) {
+      console.error('Failed to parse attachments:', e);
+      attachments = [];
+    }
+  }
+
+  // Create a processed viewing object
+  const processedCategory = {
+    ...viewingCategory,
+    attachments: attachments
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
       <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
@@ -24,40 +41,40 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-800">
   {[
-    { label: 'Asset Name', value: viewingCategory.assetname },
-    { label: 'Asset Category', value: viewingCategory.assetcategory },
-    { label: 'Invoice Number', value: viewingCategory.invoicenumber },
-    { label: 'Specification', value: viewingCategory.specification },
-    { label: 'Make/Model', value: viewingCategory.makemodel },
-    { label: 'Serial Number', value: viewingCategory.productserialnumber },
-    { label: 'Location', value: viewingCategory.locationofitem },
-    { label: 'Vendor', value: viewingCategory.vendorname },
-    { label: 'Status', value: viewingCategory.status, capitalize: true },
-    { label: 'Condition', value: viewingCategory.conditionofasset, capitalize: true },
-    { label: 'Quantity In Stock', value: viewingCategory.balancequantityinstock },
-    { label: 'Unit', value: viewingCategory.unitofmeasurement },
-    { label: 'Description', value: viewingCategory.description },
-    { label: 'Purchase Order #', value: viewingCategory.purchaseordernumber },
-    { label: 'Expected Lifespan', value: viewingCategory.expectedlifespan },
-    { label: 'Warranty Information', value: viewingCategory.warrantyinformation },
-    { label: 'Depreciation Method', value: viewingCategory.depreciationmethod },
-    { label: 'Maintenance Schedule', value: viewingCategory.maintenanceschedule },
-    { label: 'Minimum Stock Level', value: viewingCategory.minimumstocklevel },
-    { label: 'Date of Issue', value: viewingCategory.dateofissue },
-    { label: 'Issued To', value: viewingCategory.issuedto },
-    { label: 'Expected Return Date', value: viewingCategory.expectedreturndate ?? '—' },
-    { label: 'Created At', value: new Date(viewingCategory.createdat).toLocaleString() },
-    { label: 'Last Updated', value: new Date(viewingCategory.lastmodifieddate).toLocaleString() },
-    { label: 'Asset ID', value: viewingCategory.id, isMono: true },
-    { label: 'Unique ID', value: viewingCategory.uniqueid },
-    { label: 'Financial Year', value: viewingCategory.financialyear },
-    { label: 'Date of Invoice', value: viewingCategory.dateofinvoice },
-    { label: 'Date of Entry', value: new Date(viewingCategory.dateofentry).toLocaleString() },
-    { label: 'Quantity Per Item', value: viewingCategory.quantityperitem },
-    { label: 'Rate (Inclusive Tax)', value: viewingCategory.rateinclusivetax },
-    { label: 'Total Cost', value: viewingCategory.totalcost },
-    { label: 'Asset Tag', value: viewingCategory.assettag },
-    { label: 'Modified By (User ID)', value: viewingCategory.lastmodifiedby },
+    { label: 'Asset Name', value: processedCategory.assetname },
+    { label: 'Asset Category', value: processedCategory.assetcategory },
+    { label: 'Invoice Number', value: processedCategory.invoicenumber },
+    { label: 'Specification', value: processedCategory.specification },
+    { label: 'Make/Model', value: processedCategory.makemodel },
+    { label: 'Serial Number', value: processedCategory.productserialnumber },
+    { label: 'Location', value: processedCategory.locationofitem },
+    { label: 'Vendor', value: processedCategory.vendorname },
+    { label: 'Status', value: processedCategory.status, capitalize: true },
+    { label: 'Condition', value: processedCategory.conditionofasset, capitalize: true },
+    { label: 'Quantity In Stock', value: processedCategory.balancequantityinstock },
+    { label: 'Unit', value: processedCategory.unitofmeasurement },
+    { label: 'Description', value: processedCategory.description },
+    { label: 'Purchase Order #', value: processedCategory.purchaseordernumber },
+    { label: 'Expected Lifespan', value: processedCategory.expectedlifespan },
+    { label: 'Warranty Information', value: processedCategory.warrantyinformation },
+    { label: 'Depreciation Method', value: processedCategory.depreciationmethod },
+    { label: 'Maintenance Schedule', value: processedCategory.maintenanceschedule },
+    { label: 'Minimum Stock Level', value: processedCategory.minimumstocklevel },
+    { label: 'Date of Issue', value: processedCategory.dateofissue },
+    { label: 'Issued To', value: processedCategory.issuedto },
+    { label: 'Expected Return Date', value: processedCategory.expectedreturndate ?? '—' },
+    { label: 'Created At', value: new Date(processedCategory.createdat).toLocaleString() },
+    { label: 'Last Updated', value: new Date(processedCategory.lastmodifieddate).toLocaleString() },
+    { label: 'Asset ID', value: processedCategory.id, isMono: true },
+    { label: 'Unique ID', value: processedCategory.uniqueid },
+    { label: 'Financial Year', value: processedCategory.financialyear },
+    { label: 'Date of Invoice', value: processedCategory.dateofinvoice },
+    { label: 'Date of Entry', value: new Date(processedCategory.dateofentry).toLocaleString() },
+    { label: 'Quantity Per Item', value: processedCategory.quantityperitem },
+    { label: 'Rate (Inclusive Tax)', value: processedCategory.rateinclusivetax },
+    { label: 'Total Cost', value: processedCategory.totalcost },
+    { label: 'Asset Tag', value: processedCategory.assettag },
+    { label: 'Modified By (User ID)', value: processedCategory.lastmodifiedby },
   ].map((field, index) => (
     <div key={index} className="break-words">
       <label className="block mb-1 font-medium">{field.label}</label>
@@ -71,50 +88,110 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
     </div>
   ))}
 
-{Array.isArray(viewingCategory.attachments) &&
-  viewingCategory.attachments.map((file: any, index: number) => (
-    <div key={index} className="break-words">
-      <label className="block mb-1 font-medium">Attachment</label>
-      <div className="flex flex-col space-y-2">
-        <img
-          src={file.url}
-          alt={file.name}
-          className="w-20 h-20 object-cover border rounded"
-        />
-        <a
-          href={file.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline break-all"
-        >
-          {file.name}
-        </a>
-        <button
-          onClick={async () => {
-            try {
-              const response = await fetch(file.url);
-              const blob = await response.blob();
-              const url = window.URL.createObjectURL(blob);
+{/* Debug: Show attachments data structure */}
+{(() => {
+  console.log('Attachments data:', processedCategory.attachments);
+  return null;
+})()}
 
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = file.name;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              window.URL.revokeObjectURL(url);
-            } catch (err) {
-              alert('Failed to download file.');
-              console.error('Download error:', err);
-            }
-          }}
-          className="inline-block w-fit px-3 py-1 mt-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-        >
-          Download
-        </button>
-      </div>
+{/* Attachments Section */}
+{processedCategory.attachments && Array.isArray(processedCategory.attachments) && processedCategory.attachments.length > 0 ? (
+  <div className="col-span-full">
+    <label className="block mb-3 text-sm font-medium text-gray-700">Attachments</label>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {processedCategory.attachments.map((file: any, index: number) => {
+        // Handle both File objects and URL objects
+        const isFileObject = file instanceof File;
+        const fileUrl = isFileObject ? URL.createObjectURL(file) : (file.url || file);
+        const fileName = isFileObject ? file.name : (file.name || `Attachment ${index + 1}`);
+        
+        return (
+          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+            {/* Image Preview */}
+            <div className="relative aspect-square bg-white rounded-lg overflow-hidden border border-gray-200">
+              <img
+                src={fileUrl}
+                alt={fileName}
+                className="w-full h-full object-cover transition-transform hover:scale-105"
+                onError={(e) => {
+                  // Fallback to file icon if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                      </div>
+                    `;
+                  }
+                }}
+              />
+            </div>
+            
+            {/* File Info */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-900 truncate" title={fileName}>
+                {fileName}
+              </p>
+              
+              {/* Action Buttons */}
+              <div className="flex space-x-2">
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-2 text-xs font-medium text-center text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  View
+                </a>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(fileUrl);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = fileName;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      alert('Failed to download file.');
+                      console.error('Download error:', err);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
-  ))}
+  </div>
+) : (
+  <div className="col-span-full">
+    <label className="block mb-3 text-sm font-medium text-gray-700">Attachments</label>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+      <p className="text-gray-500 text-sm">No attachments available</p>
+      {processedCategory.attachments && (
+        <p className="text-xs text-gray-400 mt-1">
+          Data type: {typeof processedCategory.attachments}, 
+          Is Array: {Array.isArray(processedCategory.attachments)}, 
+          Length: {processedCategory.attachments?.length || 'N/A'}
+        </p>
+      )}
+    </div>
+  </div>
+)}
 
 
 

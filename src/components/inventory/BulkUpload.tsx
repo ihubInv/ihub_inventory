@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 
 interface BulkUploadProps {
   onUpload: (data: any[]) => Promise<void>;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 interface UploadResult {
@@ -287,61 +287,77 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Bulk Asset Upload</h2>
-              <p className="text-gray-600">Upload multiple inventory items using Excel or CSV files</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-            >
-              <X size={24} />
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="text-center">
+        <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <Upload className="w-10 h-10 text-white" />
         </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Bulk Asset Upload</h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Upload multiple inventory items at once using Excel or CSV files. Follow the template format for best results.
+        </p>
+      </div>
 
-        <div className="p-6 space-y-6">
+      <div className="space-y-6">
           {/* Instructions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-blue-900">Important Instructions</h3>
-                <ul className="mt-2 text-sm text-blue-800 space-y-1">
-                  <li>• Headers must match exactly (case-insensitive)</li>
-                  <li>• Data types must be correct (numbers for quantities, dates in YYYY-MM-DD format)</li>
-                  <li>• Download the template below for proper format</li>
-                  <li>• Supported formats: Excel (.xlsx, .xls) and CSV files</li>
-                </ul>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Info className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3">Upload Guidelines</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">Headers must match exactly</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">Use correct data types</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">Download template below</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">Supports Excel & CSV files</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Template Download */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h3 className="font-semibold text-gray-900">Download Template</h3>
-              <p className="text-sm text-gray-600">Get the exact format required for bulk upload</p>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <FileSpreadsheet className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-green-900">Excel Template</h3>
+                  <p className="text-sm text-green-700">Download the template with all required columns and sample data</p>
+                </div>
+              </div>
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Download size={18} />
+                <span className="font-medium">Download Template</span>
+              </button>
             </div>
-            <button
-              onClick={downloadTemplate}
-              className="flex items-center px-4 py-2 space-x-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Download size={16} />
-              <span>Download Template</span>
-            </button>
           </div>
 
           {/* File Upload Area */}
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 cursor-pointer group ${
               dragActive 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 shadow-lg' 
+                : 'border-gray-300 hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-indigo-50'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -357,27 +373,38 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
               className="hidden"
             />
             
-            <div className="space-y-4">
-              <div className="flex justify-center space-x-4">
-                <FileSpreadsheet className="w-12 h-12 text-green-500" />
-                <FileText className="w-12 h-12 text-blue-500" />
-              </div>
-              
+            <div className="space-y-6">
               {file ? (
-                <div>
-                  <p className="text-lg font-semibold text-gray-900">{file.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                <div className="space-y-4">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-semibold text-gray-900">{file.name}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB • Ready to upload
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  <p className="text-lg font-semibold text-gray-900">
-                    Drop your file here or click to browse
-                  </p>
-                  <p className="text-gray-500">
-                    Supports Excel (.xlsx, .xls) and CSV files
-                  </p>
+                <div className="space-y-4">
+                  <div className="flex justify-center space-x-2">
+                    <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                      <FileSpreadsheet className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                      <FileText className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xl font-semibold text-gray-900 mb-2">
+                      Drop your file here or click to browse
+                    </p>
+                    <p className="text-gray-500">
+                      Supports Excel (.xlsx, .xls) and CSV files up to 10MB
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -455,34 +482,28 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              disabled={uploading}
-            >
-              Close
-            </button>
-            
-            {file && showPreview && !uploadResult?.success && (
+          {file && showPreview && !uploadResult?.success && (
+            <div className="flex justify-center pt-6">
               <button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg font-semibold"
               >
                 {uploading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Uploading...</span>
-                  </div>
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading {previewData.length} Items...</span>
+                  </>
                 ) : (
-                  `Upload ${previewData.length} Items`
+                  <>
+                    <Upload className="w-5 h-5" />
+                    <span>Upload {previewData.length} Items</span>
+                  </>
                 )}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
     </div>
   );
 };

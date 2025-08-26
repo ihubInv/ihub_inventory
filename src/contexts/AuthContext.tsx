@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { AuthToasts } from '../services/toastService';
 import toast from 'react-hot-toast';
+import { cancelAllApiRequests } from '../utils/api';
 
 interface AuthContextType {
   user: User | null;
@@ -128,14 +129,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     const loadingToast = AuthToasts.loggingOut();
     try {
+      // Cancel all pending API requests
+      cancelAllApiRequests();
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
         console.error('Logout error:', error);
         toast.dismiss(loadingToast);
         AuthToasts.logoutError(error.message);
       } else {
+        // Clear all local data
+        setUser(null);
+        setIsAuthenticated(false);
+        setSession(null);
+        localStorage.removeItem('user');
+        localStorage.clear(); // Clear all localStorage
+        sessionStorage.clear(); // Clear all sessionStorage
+        
+        // Clear service worker cache if exists
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+        }
+        
+        // Clear IndexedDB if used by Supabase
+        if ('indexedDB' in window) {
+          indexedDB.databases().then(databases => {
+            databases.forEach(db => {
+              indexedDB.deleteDatabase(db.name!);
+            });
+          }).catch(console.error);
+        }
+        
+        // Show success message
         toast.dismiss(loadingToast);
         AuthToasts.logoutSuccess();
+        
+        // Force reload to clear all network activity and memory
+        // This ensures a complete clean slate
+        setTimeout(() => {
+          window.location.replace('/login'); // Use replace to prevent back navigation
+        }, 500);
       }
     } catch (err) {
       console.error('Logout error:', err);

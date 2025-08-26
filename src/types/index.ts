@@ -48,7 +48,7 @@ export interface InventoryItem {
   expectedlifespan?: string;
   assettag?: string;
   salvagevalue?: number;
-  attachments: File[]; // ⬅️ Store raw File objects until submit
+  attachments?: { name: string; url: string }[] | File[]; // Can be URLs from DB or Files during upload
   lastmodifiedby: string;
   lastmodifieddate: Date;
   createdat: Date;

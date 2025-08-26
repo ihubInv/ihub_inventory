@@ -95,16 +95,16 @@ const AppContent: React.FC = () => {
 // ✅ Application Entry
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <InventoryProvider>
-        <NotificationProvider>
-          <Router>
+    <Router>
+      <AuthProvider>
+        <InventoryProvider>
+          <NotificationProvider>
             <AppContent />
             <Toaster />
-          </Router>
-        </NotificationProvider>
-      </InventoryProvider>
-    </AuthProvider>
+          </NotificationProvider>
+        </InventoryProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 

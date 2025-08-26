@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
@@ -14,15 +14,24 @@ import InventoryPivotTable from './InventoryPivotTable';
 // import UpdateInventory from './updateInventory';
 
 const InventoryList: React.FC = () => {
-  const { inventoryItems, addInventoryItem, deleteInventoryItem, updateInventoryItem } = useInventory();
+  const { inventoryItems, addInventoryItem, deleteInventoryItem, updateInventoryItem, loading } = useInventory();
   const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
+  // Initialize states with localStorage persistence
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return localStorage.getItem('inventoryListSearchTerm') || '';
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [viewingCategory, setViewingCategory] = useState<any>(null);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [activeTab, setActiveTab] = useState<'list' | 'pivot'>('list');
+  const [filterStatus, setFilterStatus] = useState(() => {
+    return localStorage.getItem('inventoryListFilterStatus') || 'all';
+  });
+  const [filterCategory, setFilterCategory] = useState(() => {
+    return localStorage.getItem('inventoryListFilterCategory') || 'all';
+  });
+  const [activeTab, setActiveTab] = useState<'list' | 'pivot'>(() => {
+    return (localStorage.getItem('inventoryListActiveTab') as 'list' | 'pivot') || 'list';
+  });
   
   // Delete functionality states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -68,6 +77,23 @@ const InventoryList: React.FC = () => {
              assettag: '',
     salvagevalue: 0,
   });
+
+  // Save filter states to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('inventoryListSearchTerm', searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    localStorage.setItem('inventoryListFilterStatus', filterStatus);
+  }, [filterStatus]);
+
+  useEffect(() => {
+    localStorage.setItem('inventoryListFilterCategory', filterCategory);
+  }, [filterCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('inventoryListActiveTab', activeTab);
+  }, [activeTab]);
 
 
 
@@ -393,6 +419,18 @@ const InventoryList: React.FC = () => {
     counts: categoryNames.map(cat => filteredItems.filter(item => item.assetcategory === cat).length),
   };
 
+  // Show loading state while data is being fetched
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-b-2 border-indigo-600 rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading inventory data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -407,7 +445,7 @@ const InventoryList: React.FC = () => {
             <>
               {/* Selection status indicator */}
               {selectedItems.length > 0 && (
-                <div className="flex items-center px-3 py-1 text-sm bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center px-3 py-1 text-sm border border-blue-200 rounded-lg bg-blue-50">
                   <CheckSquare size={16} className="mr-2 text-blue-600" />
                   <span className="text-blue-700">{selectedItems.length} selected</span>
                 </div>
@@ -418,7 +456,7 @@ const InventoryList: React.FC = () => {
                 <>
                   <button
                     onClick={() => setSelectedItems([])}
-                    className="flex items-center px-3 py-2 space-x-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                    className="flex items-center px-3 py-2 space-x-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
                     <X size={16} />
                     <span>Clear</span>
@@ -426,7 +464,7 @@ const InventoryList: React.FC = () => {
                   
                   <button
                     onClick={handleBulkDelete}
-                    className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg"
+                    className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
                   >
                     <Trash2 size={16} />
                     <span>Delete Selected ({selectedItems.length})</span>
@@ -449,9 +487,9 @@ const InventoryList: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex px-6 space-x-8" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('list')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -510,7 +548,7 @@ const InventoryList: React.FC = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div className="p-4 border border-gray-200 bg-gray-50 rounded-xl">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                   <div className="relative">
                     <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={16} />
@@ -727,9 +765,9 @@ const InventoryList: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+          <div className="w-full max-w-md p-6 mx-4 bg-white shadow-2xl rounded-2xl">
             <div className="flex items-center mb-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div className="ml-4">
@@ -742,7 +780,7 @@ const InventoryList: React.FC = () => {
               <p className="text-gray-700">
                 Are you sure you want to delete <span className="font-semibold">"{itemToDelete?.assetname}"</span>?
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="mt-2 text-sm text-gray-500">
                 Asset ID: {itemToDelete?.uniqueid}
               </p>
             </div>
@@ -753,7 +791,7 @@ const InventoryList: React.FC = () => {
                   setShowDeleteModal(false);
                   setItemToDelete(null);
                 }}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2 text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
                 disabled={isDeleting}
               >
                 Cancel
@@ -761,7 +799,7 @@ const InventoryList: React.FC = () => {
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
@@ -773,9 +811,9 @@ const InventoryList: React.FC = () => {
       {/* Bulk Delete Confirmation Modal */}
       {showBulkDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
+          <div className="w-full max-w-md p-6 mx-4 bg-white shadow-2xl rounded-2xl">
             <div className="flex items-center mb-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div className="ml-4">
@@ -788,19 +826,19 @@ const InventoryList: React.FC = () => {
               <p className="text-gray-700">
                 Are you sure you want to delete <span className="font-semibold">{selectedItems.length} selected item{selectedItems.length > 1 ? 's' : ''}</span>?
               </p>
-              <div className="mt-3 max-h-32 overflow-y-auto">
-                <ul className="text-sm text-gray-600 space-y-1">
+              <div className="mt-3 overflow-y-auto max-h-32">
+                <ul className="space-y-1 text-sm text-gray-600">
                   {selectedItems.slice(0, 5).map(itemId => {
                     const item = filteredItems.find(i => i.id === itemId);
                     return (
                       <li key={itemId} className="flex items-center">
-                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        <span className="w-2 h-2 mr-2 bg-red-400 rounded-full"></span>
                         {item?.assetname} ({item?.uniqueid})
                       </li>
                     );
                   })}
                   {selectedItems.length > 5 && (
-                    <li className="text-gray-400 italic">
+                    <li className="italic text-gray-400">
                       ... and {selectedItems.length - 5} more items
                     </li>
                   )}
@@ -813,7 +851,7 @@ const InventoryList: React.FC = () => {
                 onClick={() => {
                   setShowBulkDeleteModal(false);
                 }}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2 text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
                 disabled={isDeleting}
               >
                 Cancel
@@ -821,7 +859,7 @@ const InventoryList: React.FC = () => {
               <button
                 onClick={handleConfirmBulkDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeleting ? 'Deleting...' : `Delete All ${selectedItems.length}`}
               </button>
@@ -832,16 +870,16 @@ const InventoryList: React.FC = () => {
 
       {/* Floating Action Bar - appears when items are selected */}
       {selectedItems.length > 0 && (user?.role === 'admin' || user?.role === 'stock-manager') && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
-          <div className="flex items-center space-x-3 px-6 py-3 bg-white rounded-full shadow-2xl border border-gray-200">
-            <div className="flex items-center px-3 py-1 text-sm bg-blue-50 border border-blue-200 rounded-full">
+        <div className="fixed z-40 transform -translate-x-1/2 bottom-6 left-1/2">
+          <div className="flex items-center px-6 py-3 space-x-3 bg-white border border-gray-200 rounded-full shadow-2xl">
+            <div className="flex items-center px-3 py-1 text-sm border border-blue-200 rounded-full bg-blue-50">
               <CheckSquare size={16} className="mr-2 text-blue-600" />
-              <span className="text-blue-700 font-medium">{selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected</span>
+              <span className="font-medium text-blue-700">{selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected</span>
             </div>
             
             <button
               onClick={() => setSelectedItems([])}
-              className="flex items-center px-4 py-2 space-x-2 text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-all duration-200"
+              className="flex items-center px-4 py-2 space-x-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-full hover:bg-gray-200"
             >
               <X size={16} />
               <span>Clear</span>
@@ -849,7 +887,7 @@ const InventoryList: React.FC = () => {
             
             <button
               onClick={handleBulkDelete}
-              className="flex items-center px-4 py-2 space-x-2 text-white bg-red-600 rounded-full hover:bg-red-700 transition-all duration-200 shadow-lg"
+              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-full shadow-lg hover:bg-red-700"
             >
               <Trash2 size={16} />
               <span>Delete Selected</span>

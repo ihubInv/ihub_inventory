@@ -1,43 +1,42 @@
 import React, { useState } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, Eye, EyeOff } from 'lucide-react';
-import RoleDropdown from '../common/RoleDropdown';
-import DepartmentDropdown from '../common/DepartmentDropdown';
+import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, Eye, EyeOff, Shield, UserCog, User as UserIcon, Building2, CheckCircle, XCircle } from 'lucide-react';
+import AttractiveDropdown from '../common/AttractiveDropdown';
 import { supabase } from '../../lib/supabaseClient';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../utils/validation';
+import { User } from '../../types';
 
 // Function to create employee account in Supabase Auth
 const createEmployeeAccount = async (userData: FormData) => {
   try {
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        data: {
-          name: userData.name,
-          role: userData.role,
-          department: userData.department
-        }
-      }
-    });
+    // Create user record directly in users table (without auth signup)
+    // This approach avoids all session conflicts
+    const { data: userRecord, error: insertError } = await supabase
+      .from('users')
+      .insert({
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        department: userData.department || null,
+        isactive: true,
+        createdat: new Date().toISOString(),
+        lastlogin: new Date().toISOString()
+      })
+      .select()
+      .single();
 
-    if (authError) {
-      throw new Error(authError.message);
-    }
-
-    if (!authData.user) {
-      throw new Error('Failed to create user account');
+    if (insertError) {
+      throw new Error(insertError.message);
     }
 
     return {
       success: true,
-      message: 'Employee account created successfully! Please check email for verification.',
-      user: authData.user
+      message: 'Employee account created successfully! The user will need to use "Forgot Password" to set their password and log in.',
+      user: { id: userRecord.id, email: userRecord.email }
     };
   } catch (error: any) {
     console.error('Error creating employee account:', error);
@@ -84,10 +83,85 @@ const [formData, setFormData] = useState<FormData>({
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const roleOptions = [
-  { value: 'employee', label: 'Employee '},
-  { value: 'stock-manager', label: 'Stock Manager ' },
-  { value: 'admin', label: 'Administrator' }
-];
+    { 
+      value: 'employee', 
+      label: 'Employee',
+      icon: <UserIcon size={16} />,
+      description: 'Basic user with limited access'
+    },
+    { 
+      value: 'stock-manager', 
+      label: 'Stock Manager',
+      icon: <UserCog size={16} />,
+      description: 'Can manage inventory and users'
+    },
+    { 
+      value: 'admin', 
+      label: 'Administrator',
+      icon: <Shield size={16} />,
+      description: 'Full system access and control'
+    }
+  ];
+
+  const statusOptions = [
+    { 
+      value: 'all', 
+      label: 'All Status',
+      icon: <Filter size={16} />,
+      description: 'Show all users'
+    },
+    { 
+      value: 'active', 
+      label: 'Active',
+      icon: <CheckCircle size={16} />,
+      description: 'Currently active users'
+    },
+    { 
+      value: 'inactive', 
+      label: 'Inactive',
+      icon: <XCircle size={16} />,
+      description: 'Deactivated users'
+    }
+  ];
+
+  const departmentOptions = [
+    { 
+      value: '', 
+      label: 'No Department',
+      icon: <Building2 size={16} />,
+      description: 'No specific department assigned'
+    },
+    { 
+      value: 'IT', 
+      label: 'Information Technology',
+      icon: <Building2 size={16} />,
+      description: 'IT department'
+    },
+    { 
+      value: 'HR', 
+      label: 'Human Resources',
+      icon: <Building2 size={16} />,
+      description: 'Human Resources department'
+    },
+    { 
+      value: 'Finance', 
+      label: 'Finance',
+      icon: <Building2 size={16} />,
+      description: 'Finance department'
+    },
+    { 
+      value: 'Operations', 
+      label: 'Operations',
+      icon: <Building2 size={16} />,
+      description: 'Operations department'
+    },
+    { 
+      value: 'Marketing', 
+      label: 'Marketing',
+      icon: <Building2 size={16} />,
+      description: 'Marketing department'
+    }
+  ];
 
 
   const filteredUsers = users.filter(user => {
@@ -158,9 +232,8 @@ const [formData, setFormData] = useState<FormData>({
       newErrors.email = 'Please enter a valid email address';
     }
     
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
+    // Password is optional since user will set it via "Forgot Password"
+    if (formData.password && formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
     
@@ -191,22 +264,32 @@ const [formData, setFormData] = useState<FormData>({
         throw new Error(result.message);
       }
 
-      const userId = result.user?.id;
-      const { error: insertError } = await supabase.from('users').insert({
-        id: userId,
+      // Add the new user to the context to update the UI immediately
+      const newUser: Omit<User, 'id' | 'createdat'> = {
         email: formData.email,
         name: formData.name,
-        role: formData.role,
-        department: formData.department || null,
+        role: formData.role as 'admin' | 'stock-manager' | 'employee',
+        department: formData.department || '',
         isactive: true,
-        createdat: new Date().toISOString(),
-        lastlogin: new Date().toISOString()
-      });
-  
-      if (insertError) throw insertError;
+        lastlogin: new Date()
+      };
+      
+      // Add user to context (this will trigger a re-render)
+      await addUser(newUser);
   
       toast.dismiss(loadingToast);
       CRUDToasts.created('employee account');
+      
+      // Close modal and reset form
+      setShowAddModal(false);
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'employee',
+        department: ''
+      });
+      setErrors({});
   
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -379,30 +462,35 @@ const handleUserUpdate = (user:any) => {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full py-3 pl-10 pr-4 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
             />
           </div>
 
-          <select
+          <AttractiveDropdown
+            options={[
+              { 
+                value: 'all', 
+                label: 'All Roles',
+                icon: <Filter size={16} />,
+                description: 'Show all user roles'
+              },
+              ...roleOptions
+            ]}
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="stock-manager">Stock Manager</option>
-            <option value="employee">Employee</option>
-          </select>
+            onChange={setFilterRole}
+            placeholder="Filter by role"
+            size="sm"
+            variant="bordered"
+          />
 
-          <select
+          <AttractiveDropdown
+            options={statusOptions}
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            onChange={setFilterStatus}
+            placeholder="Filter by status"
+            size="sm"
+            variant="bordered"
+          />
 
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-400" />
@@ -525,62 +613,81 @@ const handleUserUpdate = (user:any) => {
       >
         {/* Row 1 - Column 1 */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Name</label>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Name <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
             placeholder="e.g., Rohit Kumar"
           />
         </div>
 
         {/* Row 1 - Column 2 */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Email <span className="text-red-500">*</span>
+          </label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
             placeholder="rohit@ihubiitmandi.in"
           />
         </div>
 
         {/* Row 2 - Column 1 */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="password"
-          />
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Password <span className="text-gray-400">(Optional)</span>
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
+              placeholder="Leave empty - user will set password via 'Forgot Password'"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </div>
 
         {/* Row 2 - Column 2 */}
         <div>
-          <DepartmentDropdown
+          <AttractiveDropdown
             label="Department"
+            options={departmentOptions}
             value={formData.department}
             onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
             placeholder="Select department"
             size="sm"
             searchable
+            variant="bordered"
           />
         </div>
 
         {/* Row 3 - Role Dropdown */}
         <div className="md:col-span-2">
-          <RoleDropdown
+          <AttractiveDropdown
             label="Role"
+            options={roleOptions}
             value={formData.role}
             onChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
             placeholder="Select user role"
             required
             size="sm"
+            variant="bordered"
           />
         </div>
 
@@ -589,9 +696,24 @@ const handleUserUpdate = (user:any) => {
           <button
             type="button"
             onClick={() => {
-              setShowAddModal(false);
+              if (!isLoading) {
+                setShowAddModal(false);
+                setFormData({
+                  name: '',
+                  email: '',
+                  password: '',
+                  role: 'employee',
+                  department: ''
+                });
+                setErrors({});
+              }
             }}
-            className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100"
+            disabled={isLoading}
+            className={`flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg ${
+              isLoading 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-gray-100'
+            }`}
           >
             <X size={16} className="mr-1" />
             Cancel
@@ -599,10 +721,15 @@ const handleUserUpdate = (user:any) => {
 
           <button
             type="submit"
-            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+            disabled={isLoading}
+            className={`flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg ${
+              isLoading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
+            }`}
           >
             <Save size={16} className="mr-1" />
-         Add User
+            {isLoading ? 'Adding User...' : 'Add User'}
           </button>
         </div>
       </form>
@@ -637,25 +764,29 @@ const handleUserUpdate = (user:any) => {
 >
   {/* Row 1 - Column 1 */}
   <div>
-    <label className="block mb-1 text-sm font-medium text-gray-700">Name</label>
+    <label className="block mb-2 text-sm font-medium text-gray-700">
+      Name <span className="text-red-500">*</span>
+    </label>
     <input
       type="text"
       value={formData.name}
       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
       required
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
       placeholder="e.g., Rohit Kumar"
     />
   </div>
 
   {/* Row 1 - Column 2 */}
   <div>
-    <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+    <label className="block mb-2 text-sm font-medium text-gray-700">
+      Email <span className="text-red-500">*</span>
+    </label>
     <input
       type="email"
       value={formData.email}
       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
       placeholder="rohit@ihubiitmandi.in"
     />
   </div>
@@ -674,13 +805,29 @@ const handleUserUpdate = (user:any) => {
 
   {/* Row 2 - Column 2 */}
   <div>
-    <DepartmentDropdown
+    <AttractiveDropdown
       label="Department"
+      options={departmentOptions}
       value={formData.department}
       onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
       placeholder="Select department"
       size="sm"
       searchable
+      variant="bordered"
+    />
+  </div>
+
+  {/* Row 3 - Role Dropdown */}
+  <div className="md:col-span-2">
+    <AttractiveDropdown
+      label="Role"
+      options={roleOptions}
+      value={formData.role}
+      onChange={(value) => setFormData(prev => ({ ...prev, role: value }))}
+      placeholder="Select user role"
+      required
+      size="sm"
+      variant="bordered"
     />
   </div>
 

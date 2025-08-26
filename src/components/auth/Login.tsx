@@ -73,14 +73,18 @@ const Login: React.FC = () => {
         return;
       }
   
+      // Wait a moment for user creation to complete if needed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Safely parse user from localStorage
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const role = storedUser?.role;
   
       if (!role) {
+        console.error('User role not found in localStorage:', storedUser);
         toast.dismiss(loadingToast);
-        setError('User role not found. Please contact support.');
-        AuthToasts.loginError('User role not found');
+        setError('User role not found. Please try logging in again.');
+        AuthToasts.loginError('User role not found - please try again');
         return;
       }
   

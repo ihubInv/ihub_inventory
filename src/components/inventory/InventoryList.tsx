@@ -88,16 +88,28 @@ const InventoryList: React.FC = () => {
 
   // Chart image capture function
   const captureChartImage = async (chartRef: React.RefObject<any>): Promise<string | null> => {
-    if (!chartRef.current) return null;
+    if (!chartRef.current) {
+      console.warn('Chart ref is null');
+      return null;
+    }
     
     try {
+      // Wait a bit for the chart to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const canvas = await html2canvas(chartRef.current, {
         backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        logging: false,
+        width: chartRef.current.offsetWidth,
+        height: chartRef.current.offsetHeight
       });
-      return canvas.toDataURL('image/png');
+      
+      const dataURL = canvas.toDataURL('image/png', 1.0);
+      console.log('Chart captured successfully, size:', dataURL.length);
+      return dataURL;
     } catch (error) {
       console.error('Error capturing chart:', error);
       return null;
@@ -503,7 +515,7 @@ const InventoryList: React.FC = () => {
               name: "Segoe UI"
             },
             fill: { 
-              fgColor: { rgb: "2E7D32" }, // Green color matching the theme
+              fgColor: { rgb: "1976D2" }, // Blue color
               patternType: "solid"
             },
             alignment: { 
@@ -512,10 +524,10 @@ const InventoryList: React.FC = () => {
               wrapText: true
             },
             border: {
-              top: { style: "medium", color: { rgb: "1B5E20" } },
-              bottom: { style: "medium", color: { rgb: "1B5E20" } },
-              left: { style: "medium", color: { rgb: "1B5E20" } },
-              right: { style: "medium", color: { rgb: "1B5E20" } }
+              top: { style: "medium", color: { rgb: "1565C0" } },
+              bottom: { style: "medium", color: { rgb: "1565C0" } },
+              left: { style: "medium", color: { rgb: "1565C0" } },
+              right: { style: "medium", color: { rgb: "1565C0" } }
             }
           };
         }
@@ -773,14 +785,14 @@ const InventoryList: React.FC = () => {
       headerRow.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF2E7D32' }
+        fgColor: { argb: 'FF1976D2' } // Blue color instead of green
       };
       headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
       headerRow.border = {
-        top: { style: 'medium', color: { argb: 'FF1B5E20' } },
-        left: { style: 'medium', color: { argb: 'FF1B5E20' } },
-        bottom: { style: 'medium', color: { argb: 'FF1B5E20' } },
-        right: { style: 'medium', color: { argb: 'FF1B5E20' } }
+        top: { style: 'medium', color: { argb: 'FF1565C0' } },
+        left: { style: 'medium', color: { argb: 'FF1565C0' } },
+        bottom: { style: 'medium', color: { argb: 'FF1565C0' } },
+        right: { style: 'medium', color: { argb: 'FF1565C0' } }
       };
 
       // Add data rows with alternating colors
@@ -835,18 +847,18 @@ const InventoryList: React.FC = () => {
         
         // Add title
         const titleRow = chartsWorksheet.addRow(['📊 INVENTORY ANALYSIS CHARTS']);
-        titleRow.font = { bold: true, size: 18, color: { argb: 'FF2E7D32' }, name: 'Segoe UI' };
+        titleRow.font = { bold: true, size: 18, color: { argb: 'FFFFFFFF' }, name: 'Segoe UI' };
         titleRow.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: 'FFE8F5E8' }
+          fgColor: { argb: 'FF1976D2' } // Blue color instead of green
         };
         titleRow.alignment = { horizontal: 'center', vertical: 'middle' };
         titleRow.border = {
-          top: { style: 'medium', color: { argb: 'FF2E7D32' } },
-          left: { style: 'medium', color: { argb: 'FF2E7D32' } },
-          bottom: { style: 'medium', color: { argb: 'FF2E7D32' } },
-          right: { style: 'medium', color: { argb: 'FF2E7D32' } }
+          top: { style: 'medium', color: { argb: 'FF1565C0' } },
+          left: { style: 'medium', color: { argb: 'FF1565C0' } },
+          bottom: { style: 'medium', color: { argb: 'FF1565C0' } },
+          right: { style: 'medium', color: { argb: 'FF1565C0' } }
         };
         chartsWorksheet.mergeCells('A1:D1');
 
@@ -858,6 +870,10 @@ const InventoryList: React.FC = () => {
 
         // Try to capture and embed chart images
         try {
+          // Add some spacing before charts
+          chartsWorksheet.addRow(['']);
+          chartsWorksheet.addRow(['']);
+
           // Capture condition chart
           const conditionChartImage = await captureChartImage(conditionChartRef);
           if (conditionChartImage) {
@@ -883,20 +899,22 @@ const InventoryList: React.FC = () => {
                 extension: 'png',
               });
               
-              // Position the image
+              // Position the image at current row
+              const currentRow = chartsWorksheet.rowCount;
               chartsWorksheet.addImage(imageId, {
-                tl: { col: 0, row: chartsWorksheet.rowCount - 1 },
+                tl: { col: 0, row: currentRow },
                 ext: { width: 600, height: 400 }
               });
               
-              // Add some rows to make space for the image
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
+              // Add rows to make space for the image (each row is about 20px)
+              for (let i = 0; i < 20; i++) {
+                chartsWorksheet.addRow(['']);
+              }
+              
+              console.log('Condition chart embedded successfully');
             } catch (imageError) {
               console.warn('Failed to embed condition chart image:', imageError);
+              chartsWorksheet.addRow(['Chart image could not be embedded']);
             }
 
             // Add condition data
@@ -913,7 +931,16 @@ const InventoryList: React.FC = () => {
             chartsWorksheet.addRow(['Fair: ' + conditionData.fair]);
             chartsWorksheet.addRow(['Poor: ' + conditionData.poor]);
             chartsWorksheet.addRow(['']);
+          } else {
+            console.warn('Condition chart image not captured');
+            chartsWorksheet.addRow(['📈 ASSET CONDITION DISTRIBUTION']);
+            chartsWorksheet.addRow(['Chart could not be captured']);
+            chartsWorksheet.addRow(['']);
           }
+
+          // Add spacing between charts
+          chartsWorksheet.addRow(['']);
+          chartsWorksheet.addRow(['']);
 
           // Capture category chart
           const categoryChartImage = await captureChartImage(categoryChartRef);
@@ -940,20 +967,22 @@ const InventoryList: React.FC = () => {
                 extension: 'png',
               });
               
-              // Position the image
+              // Position the image at current row
+              const currentRow = chartsWorksheet.rowCount;
               chartsWorksheet.addImage(imageId, {
-                tl: { col: 0, row: chartsWorksheet.rowCount - 1 },
+                tl: { col: 0, row: currentRow },
                 ext: { width: 600, height: 400 }
               });
               
-              // Add some rows to make space for the image
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
-              chartsWorksheet.addRow(['']);
+              // Add rows to make space for the image
+              for (let i = 0; i < 20; i++) {
+                chartsWorksheet.addRow(['']);
+              }
+              
+              console.log('Category chart embedded successfully');
             } catch (imageError) {
               console.warn('Failed to embed category chart image:', imageError);
+              chartsWorksheet.addRow(['Chart image could not be embedded']);
             }
 
             // Add category data
@@ -967,9 +996,15 @@ const InventoryList: React.FC = () => {
               chartsWorksheet.addRow([category + ': ' + count]);
             });
             chartsWorksheet.addRow(['']);
+          } else {
+            console.warn('Category chart image not captured');
+            chartsWorksheet.addRow(['📊 CATEGORY DISTRIBUTION']);
+            chartsWorksheet.addRow(['Chart could not be captured']);
+            chartsWorksheet.addRow(['']);
           }
         } catch (chartError) {
           console.warn('Chart capture failed:', chartError);
+          chartsWorksheet.addRow(['Chart capture failed: ' + chartError.message]);
         }
 
         // Add summary statistics

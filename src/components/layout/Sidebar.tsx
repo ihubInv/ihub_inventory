@@ -93,8 +93,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div className={`hidden lg:flex bg-white shadow-lg flex-col h-full fixed left-0 top-0 z-30 transition-all duration-300 ${
+      {/* Enhanced Desktop Sidebar */}
+      <div className={`hidden lg:flex bg-white/95 backdrop-blur-lg shadow-2xl flex-col h-full fixed left-0 top-0 z-30 transition-all duration-300 ${
         collapsed ? 'w-20' : 'w-64'
       }`}>
       
@@ -104,15 +104,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         collapsed ? 'px-2' : 'px-6'
       }`}
     >
-      {/* Logo + Title (Clickable) */}
+      {/* Enhanced Logo + Title */}
       <div className="flex items-center space-x-3">
-        <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 rounded-xl">
-          <span className="text-lg font-bold text-white">IM</span>
+        <div className="relative">
+          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 rounded-2xl shadow-lg transition-all duration-200 hover:scale-105">
+            <span className="text-lg font-bold text-white">I</span>
+          </div>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
         </div>
         {!collapsed && (
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Inventory</h1>
-            <p className="-mt-1 text-sm text-gray-500">Management</p>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Inventory</h1>
+            <p className="-mt-1 text-sm text-gray-500 font-medium">Management</p>
           </div>
         )}
       </div>

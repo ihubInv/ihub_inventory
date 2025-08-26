@@ -17,10 +17,15 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Activity,
+  BarChart3,
+  PieChart,
+  LineChart
 } from 'lucide-react';
 import StatsCard from '../common/StatsCard';
 import RecentActivity from '../common/RecentActivity';
+import AttractiveLoader from '../common/AttractiveLoader';
 import { useNavigate } from 'react-router-dom';
 
 const DashboardHome: React.FC = () => {
@@ -188,64 +193,111 @@ const DashboardHome: React.FC = () => {
 
   // Show loading state while data is being fetched
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard data...</p>
-        </div>
-      </div>
-    );
+    return <AttractiveLoader message="Loading dashboard data..." variant="fullscreen" />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition-all duration-200 transform border border-transparent shadow-lg p-8flex bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 rounded-2xl">
-
-        <h1 className="mb-2 text-3xl font-bold">
-          {getGreeting()}, {user?.name}!
-        </h1>
-        <p className="text-lg text-blue-100">
-          Welcome to your {user?.role.replace('-', ' ')} dashboard. Here's an overview of your inventory system.
-        </p>
+    <div className="space-y-8 animate-fadeIn">
+      {/* Enhanced Welcome Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-3xl shadow-2xl">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-white opacity-10 rounded-full -translate-x-36 -translate-y-36 animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white opacity-5 rounded-full translate-x-48 translate-y-48 animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-32 -translate-y-32 animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+        
+        <div className="relative z-10 p-8 md:p-12">
+          <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-white bg-opacity-20 rounded-2xl backdrop-blur-sm">
+                  <Activity className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 animate-slideInLeft">
+                    {getGreeting()}, {user?.name}!
+                  </h1>
+                  <p className="text-xl text-blue-100 animate-slideInLeft" style={{ animationDelay: '0.2s' }}>
+                    Welcome to your {user?.role.replace('-', ' ')} dashboard
+                  </p>
+                </div>
+              </div>
+              <p className="text-lg text-blue-100 max-w-2xl animate-slideInLeft" style={{ animationDelay: '0.4s' }}>
+                Here's a comprehensive overview of your inventory system with real-time analytics and insights.
+              </p>
+            </div>
+            
+            {/* Quick Stats Preview */}
+            <div className="hidden lg:flex space-x-4 animate-slideInRight" style={{ animationDelay: '0.6s' }}>
+              <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
+                <div className="text-2xl font-bold text-white">{stats.totalitems}</div>
+                <div className="text-sm text-blue-100">Total Items</div>
+              </div>
+              <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
+                <div className="text-2xl font-bold text-white">{stats.availableitems}</div>
+                <div className="text-sm text-blue-100">Available</div>
+              </div>
+              <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
+                <div className="text-2xl font-bold text-white">{stats.pendingrequests}</div>
+                <div className="text-sm text-blue-100">Pending</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
-        <StatsCard
-          title="Total Inventory"
-          value={stats.totalitems}
-          icon={Package}
-          color="blue"
-          trend={{ value: 12, direction: 'up' }}
-        />
-        
-        <StatsCard
-          title="Available Items"
-          value={stats.availableitems}
-          icon={CheckCircle}
-          color="green"
-          trend={{ value: 5, direction: 'up' }}
-        />
-        
-        <StatsCard
-          title="Pending Requests"
-          value={stats.pendingrequests}
-          icon={Clock}
-          color="yellow"
-          trend={{ value: 2, direction: 'down' }}
-        />
-        
-        {stats.lowstockitems > 0 && (
+      {/* Enhanced Stats Grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="animate-slideInUp" style={{ animationDelay: '0.1s' }}>
           <StatsCard
-            title="Low Stock Alert"
-            value={stats.lowstockitems}
-            icon={AlertTriangle}
-            color="red"
-            trend={{ value: 1, direction: 'up' }}
+            title="Total Inventory"
+            value={stats.totalitems}
+            icon={Package}
+            color="blue"
+            trend={{ value: Math.round((stats.totalitems / Math.max(stats.totalitems - 10, 1)) * 100 - 100), direction: 'up' }}
           />
-        )}
+        </div>
+        
+        <div className="animate-slideInUp" style={{ animationDelay: '0.2s' }}>
+          <StatsCard
+            title="Available Items"
+            value={stats.availableitems}
+            icon={CheckCircle}
+            color="green"
+            trend={{ value: Math.round((stats.availableitems / Math.max(stats.totalitems, 1)) * 100), direction: 'up' }}
+          />
+        </div>
+        
+        <div className="animate-slideInUp" style={{ animationDelay: '0.3s' }}>
+          <StatsCard
+            title="Pending Requests"
+            value={stats.pendingrequests}
+            icon={Clock}
+            color="yellow"
+            trend={{ value: stats.pendingrequests > 0 ? 100 : 0, direction: stats.pendingrequests > 0 ? 'up' : 'down' }}
+          />
+        </div>
+        
+        <div className="animate-slideInUp" style={{ animationDelay: '0.4s' }}>
+          {stats.lowstockitems > 0 ? (
+            <StatsCard
+              title="Low Stock Alert"
+              value={stats.lowstockitems}
+              icon={AlertTriangle}
+              color="red"
+              trend={{ value: 100, direction: 'up' }}
+            />
+          ) : (
+            <StatsCard
+              title="Stock Status"
+              value="All Good"
+              icon={CheckCircle}
+              color="green"
+              trend={{ value: 0, direction: 'down' }}
+            />
+          )}
+        </div>
 
         {(isAdmin || isStockManager) && (
           <>
@@ -286,15 +338,23 @@ const DashboardHome: React.FC = () => {
         )}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {/* Enhanced Charts Section */}
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
         {/* Inventory Trend Chart */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Inventory Trends</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Last 6 months</span>
+        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.5s' }}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                <LineChart className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Inventory Trends</h3>
+                <p className="text-sm text-gray-500">Growth over time</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-blue-700">Last 6 months</span>
             </div>
           </div>
           <div className="h-80">
@@ -313,12 +373,20 @@ const DashboardHome: React.FC = () => {
         </div>
 
         {/* Request Status Chart */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Request Status</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"></div>
-              <span className="text-sm text-gray-600">Current period</span>
+        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
+                <PieChart className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Request Status</h3>
+                <p className="text-sm text-gray-500">Current distribution</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-orange-50 rounded-full">
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-orange-700">Current period</span>
             </div>
           </div>
           <div className="h-80">
@@ -328,12 +396,20 @@ const DashboardHome: React.FC = () => {
       </div>
 
       {/* Additional Charts Row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3">
         {/* Category Distribution */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Category Distribution</h3>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
+        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.7s' }}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Category Distribution</h3>
+                <p className="text-sm text-gray-500">By asset type</p>
+              </div>
+            </div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 animate-pulse"></div>
           </div>
           <div className="h-64">
             {categoryData.categories.length > 0 ? (

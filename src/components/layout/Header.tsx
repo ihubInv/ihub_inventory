@@ -95,27 +95,32 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
   return (
     <>
-      {/* Main Header */}
-      <div className="relative flex items-center justify-between w-full px-3 py-3 bg-white shadow-lg sm:px-4 lg:px-6 border-b border-gray-200">
+      {/* Enhanced Main Header */}
+      <div className="relative flex items-center justify-between w-full px-4 py-4 bg-white/90 backdrop-blur-lg shadow-xl sm:px-6 lg:px-8 border-b border-gray-200/50">
         
         {/* Left Section - Mobile Menu & Logo */}
-        <div className="flex items-center space-x-3">
-          {/* Mobile Menu Button */}
+        <div className="flex items-center space-x-4">
+          {/* Enhanced Mobile Menu Button */}
           <button
-            className="p-2 text-gray-600 transition-colors rounded-lg md:hidden hover:text-blue-600 hover:bg-blue-50"
+            className="p-3 text-gray-600 transition-all duration-200 rounded-xl md:hidden hover:text-blue-600 hover:bg-blue-50 hover:scale-105"
             onClick={onMobileToggle}
           >
             <Menu size={20} />
           </button>
 
-          {/* Logo & Title - Hidden on mobile when sidebar is open */}
-          <div className={`flex items-center space-x-3 ${mobileOpen ? 'hidden' : 'flex'} md:flex`}>
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 sm:w-10 sm:h-10">
-              <span className="text-sm font-bold text-white sm:text-lg">IM</span>
+          {/* Enhanced Logo & Title */}
+          <div className={`flex items-center space-x-4 ${mobileOpen ? 'hidden' : 'flex'} md:flex`}>
+            <div className="relative">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:w-12 sm:h-12">
+                <span className="text-lg font-bold text-white sm:text-xl">I</span>
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse sm:w-4 sm:h-4"></div>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-gray-900 lg:text-xl">iHub Inventory</h1>
-              <p className="text-xs text-gray-500 lg:text-sm">Management System</p>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent lg:text-2xl">
+                iHub Inventory
+              </h1>
+              <p className="text-sm text-gray-500 font-medium">Management System</p>
             </div>
           </div>
         </div>

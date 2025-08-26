@@ -51,12 +51,51 @@ const DashboardHome: React.FC = () => {
   const isAdmin = user?.role === 'admin';
   const isStockManager = user?.role === 'stock-manager';
 
-  // Mock chart data - in real app, this would come from API
-  const inventoryTrendData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    totalitems: [120, 135, 142, 158, 165, 172],
-    availableitems: [95, 108, 115, 125, 132, 138],
+  // Generate dynamic chart data from actual inventory data
+  const generateInventoryTrendData = () => {
+    const last6Months = [];
+    const currentDate = new Date();
+    
+    // Generate last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      last6Months.push(date.toLocaleDateString('en-US', { month: 'short' }));
+    }
+    
+    // Calculate cumulative inventory data for each month
+    const totalItemsData = [];
+    const availableItemsData = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const cutoffDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      
+      // Count items created up to this month
+      const totalItems = inventoryItems.filter(item => 
+        item.createdat && new Date(item.createdat) <= cutoffDate
+      ).length;
+      
+      // Count available items up to this month
+      const availableItems = inventoryItems.filter(item => 
+        item.createdat && 
+        new Date(item.createdat) <= cutoffDate && 
+        item.status === 'available'
+      ).length;
+      
+      totalItemsData.push(totalItems);
+      availableItemsData.push(availableItems);
+    }
+    
+    return {
+      labels: last6Months,
+      totalItems: totalItemsData,
+      availableItems: availableItemsData,
+    };
   };
+
+  const inventoryTrendData = generateInventoryTrendData();
+  
+  // Add fallback data if no inventory items exist
+  const hasInventoryData = inventoryItems.length > 0;
 
   const requestStatusData = {
     pending: stats.pendingrequests,
@@ -64,10 +103,25 @@ const DashboardHome: React.FC = () => {
     rejected: stats.rejectedrequests,
   };
 
-  const categoryData = {
-    categories: ['Electronics', 'Furniture', 'Software', 'Office Supplies', 'Equipment'],
-    counts: [45, 32, 18, 28, 15],
+  // Generate dynamic category data from actual inventory
+  const generateCategoryData = () => {
+    const categoryCounts: { [key: string]: number } = {};
+    
+    inventoryItems.forEach(item => {
+      const category = item.assetcategory || 'Uncategorized';
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+    
+    const categories = Object.keys(categoryCounts);
+    const counts = Object.values(categoryCounts);
+    
+    return {
+      categories,
+      counts,
+    };
   };
+
+  const categoryData = generateCategoryData();
 
   const assetConditionData = {
     excellent: inventoryItems.filter(item => item.conditionofasset === 'excellent').length,
@@ -77,11 +131,50 @@ const DashboardHome: React.FC = () => {
     damaged: inventoryItems.filter(item => item.conditionofasset === 'damaged').length,
   };
 
-  const monthlyActivityData = {
-    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    itemsAdded: [12, 18, 8, 22, 15, 25],
-    requestsSubmitted: [8, 12, 15, 10, 18, 14],
+  // Generate dynamic monthly activity data from actual data
+  const generateMonthlyActivityData = () => {
+    const last6Months = [];
+    const currentDate = new Date();
+    
+    // Generate last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      last6Months.push(date.toLocaleDateString('en-US', { month: 'short' }));
+    }
+    
+    const itemsAdded = [];
+    const requestsSubmitted = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+      
+      // Count items added in this month
+      const itemsInMonth = inventoryItems.filter(item => {
+        if (!item.createdat) return false;
+        const itemDate = new Date(item.createdat);
+        return itemDate >= startDate && itemDate <= endDate;
+      }).length;
+      
+      // Count requests submitted in this month
+      const requestsInMonth = requests.filter(request => {
+        if (!request.submittedat) return false;
+        const requestDate = new Date(request.submittedat);
+        return requestDate >= startDate && requestDate <= endDate;
+      }).length;
+      
+      itemsAdded.push(itemsInMonth);
+      requestsSubmitted.push(requestsInMonth);
+    }
+    
+    return {
+      months: last6Months,
+      itemsAdded,
+      requestsSubmitted,
+    };
   };
+
+  const monthlyActivityData = generateMonthlyActivityData();
 
 
   const handleNavigateAddInventory=()=>{
@@ -205,7 +298,17 @@ const DashboardHome: React.FC = () => {
             </div>
           </div>
           <div className="h-80">
-            <InventoryTrendChart data={inventoryTrendData} />
+            {hasInventoryData ? (
+              <InventoryTrendChart data={inventoryTrendData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-500">No inventory data available</p>
+                  <p className="text-sm text-gray-400">Add some inventory items to see trends</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -233,7 +336,17 @@ const DashboardHome: React.FC = () => {
             <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
           </div>
           <div className="h-64">
-            <CategoryDistributionChart data={categoryData} />
+            {categoryData.categories.length > 0 ? (
+              <CategoryDistributionChart data={categoryData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-500">No categories found</p>
+                  <p className="text-sm text-gray-400">Add inventory items to see distribution</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -244,7 +357,17 @@ const DashboardHome: React.FC = () => {
             <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
           </div>
           <div className="h-64">
-            <AssetConditionChart data={assetConditionData} />
+            {hasInventoryData ? (
+              <AssetConditionChart data={assetConditionData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-500">No asset data available</p>
+                  <p className="text-sm text-gray-400">Add inventory items to see conditions</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -255,7 +378,17 @@ const DashboardHome: React.FC = () => {
             <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-400 to-red-500"></div>
           </div>
           <div className="h-64">
-            <MonthlyActivityChart data={monthlyActivityData} />
+            {(hasInventoryData || requests.length > 0) ? (
+              <MonthlyActivityChart data={monthlyActivityData} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-500">No activity data available</p>
+                  <p className="text-sm text-gray-400">Add inventory items or requests to see activity</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -13,6 +13,20 @@ import { User } from '../../types';
 // Function to create employee account in Supabase Auth
 const createEmployeeAccount = async (userData: FormData) => {
   try {
+    // First, check if user already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', userData.email)
+      .maybeSingle();
+
+    if (existingUser) {
+      return {
+        success: false,
+        message: 'An account with this email already exists.'
+      };
+    }
+
     // Create user record directly in users table (without auth signup)
     // This approach avoids all session conflicts
     const { data: userRecord, error: insertError } = await supabase
@@ -30,6 +44,16 @@ const createEmployeeAccount = async (userData: FormData) => {
       .single();
 
     if (insertError) {
+      console.error('Insert error:', insertError);
+      
+      // Handle specific error cases
+      if (insertError.code === '23505') {
+        return {
+          success: false,
+          message: 'An account with this email already exists.'
+        };
+      }
+      
       throw new Error(insertError.message);
     }
 
@@ -255,9 +279,18 @@ const [formData, setFormData] = useState<FormData>({
   
     if (!validateForm()) return;
     setIsLoading(true);
+    
+    let loadingToast: string | undefined;
   
     try {
-      const loadingToast = CRUDToasts.creating('employee account');
+      loadingToast = CRUDToasts.creating('employee account');
+      
+      // Check if user already exists in the current users list
+      const existingUser = users.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
+      if (existingUser) {
+        throw new Error('An account with this email already exists.');
+      }
+      
       const result = await createEmployeeAccount(formData);
       
       if (!result.success) {
@@ -293,8 +326,17 @@ const [formData, setFormData] = useState<FormData>({
   
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.dismiss(loadingToast);
-      CRUDToasts.createError('employee account', error.message || 'An unexpected error occurred');
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+      }
+      
+      // Provide more specific error messages
+      let errorMessage = error.message || 'An unexpected error occurred';
+      if (error.message?.includes('duplicate key') || error.message?.includes('already exists')) {
+        errorMessage = 'An account with this email already exists.';
+      }
+      
+      CRUDToasts.createError('employee account', errorMessage);
     } finally {
       setIsLoading(false);
     }

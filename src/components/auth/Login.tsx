@@ -18,7 +18,7 @@ const Login: React.FC = () => {
 
   const demoAccounts = [
     { email: 'rohit@ihubiitmandi.in', role: 'admin', password: 'rohit@' },
-    { email: 'rksaklani90@gmail.com', role: 'stock-manager', password: 'rksaklani90@' },
+    { email: 'printi@ihubiitmandi.in', role: 'stock-manager', password: 'printi@' },
     { email: 'rksaklani9090@gmail.com', role: 'employee', password: 'rksaklani9090@' },
   ];
 

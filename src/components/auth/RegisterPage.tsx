@@ -85,14 +85,14 @@ const RegisterPage: React.FC = () => {
     }
 
     // Check email domain
-    // const allowedDomain = "@ihubiitmandi.in";
-    // if (!formData.email.endsWith(allowedDomain)) {
-    //   toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
-    //     position: 'top-right',
-    //     autoClose: 5000,
-    //   });
-    //   return;
-    // }
+    const allowedDomain = "@ihubiitmandi.in";
+    if (!formData.email.endsWith(allowedDomain)) {
+      toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
+      return;
+    }
 
     setIsLoading(true);
 
@@ -102,7 +102,7 @@ const RegisterPage: React.FC = () => {
         .from('users')
         .select('email')
         .eq('email', formData.email)
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         toast.error('An account with this email already exists.');

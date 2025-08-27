@@ -31,7 +31,8 @@ export const createAttractiveExcelFile = async (
   includeCharts: boolean = false,
   showCharts: boolean = false,
   primaryChartRef?: React.RefObject<any>,
-  secondaryChartRef?: React.RefObject<any>
+  secondaryChartRef?: React.RefObject<any>,
+  inventoryData?: any[] // Add inventory data parameter
 ) => {
   const workbook = new ExcelJS.Workbook();
   
@@ -41,7 +42,130 @@ export const createAttractiveExcelFile = async (
   workbook.created = new Date();
   workbook.modified = new Date();
   
-  // Main worksheet
+  // Add complete inventory data sheet if provided
+  if (inventoryData && inventoryData.length > 0) {
+    const inventorySheet = workbook.addWorksheet('Complete Inventory Data', {
+      pageSetup: { 
+        paperSize: 9, 
+        orientation: 'landscape',
+        margins: { left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
+      }
+    });
+
+    // Add title
+    const titleCell = inventorySheet.getCell('A1');
+    titleCell.value = '📊 COMPLETE INVENTORY DATA';
+    titleCell.font = { 
+      name: 'Segoe UI', 
+      size: 18, 
+      bold: true, 
+      color: { argb: 'FF2563EB' } 
+    };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    inventorySheet.mergeCells('A1:Z1');
+    
+    // Add background color to title
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF1F5F9' }
+    };
+    titleCell.border = {
+      top: { style: 'thick', color: { argb: 'FF2563EB' } },
+      bottom: { style: 'thick', color: { argb: 'FF2563EB' } },
+      left: { style: 'thick', color: { argb: 'FF2563EB' } },
+      right: { style: 'thick', color: { argb: 'FF2563EB' } }
+    };
+
+    // Add metadata
+    inventorySheet.getCell('A3').value = 'Generated on:';
+    inventorySheet.getCell('B3').value = new Date().toLocaleString();
+    inventorySheet.getCell('A4').value = 'Total Items:';
+    inventorySheet.getCell('B4').value = inventoryData.length;
+
+    // Get all unique field names from inventory data
+    const allFields = new Set<string>();
+    inventoryData.forEach(item => {
+      Object.keys(item).forEach(key => allFields.add(key));
+    });
+    
+    const fieldNames = Array.from(allFields);
+    const headers = fieldNames.map(field => {
+      // Convert field names to readable format
+      return field.replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+    });
+
+    // Add headers
+    const headerRow = inventorySheet.addRow(headers);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12, name: 'Segoe UI' };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1976D2' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    headerRow.border = {
+      top: { style: 'medium', color: { argb: 'FF1565C0' } },
+      left: { style: 'medium', color: { argb: 'FF1565C0' } },
+      bottom: { style: 'medium', color: { argb: 'FF1565C0' } },
+      right: { style: 'medium', color: { argb: 'FF1565C0' } }
+    };
+
+    // Add data rows with alternating colors
+    inventoryData.forEach((item, index) => {
+      const rowData = fieldNames.map(field => {
+        const value = item[field];
+        if (value instanceof Date) {
+          return value.toLocaleDateString();
+        }
+        return value || '';
+      });
+      
+      const row = inventorySheet.addRow(rowData);
+      
+      // Alternate row colors
+      if (index % 2 === 0) {
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF8F9FA' }
+        };
+      }
+      
+      // Style numeric columns
+      fieldNames.forEach((field, colIndex) => {
+        const cell = row.getCell(colIndex + 1);
+        if (['quantityperitem', 'rateinclusivetax', 'totalcost', 'balancequantityinstock', 'minimumstocklevel', 'salvagevalue'].includes(field)) {
+          cell.numFmt = '#,##0.00';
+          cell.alignment = { horizontal: 'right' };
+        }
+      });
+    });
+
+    // Set column widths
+    fieldNames.forEach((field, index) => {
+      const column = inventorySheet.getColumn(index + 1);
+      const headerLength = headers[index].length;
+      column.width = Math.max(headerLength + 5, 15);
+      column.alignment = { vertical: 'middle' };
+    });
+
+    // Add borders to all cells
+    inventorySheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+          left: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+          right: { style: 'thin', color: { argb: 'FFE0E0E0' } }
+        };
+      });
+    });
+  }
+  
+  // Main worksheet (Pivot Analysis)
   const worksheet = workbook.addWorksheet('Pivot Analysis', {
     pageSetup: { 
       paperSize: 9, 

@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
-import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square, FileSpreadsheet, FileText, Image, Sliders, RotateCcw } from 'lucide-react';
+import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square, FileSpreadsheet, FileText, Image, Sliders, RotateCcw, ChevronDown } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { createAttractiveExcelFile, createAttractiveCSV } from '../../utils/enhancedExport';
+import { 
+  exportInventoryToExcel, 
+  exportInventoryToCSV, 
+  exportDataOnly,
+  exportWithCharts,
+  debugChartExport,
+  getAvailableFields,
+  ExportOptions 
+} from '../../utils/inventoryExport';
 import html2canvas from 'html2canvas';
 import ViewInventory from './ViewInventory';
 import UpdateInventory from './UpdateInventory';
@@ -1060,6 +1069,127 @@ const InventoryList: React.FC = () => {
     }
   };
 
+  // Simplified export functions - same as pivot tab
+  const exportDataOnlyExcel = async () => {
+    setIsExporting(true);
+    try {
+      const loadingToast = toast.loading('Exporting data only...');
+      
+      await exportDataOnly();
+      
+      toast.dismiss(loadingToast);
+      toast.success('Data-only Excel exported successfully!');
+    } catch (error) {
+      console.error('Data-only export error:', error);
+      toast.error('Failed to export data-only Excel');
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const exportChartsExcel = async () => {
+    setIsExporting(true);
+    try {
+      const loadingToast = toast.loading('Exporting with chart data...');
+      
+      // Create pivot-like data structure for enhanced export
+      const pivotData = {
+        rows: [...new Set(inventoryItems.map(item => item.assetcategory))],
+        columns: [...new Set(inventoryItems.map(item => item.status))],
+        data: {}
+      };
+
+      // Populate pivot data
+      pivotData.rows.forEach(row => {
+        pivotData.data[row] = {};
+        pivotData.columns.forEach(col => {
+          const count = inventoryItems.filter(item => 
+            item.assetcategory === row && item.status === col
+          ).length;
+          pivotData.data[row][col] = count;
+        });
+      });
+
+      const pivotConfig = {
+        rows: ['assetcategory'],
+        columns: ['status'],
+        values: 'balancequantityinstock',
+        aggregation: 'count' as const
+      };
+
+      const availableFields = [
+        { value: 'assetcategory', label: 'Asset Category' },
+        { value: 'status', label: 'Status' },
+        { value: 'conditionofasset', label: 'Condition' },
+        { value: 'locationofitem', label: 'Location' }
+      ];
+
+      const valueFields = [
+        { value: 'balancequantityinstock', label: 'Quantity in Stock' },
+        { value: 'totalcost', label: 'Total Cost' }
+      ];
+
+      const workbook = await createAttractiveExcelFile(
+        pivotData,
+        pivotConfig,
+        availableFields,
+        valueFields,
+        'bar',
+        true, // includeCharts
+        true, // showCharts
+        undefined, // primaryChartRef
+        undefined, // secondaryChartRef
+        inventoryItems // Pass complete inventory data
+      );
+      
+      // Generate and download file
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `inventory-analysis-with-chart-data-${timestamp}.xlsx`;
+      link.download = filename;
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.dismiss(loadingToast);
+      toast.success('Excel with chart data exported successfully!');
+    } catch (error) {
+      console.error('Chart data export error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export Excel with chart data';
+      toast.error(errorMessage);
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
+  const debugCharts = async () => {
+    setIsExporting(true);
+    try {
+      const loadingToast = toast.loading('Testing chart creation...');
+      
+      await debugChartExport();
+      
+      toast.dismiss(loadingToast);
+      toast.success('Debug chart test completed! Check console for details.');
+    } catch (error) {
+      console.error('Debug chart error:', error);
+      toast.error('Debug chart test failed. Check console for details.');
+    } finally {
+      setIsExporting(false);
+      setShowExportMenu(false);
+    }
+  };
+
   const toggleFieldSelection = (field: string) => {
     setExportFilters(prev => ({
       ...prev,
@@ -1155,119 +1285,96 @@ const InventoryList: React.FC = () => {
               >
                 <Download size={16} />
                 <span>{isExporting ? 'Exporting...' : 'Export'}</span>
+                <ChevronDown 
+                  size={16} 
+                  className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} 
+                />
               </button>
               
               {showExportMenu && (
-                <div className="absolute right-0 z-50 mt-2 duration-200 bg-white border border-gray-100 shadow-2xl w-80 rounded-2xl animate-in slide-in-from-top-2">
-                  <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-teal-50 rounded-t-2xl">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-teal-600">
-                        <Download className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900">Export Options</h3>
-                        <p className="text-xs text-gray-600">Choose export format and options</p>
-                      </div>
-                    </div>
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+                  <div className="p-3 border-b border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-900">Export Options</h3>
+                    <p className="text-xs text-gray-600 mt-1">Choose format and content</p>
                   </div>
                   
-                  <div className="p-4 space-y-4">
-                    {/* Field Selection */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Sliders className="w-4 h-4 text-green-600" />
-                          <label className="text-sm font-semibold text-gray-800">Select Fields</label>
-                        </div>
-                        <button
-                          onClick={() => setShowExportFilters(!showExportFilters)}
-                          className="px-2 py-1 text-xs font-medium text-green-600 transition-colors bg-green-100 rounded-lg hover:bg-green-200"
-                        >
-                          {showExportFilters ? 'Hide' : 'Customize'}
-                        </button>
-                      </div>
+                  <div className="p-3 space-y-3">
+                    {/* Excel Export Options */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-700 flex items-center">
+                        <FileSpreadsheet className="w-3 h-3 mr-1" />
+                        Excel Export
+                      </h4>
                       
-                      {showExportFilters && (
-                        <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
-                          <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-32">
-                            {Object.entries(fieldMapping).map(([field, label]) => (
-                              <label key={field} className="flex items-center space-x-2 text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={exportFilters.includeFields.includes(field)}
-                                  onChange={() => toggleFieldSelection(field)}
-                                  className="text-green-600 border-gray-300 rounded focus:ring-green-500"
-                                />
-                                <span className="text-gray-700">{label}</span>
-                              </label>
-                            ))}
-                          </div>
+                      <button
+                        onClick={exportDataOnlyExcel}
+                        disabled={isExporting}
+                        className="w-full flex items-center justify-between p-2 text-left text-sm border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                          <span>Data Only</span>
                         </div>
-                      )}
+                        <span className="text-xs text-gray-500">Clean</span>
+                      </button>
+                      
+                      <button
+                        onClick={exportChartsExcel}
+                        disabled={isExporting}
+                        className="w-full flex items-center justify-between p-2 text-left text-sm border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <BarChart3 className="w-4 h-4 text-green-600" />
+                          <span>With Chart Data</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Premium</span>
+                      </button>
                     </div>
 
-                    {/* Export Options */}
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                        <label className="text-sm font-semibold text-gray-800">Export Format</label>
-                      </div>
+                    {/* CSV Export Option */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-700 flex items-center">
+                        <FileText className="w-3 h-3 mr-1" />
+                        CSV Export
+                      </h4>
                       
-                      <div className="grid grid-cols-1 gap-2">
-                        <button
-                          onClick={() => exportToExcelAdvanced(false)}
-                          disabled={isExporting}
-                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="p-2 transition-colors bg-blue-100 rounded-lg group-hover:bg-blue-200">
-                              <FileSpreadsheet className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">Excel (Data Only)</div>
-                              <div className="text-xs text-gray-500">Export with professional styling</div>
-                            </div>
-                          </div>
-                        </button>
-                        
-                        <button
-                          onClick={() => exportToExcelAdvanced(true)}
-                          disabled={isExporting}
-                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="p-2 transition-colors bg-purple-100 rounded-lg group-hover:bg-purple-200">
-                              <Image className="w-4 h-4 text-purple-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">Excel (With Charts)</div>
-                              <div className="text-xs text-gray-500">Export data + charts + analysis</div>
-                            </div>
-                          </div>
-                        </button>
-                        
-                        <button
-                          onClick={exportToCSV}
-                          disabled={isExporting}
-                          className="flex items-center justify-between p-3 text-left transition-all duration-200 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 group"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="p-2 transition-colors bg-orange-100 rounded-lg group-hover:bg-orange-200">
-                              <FileText className="w-4 h-4 text-orange-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">CSV File</div>
-                              <div className="text-xs text-gray-500">Export data to CSV format</div>
-                            </div>
-                          </div>
-                        </button>
-                      </div>
+                      <button
+                        onClick={exportToCSV}
+                        disabled={isExporting}
+                        className="w-full flex items-center justify-between p-2 text-left text-sm border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-orange-600" />
+                          <span>CSV File</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Simple</span>
+                      </button>
+                    </div>
+
+                    {/* Debug Option */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-700 flex items-center">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Debug
+                      </h4>
+                      
+                      <button
+                        onClick={debugCharts}
+                        disabled={isExporting}
+                        className="w-full flex items-center justify-between p-2 text-left text-sm border border-gray-200 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 transition-colors"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                          <span>Test Charts</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Debug</span>
+                      </button>
                     </div>
                   </div>
                   
-                  <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-green-50 to-teal-50 rounded-b-2xl">
+                  <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
                     <p className="text-xs text-center text-gray-500">
-                      📊 Export includes {exportFilters.includeFields.length} selected fields
+                      📊 Exports ALL data from database
                     </p>
                   </div>
                 </div>

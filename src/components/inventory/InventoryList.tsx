@@ -1172,23 +1172,23 @@ const InventoryList: React.FC = () => {
     }
   };
 
-  const debugCharts = async () => {
-    setIsExporting(true);
-    try {
-      const loadingToast = toast.loading('Testing chart creation...');
+  // const debugCharts = async () => {
+  //   setIsExporting(true);
+  //   try {
+  //     const loadingToast = toast.loading('Testing chart creation...');
       
-      await debugChartExport();
+  //     await debugChartExport();
       
-      toast.dismiss(loadingToast);
-      toast.success('Debug chart test completed! Check console for details.');
-    } catch (error) {
-      console.error('Debug chart error:', error);
-      toast.error('Debug chart test failed. Check console for details.');
-    } finally {
-      setIsExporting(false);
-      setShowExportMenu(false);
-    }
-  };
+  //     toast.dismiss(loadingToast);
+  //     toast.success('Debug chart test completed! Check console for details.');
+  //   } catch (error) {
+  //     console.error('Debug chart error:', error);
+  //     toast.error('Debug chart test failed. Check console for details.');
+  //   } finally {
+  //     setIsExporting(false);
+  //     setShowExportMenu(false);
+  //   }
+  // };
 
   const toggleFieldSelection = (field: string) => {
     setExportFilters(prev => ({
@@ -1352,7 +1352,7 @@ const InventoryList: React.FC = () => {
                     </div>
 
                     {/* Debug Option */}
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <h4 className="text-xs font-medium text-gray-700 flex items-center">
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Debug
@@ -1369,14 +1369,14 @@ const InventoryList: React.FC = () => {
                         </div>
                         <span className="text-xs text-gray-500">Debug</span>
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                   
-                  <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                  {/* <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
                     <p className="text-xs text-center text-gray-500">
                       📊 Exports ALL data from database
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useInventory } from '../../contexts/InventoryContext';
-import { RequestStatusChart, MonthlyActivityChart } from '../charts/ChartComponents';
+import { RequestStatusChart } from '../charts/ChartComponents';
 import { 
   ClipboardList, 
   CheckCircle,
@@ -44,11 +44,7 @@ const EmployeeDashboardHome: React.FC = () => {
     rejected: stats.rejectedRequests,
   };
 
-  const monthlyActivityData = {
-    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    itemsAdded: [0, 0, 0, 0, 0, 0], // Employees don't add items
-    requestsSubmitted: [2, 3, 1, 4, 2, 3],
-  };
+
 
   // Show loading state while data is being fetched
   if (loading) {
@@ -110,8 +106,8 @@ const EmployeeDashboardHome: React.FC = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        {/* Recent Requests */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Recent Requests - Left Column */}
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-900">Recent Requests</h3>
@@ -157,9 +153,7 @@ const EmployeeDashboardHome: React.FC = () => {
           )}
         </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Request Status Chart */}
+        {/* Request Status Chart - Center Column */}
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-900">My Request Status</h3>
@@ -173,60 +167,50 @@ const EmployeeDashboardHome: React.FC = () => {
           </div>
         </div>
 
-        {/* Monthly Request Activity */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Request Activity</h3>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500"></div>
-              <span className="text-sm text-gray-600">Last 6 months</span>
+        {/* Right Column - Quick Actions and Request Activity */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/employee/create-request')}
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+              >
+                <span className="font-medium">Create New Request</span>
+                <Plus size={20} />
+              </button>
+              
+              <button
+                onClick={() => navigate('/employee/requests')}
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
+              >
+                <span className="font-medium">View Request Status</span>
+                <ClipboardList size={20} />
+              </button>
+              
+              <button
+                onClick={() => navigate('/employee/profile')}
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+              >
+                <span className="font-medium">Update Profile</span>
+                <FileText size={20} />
+              </button>
+            </div>
+
+            {/* Request Guidelines */}
+            <div className="p-4 mt-6 rounded-lg bg-blue-50">
+              <h4 className="mb-2 font-medium text-blue-900">Request Guidelines</h4>
+              <ul className="space-y-1 text-sm text-blue-800">
+                <li>• Provide detailed justification for your request</li>
+                <li>• Include exact specifications when needed</li>
+                <li>• Allow 2-3 business days for approval</li>
+                <li>• Contact admin for urgent requests</li>
+              </ul>
             </div>
           </div>
-          <div className="h-80">
-            <MonthlyActivityChart data={monthlyActivityData} />
-          </div>
-        </div>
-      </div>
 
-        {/* Quick Actions */}
-        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-          <h3 className="mb-4 text-xl font-semibold text-gray-900">Quick Actions</h3>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/employee/create-request')}
-              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
-            >
-              <span className="font-medium">Create New Request</span>
-              <Plus size={20} />
-            </button>
-            
-            <button
-              onClick={() => navigate('/employee/requests')}
-              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
-            >
-              <span className="font-medium">View Request Status</span>
-              <ClipboardList size={20} />
-            </button>
-            
-            <button
-              onClick={() => navigate('/employee/profile')}
-              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
-            >
-              <span className="font-medium">Update Profile</span>
-              <FileText size={20} />
-            </button>
-          </div>
 
-          {/* Request Guidelines */}
-          <div className="p-4 mt-6 rounded-lg bg-blue-50">
-            <h4 className="mb-2 font-medium text-blue-900">Request Guidelines</h4>
-            <ul className="space-y-1 text-sm text-blue-800">
-              <li>• Provide detailed justification for your request</li>
-              <li>• Include exact specifications when needed</li>
-              <li>• Allow 2-3 business days for approval</li>
-              <li>• Contact admin for urgent requests</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>

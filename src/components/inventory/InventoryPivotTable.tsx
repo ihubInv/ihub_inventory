@@ -317,160 +317,160 @@ const InventoryPivotTable: React.FC = () => {
   }, [filteredInventoryItems, pivotConfig]);
 
   // Enhanced export functions
-  const createEnhancedWorkbook = (includeCharts: boolean = false) => {
-    const wb = XLSX.utils.book_new();
+  // const createEnhancedWorkbook = (includeCharts: boolean = false) => {
+  //   const wb = XLSX.utils.book_new();
     
-    // Create main data worksheet with enhanced formatting
-    const wsData: any[][] = [];
+  //   // Create main data worksheet with enhanced formatting
+  //   const wsData: any[][] = [];
     
-    // Add title and metadata
-    wsData.push(['INVENTORY PIVOT ANALYSIS REPORT']);
-    wsData.push(['Generated on:', new Date().toLocaleString()]);
-    wsData.push(['']);
+  //   // Add title and metadata
+  //   wsData.push(['INVENTORY PIVOT ANALYSIS REPORT']);
+  //   wsData.push(['Generated on:', new Date().toLocaleString()]);
+  //   wsData.push(['']);
     
-    // Add configuration details
-    wsData.push(['CONFIGURATION DETAILS']);
-    wsData.push(['Row Field:', availableFields.find(f => f.value === pivotConfig.rows[0])?.label || pivotConfig.rows[0]]);
-    wsData.push(['Column Field:', availableFields.find(f => f.value === pivotConfig.columns[0])?.label || pivotConfig.columns[0]]);
-    wsData.push(['Value Field:', valueFields.find(f => f.value === pivotConfig.values[0])?.label || pivotConfig.values[0]]);
-    wsData.push(['Aggregation:', pivotConfig.aggregation.toUpperCase()]);
-    wsData.push(['']);
+  //   // Add configuration details
+  //   wsData.push(['CONFIGURATION DETAILS']);
+  //   wsData.push(['Row Field:', availableFields.find(f => f.value === pivotConfig.rows[0])?.label || pivotConfig.rows[0]]);
+  //   wsData.push(['Column Field:', availableFields.find(f => f.value === pivotConfig.columns[0])?.label || pivotConfig.columns[0]]);
+  //   wsData.push(['Value Field:', valueFields.find(f => f.value === pivotConfig.values[0])?.label || pivotConfig.values[0]]);
+  //   wsData.push(['Aggregation:', pivotConfig.aggregation.toUpperCase()]);
+  //   wsData.push(['']);
     
-    // Add summary statistics
-    wsData.push(['SUMMARY STATISTICS']);
-    const totalRows = pivotData.rows.length;
-    const totalCols = pivotData.columns.length;
-    const totalCells = totalRows * totalCols;
-    const grandTotal = pivotData.rows.reduce((sum, row) => 
-      sum + pivotData.columns.reduce((rowSum, col) => rowSum + (pivotData.data[row][col] || 0), 0), 0
-    );
+  //   // Add summary statistics
+  //   wsData.push(['SUMMARY STATISTICS']);
+  //   const totalRows = pivotData.rows.length;
+  //   const totalCols = pivotData.columns.length;
+  //   const totalCells = totalRows * totalCols;
+  //   const grandTotal = pivotData.rows.reduce((sum, row) => 
+  //     sum + pivotData.columns.reduce((rowSum, col) => rowSum + (pivotData.data[row][col] || 0), 0), 0
+  //   );
     
-    wsData.push(['Total Categories:', totalRows]);
-    wsData.push(['Total Data Points:', totalCols]);
-    wsData.push(['Total Data Cells:', totalCells]);
-    wsData.push(['Grand Total:', pivotConfig.aggregation === 'avg' ? (grandTotal / totalCells).toFixed(2) : grandTotal.toLocaleString()]);
-    wsData.push(['']);
+  //   wsData.push(['Total Categories:', totalRows]);
+  //   wsData.push(['Total Data Points:', totalCols]);
+  //   wsData.push(['Total Data Cells:', totalCells]);
+  //   wsData.push(['Grand Total:', pivotConfig.aggregation === 'avg' ? (grandTotal / totalCells).toFixed(2) : grandTotal.toLocaleString()]);
+  //   wsData.push(['']);
     
-    // Add pivot table data with enhanced formatting
-    wsData.push(['PIVOT TABLE DATA']);
-    wsData.push(['']);
+  //   // Add pivot table data with enhanced formatting
+  //   wsData.push(['PIVOT TABLE DATA']);
+  //   wsData.push(['']);
     
-    // Header row
-    const headerRow = ['Category', ...pivotData.columns, 'Row Total'];
-    wsData.push(headerRow);
+  //   // Header row
+  //   const headerRow = ['Category', ...pivotData.columns, 'Row Total'];
+  //   wsData.push(headerRow);
     
-    // Data rows
-    pivotData.rows.forEach(row => {
-      const rowData = [row];
-      let rowTotal = 0;
+  //   // Data rows
+  //   pivotData.rows.forEach(row => {
+  //     const rowData = [row];
+  //     let rowTotal = 0;
       
-      pivotData.columns.forEach(col => {
-        const value = pivotData.data[row][col] || 0;
-        rowTotal += value;
-        rowData.push(pivotConfig.aggregation === 'avg' ? value.toFixed(2) : value);
-      });
+  //     pivotData.columns.forEach(col => {
+  //       const value = pivotData.data[row][col] || 0;
+  //       rowTotal += value;
+  //       rowData.push(pivotConfig.aggregation === 'avg' ? value.toFixed(2) : value);
+  //     });
       
-      rowData.push(pivotConfig.aggregation === 'avg' ? (rowTotal / pivotData.columns.length).toFixed(2) : rowTotal);
-      wsData.push(rowData);
-    });
+  //     rowData.push(pivotConfig.aggregation === 'avg' ? (rowTotal / pivotData.columns.length).toFixed(2) : rowTotal);
+  //     wsData.push(rowData);
+  //   });
     
-    // Column totals
-    const totalRow = ['Column Total'];
-    pivotData.columns.forEach(col => {
-      const colTotal = pivotData.rows.reduce((sum, row) => sum + (pivotData.data[row][col] || 0), 0);
-      totalRow.push(pivotConfig.aggregation === 'avg' ? (colTotal / pivotData.rows.length).toFixed(2) : colTotal);
-    });
-    totalRow.push(pivotConfig.aggregation === 'avg' ? (grandTotal / totalCells).toFixed(2) : grandTotal);
-    wsData.push(totalRow);
+  //   // Column totals
+  //   const totalRow = ['Column Total'];
+  //   pivotData.columns.forEach(col => {
+  //     const colTotal = pivotData.rows.reduce((sum, row) => sum + (pivotData.data[row][col] || 0), 0);
+  //     totalRow.push(pivotConfig.aggregation === 'avg' ? (colTotal / pivotData.rows.length).toFixed(2) : colTotal);
+  //   });
+  //   totalRow.push(pivotConfig.aggregation === 'avg' ? (grandTotal / totalCells).toFixed(2) : grandTotal);
+  //   wsData.push(totalRow);
     
-    // Add detailed breakdown
-    wsData.push(['']);
-    wsData.push(['DETAILED BREAKDOWN']);
-    wsData.push(['']);
+  //   // Add detailed breakdown
+  //   wsData.push(['']);
+  //   wsData.push(['DETAILED BREAKDOWN']);
+  //   wsData.push(['']);
     
-    // Create detailed data for each category
-    pivotData.rows.forEach(row => {
-      wsData.push([`${row} Details:`]);
-      pivotData.columns.forEach(col => {
-        const value = pivotData.data[row][col] || 0;
-        const percentage = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : '0.0';
-        wsData.push([`  ${col}:`, value, `(${percentage}%)`]);
-      });
-      wsData.push(['']);
-    });
+  //   // Create detailed data for each category
+  //   pivotData.rows.forEach(row => {
+  //     wsData.push([`${row} Details:`]);
+  //     pivotData.columns.forEach(col => {
+  //       const value = pivotData.data[row][col] || 0;
+  //       const percentage = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : '0.0';
+  //       wsData.push([`  ${col}:`, value, `(${percentage}%)`]);
+  //     });
+  //     wsData.push(['']);
+  //   });
     
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  //   const ws = XLSX.utils.aoa_to_sheet(wsData);
     
-    // Apply cell styling and formatting
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  //   // Apply cell styling and formatting
+  //   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
     
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 25 }, // Category column
-      ...pivotData.columns.map(() => ({ wch: 15 })), // Data columns
-      { wch: 15 } // Total column
-    ];
+  //   // Set column widths
+  //   ws['!cols'] = [
+  //     { wch: 25 }, // Category column
+  //     ...pivotData.columns.map(() => ({ wch: 15 })), // Data columns
+  //     { wch: 15 } // Total column
+  //   ];
     
-    XLSX.utils.book_append_sheet(wb, ws, 'Pivot Analysis');
+  //   XLSX.utils.book_append_sheet(wb, ws, 'Pivot Analysis');
     
-    // If including charts, create a summary sheet
-    if (includeCharts) {
-      const chartSummary: any[][] = [];
-      chartSummary.push(['CHART DATA SUMMARY']);
-      chartSummary.push(['']);
-      chartSummary.push(['Chart Configuration:']);
-      chartSummary.push(['Primary Chart Type:', chartType.toUpperCase()]);
-      chartSummary.push(['Data Visualization:', 'Chart data included for external tools']);
-      chartSummary.push(['']);
+  //   // If including charts, create a summary sheet
+  //   if (includeCharts) {
+  //     const chartSummary: any[][] = [];
+  //     chartSummary.push(['CHART DATA SUMMARY']);
+  //     chartSummary.push(['']);
+  //     chartSummary.push(['Chart Configuration:']);
+  //     chartSummary.push(['Primary Chart Type:', chartType.toUpperCase()]);
+  //     chartSummary.push(['Data Visualization:', 'Chart data included for external tools']);
+  //     chartSummary.push(['']);
       
-      // Add chart data in structured format for external visualization
-      chartSummary.push(['CHART DATA (for external charting tools)']);
-      chartSummary.push(['']);
-      chartSummary.push(['Category', ...pivotData.columns, 'Total']);
+  //     // Add chart data in structured format for external visualization
+  //     chartSummary.push(['CHART DATA (for external charting tools)']);
+  //     chartSummary.push(['']);
+  //     chartSummary.push(['Category', ...pivotData.columns, 'Total']);
       
-      pivotData.rows.forEach(row => {
-        const rowData = [row];
-        let rowTotal = 0;
-        pivotData.columns.forEach(col => {
-          const value = pivotData.data[row][col] || 0;
-          rowTotal += value;
-          rowData.push(value);
-        });
-        rowData.push(rowTotal);
-        chartSummary.push(rowData);
-      });
+  //     pivotData.rows.forEach(row => {
+  //       const rowData = [row];
+  //       let rowTotal = 0;
+  //       pivotData.columns.forEach(col => {
+  //         const value = pivotData.data[row][col] || 0;
+  //         rowTotal += value;
+  //         rowData.push(value);
+  //       });
+  //       rowData.push(rowTotal);
+  //       chartSummary.push(rowData);
+  //     });
       
-      // Add percentage breakdown
-      chartSummary.push(['']);
-      chartSummary.push(['PERCENTAGE BREAKDOWN']);
-      chartSummary.push(['Category', ...pivotData.columns.map(col => `${col} %`), 'Total %']);
+  //     // Add percentage breakdown
+  //     chartSummary.push(['']);
+  //     chartSummary.push(['PERCENTAGE BREAKDOWN']);
+  //     chartSummary.push(['Category', ...pivotData.columns.map(col => `${col} %`), 'Total %']);
       
-      const totalGrand = pivotData.rows.reduce((sum, row) => 
-        sum + pivotData.columns.reduce((rowSum, col) => rowSum + (pivotData.data[row][col] || 0), 0), 0
-      );
+  //     const totalGrand = pivotData.rows.reduce((sum, row) => 
+  //       sum + pivotData.columns.reduce((rowSum, col) => rowSum + (pivotData.data[row][col] || 0), 0), 0
+  //     );
       
-      pivotData.rows.forEach(row => {
-        const rowData = [row];
-        let rowTotal = 0;
-        pivotData.columns.forEach(col => {
-          const value = pivotData.data[row][col] || 0;
-          rowTotal += value;
-          const percentage = totalGrand > 0 ? ((value / totalGrand) * 100).toFixed(1) : '0.0';
-          rowData.push(`${percentage}%`);
-        });
-        const totalPercentage = totalGrand > 0 ? ((rowTotal / totalGrand) * 100).toFixed(1) : '0.0';
-        rowData.push(`${totalPercentage}%`);
-        chartSummary.push(rowData);
-      });
+  //     pivotData.rows.forEach(row => {
+  //       const rowData = [row];
+  //       let rowTotal = 0;
+  //       pivotData.columns.forEach(col => {
+  //         const value = pivotData.data[row][col] || 0;
+  //         rowTotal += value;
+  //         const percentage = totalGrand > 0 ? ((value / totalGrand) * 100).toFixed(1) : '0.0';
+  //         rowData.push(`${percentage}%`);
+  //       });
+  //       const totalPercentage = totalGrand > 0 ? ((rowTotal / totalGrand) * 100).toFixed(1) : '0.0';
+  //       rowData.push(`${totalPercentage}%`);
+  //       chartSummary.push(rowData);
+  //     });
       
-      const wsChart = XLSX.utils.aoa_to_sheet(chartSummary);
-      wsChart['!cols'] = [{ wch: 20 }, ...pivotData.columns.map(() => ({ wch: 15 })), { wch: 15 }];
+  //     const wsChart = XLSX.utils.aoa_to_sheet(chartSummary);
+  //     wsChart['!cols'] = [{ wch: 20 }, ...pivotData.columns.map(() => ({ wch: 15 })), { wch: 15 }];
       
-      XLSX.utils.book_append_sheet(wb, wsChart, 'Chart Data');
-    }
+  //     XLSX.utils.book_append_sheet(wb, wsChart, 'Chart Data');
+  //   }
     
-    return wb;
-  };
+  //   return wb;
+  // };
 
   const exportToExcelEnhanced = async (includeCharts: boolean = false) => {
     setIsExporting(true);
@@ -551,27 +551,27 @@ const InventoryPivotTable: React.FC = () => {
   };
 
   // Legacy function for backward compatibility
-  const exportToExcel = () => {
-    exportToExcelEnhanced(false);
-  };
+  // const exportToExcel = () => {
+  //   exportToExcelEnhanced(false);
+  // };
 
-  const exportToCSV = () => {
-    const csvContent = [
-      ['', ...pivotData.columns].join(','),
-      ...pivotData.rows.map(row => [
-        row,
-        ...pivotData.columns.map(col => pivotData.data[row][col] || 0)
-      ].join(','))
-    ].join('\n');
+  // const exportToCSV = () => {
+  //   const csvContent = [
+  //     ['', ...pivotData.columns].join(','),
+  //     ...pivotData.rows.map(row => [
+  //       row,
+  //       ...pivotData.columns.map(col => pivotData.data[row][col] || 0)
+  //     ].join(','))
+  //   ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `inventory-pivot-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  //   const blob = new Blob([csvContent], { type: 'text/csv' });
+  //   const url = window.URL.createObjectURL(blob);
+  //   const a = document.createElement('a');
+  //   a.href = url;
+  //   a.download = `inventory-pivot-${new Date().toISOString().split('T')[0]}.csv`;
+  //   a.click();
+  //   window.URL.revokeObjectURL(url);
+  // };
 
   const exportSelectedData = () => {
     const selectedRows = pivotData.rows.filter(row => 

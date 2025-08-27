@@ -129,38 +129,36 @@ const AddInventory: React.FC = () => {
     return assetName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
   };
 
-  const getNextSerialNumber = (financialYear: string, assetCode: string, location: string): string => {
-    if (!financialYear || !assetCode || !location) return '001';
-    
-    // Create the prefix pattern to match existing IDs
-    const prefix = `ihub/${financialYear}/${assetCode}/${location}/`;
-    
-    // Find all items with the same prefix
-    const matchingItems = inventoryItems.filter(item => 
-      item.uniqueid && item.uniqueid.startsWith(prefix)
-    );
-    
-    if (matchingItems.length === 0) {
-      return '001';
+  const getNextSerialNumber = async (): Promise<string> => {
+    try {
+      // Get the total count of inventory items from the database
+      const { count, error } = await supabase
+        .from('inventory_items')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error getting inventory count:', error);
+        // Fallback to local count
+        const totalItems = inventoryItems.length;
+        const nextSerial = totalItems + 1;
+        return nextSerial.toString().padStart(3, '0');
+      }
+      
+      // Calculate the next sequential number
+      const nextSerial = (count || 0) + 1;
+      
+      // Pad to 3 digits (001, 002, 003, etc.)
+      return nextSerial.toString().padStart(3, '0');
+    } catch (error) {
+      console.error('Error in getNextSerialNumber:', error);
+      // Fallback to local count
+      const totalItems = inventoryItems.length;
+      const nextSerial = totalItems + 1;
+      return nextSerial.toString().padStart(3, '0');
     }
-    
-    // Extract serial numbers and find the highest
-    const serialNumbers = matchingItems
-      .map(item => {
-        const parts = item.uniqueid.split('/');
-        const lastPart = parts[parts.length - 1];
-        return parseInt(lastPart) || 0;
-      })
-      .filter(num => !isNaN(num));
-    
-    const maxSerial = Math.max(...serialNumbers, 0);
-    const nextSerial = maxSerial + 1;
-    
-    // Pad to 3 digits
-    return nextSerial.toString().padStart(3, '0');
   };
 
-  const generateUniqueId = (): string => {
+  const generateUniqueId = async (): Promise<string> => {
     const { financialyear, assetname, locationofitem } = formData;
     
     // Always start with ihub prefix
@@ -192,8 +190,7 @@ const AddInventory: React.FC = () => {
     
     // Add serial number only if all required fields are present
     if (financialyear && assetname && locationofitem) {
-      const assetCode = generateAssetCode(assetname);
-      const serialNumber = getNextSerialNumber(financialyear, assetCode, locationofitem);
+      const serialNumber = await getNextSerialNumber();
       uniqueId += serialNumber;
     } else {
       uniqueId += '--';
@@ -202,15 +199,34 @@ const AddInventory: React.FC = () => {
     return uniqueId;
   };
 
+  // Generate initial unique ID when component mounts
+  React.useEffect(() => {
+    const generateInitialId = async () => {
+      if (!formData.uniqueid) {
+        const initialId = await generateUniqueId();
+        setFormData(prev => ({
+          ...prev,
+          uniqueid: initialId
+        }));
+      }
+    };
+    
+    generateInitialId();
+  }, []);
+
   // Update unique ID whenever relevant fields change
   React.useEffect(() => {
-    const newUniqueId = generateUniqueId();
-    if (newUniqueId !== formData.uniqueid) {
-      setFormData(prev => ({
-        ...prev,
-        uniqueid: newUniqueId
-      }));
-    }
+    const updateUniqueId = async () => {
+      const newUniqueId = await generateUniqueId();
+      if (newUniqueId !== formData.uniqueid) {
+        setFormData(prev => ({
+          ...prev,
+          uniqueid: newUniqueId
+        }));
+      }
+    };
+    
+    updateUniqueId();
   }, [formData.financialyear, formData.assetname, formData.locationofitem, inventoryItems]);
 
   // Handle bulk upload
@@ -616,6 +632,9 @@ const handleFile = (file?: File) => {
                 <span>Unique ID *</span>
                 <span className="px-2 py-1 ml-2 text-xs text-blue-800 bg-blue-100 rounded-full">Auto-Generated</span>
               </label>
+              <p className="mb-2 text-xs text-gray-500">
+                Sequential numbering: 001, 002, 003... (Total items: {inventoryItems.length + 1})
+              </p>
               <div className="relative">
                 <input
                   type="text"

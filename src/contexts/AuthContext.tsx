@@ -306,7 +306,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: false, error: 'User not found in response' };
       }
 
-      handleUserUpdate(supabaseUser);
+      // Wait for user data to be properly loaded before returning success
+      await handleUserUpdate(supabaseUser);
       return { success: true };
     } catch (err) {
       console.error('Unexpected login error:', err);

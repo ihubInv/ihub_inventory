@@ -66,17 +66,14 @@ const Login: React.FC = () => {
       const loadingToast = AuthToasts.loggingIn();
       const { success, error: loginError } = await login(formData.email, formData.password);
   
-      if (!success) {
+            if (!success) {
         toast.dismiss(loadingToast);
         setError(loginError || 'Invalid email or password');
         AuthToasts.loginError(loginError || 'Invalid email or password');
         return;
       }
-  
-      // Wait a moment for user creation to complete if needed
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Safely parse user from localStorage
+
+      // User data should now be properly loaded in localStorage
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const role = storedUser?.role;
   

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import CustomDatePicker from '../common/DatePicker';
 import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon, Upload, Plus, List } from 'lucide-react';
 import { InventoryItem } from '../../types';
+import { usePersistedFormState } from '../../hooks/usePersistedState';
 
 import UploadDropzone from '../common/UploadDropzone';
 import { supabase } from '../../lib/supabaseClient';
@@ -42,84 +43,48 @@ const AddInventory: React.FC = () => {
     }
   };
 
-  // Initialize form data with localStorage persistence
-  const getInitialFormData = () => {
-    const savedData = localStorage.getItem('addInventoryFormData');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        // Convert date strings back to Date objects
-        return {
-          ...parsed,
-          dateofinvoice: parsed.dateofinvoice ? new Date(parsed.dateofinvoice) : null,
-          dateofentry: parsed.dateofentry ? new Date(parsed.dateofentry) : new Date(),
-          dateofissue: parsed.dateofissue ? new Date(parsed.dateofissue) : null,
-          expectedreturndate: parsed.expectedreturndate ? new Date(parsed.expectedreturndate) : null,
-          attachments: [] as File[], // Don't persist File objects
-        };
-      } catch (error) {
-        console.error('Error parsing saved form data:', error);
-      }
-    }
-    
-    // Default form data
-    return {
-      uniqueid: '',
-      financialyear: '2024-25',
-      dateofinvoice: null as Date | null,
-      dateofentry: new Date(),
-      invoicenumber: '',
-      assetcategory: '',
-      assetcategoryid: "",
-      assetname: '',
-      specification: '',
-      makemodel: '',
-      productserialnumber: '',
-      vendorname: '',
-      quantityperitem: 1,
-      rateinclusivetax: 0,
-      totalcost: 0,
-      locationofitem: '',
-      issuedto: '',
-      dateofissue: null as Date | null,
-      expectedreturndate: null as Date | null,
-      balancequantityinstock: 0,
-      description: '',
-      unitofmeasurement: 'Pieces',
-      depreciationmethod: '',
-      warrantyinformation: '',
-      maintenanceschedule: '',
-      conditionofasset: 'excellent' as const,
-      status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
-      minimumstocklevel: 5,
-      purchaseordernumber: '',
-      expectedlifespan: '',
-      assettag: '',
-      salvagevalue: 0,
-      attachments: [] as File[],
-    };
+  // Initialize form data with persistent state
+  const defaultFormData = {
+    uniqueid: '',
+    financialyear: '2024-25',
+    dateofinvoice: null as Date | null,
+    dateofentry: new Date(),
+    invoicenumber: '',
+    assetcategory: '',
+    assetcategoryid: "",
+    assetname: '',
+    specification: '',
+    makemodel: '',
+    productserialnumber: '',
+    vendorname: '',
+    quantityperitem: 1,
+    rateinclusivetax: 0,
+    totalcost: 0,
+    locationofitem: '',
+    issuedto: '',
+    dateofissue: null as Date | null,
+    expectedreturndate: null as Date | null,
+    balancequantityinstock: 0,
+    description: '',
+    unitofmeasurement: 'Pieces',
+    depreciationmethod: '',
+    warrantyinformation: '',
+    maintenanceschedule: '',
+    conditionofasset: 'excellent' as const,
+    status: 'available' as 'available' | 'issued' | 'maintenance' | 'retired',
+    minimumstocklevel: 5,
+    purchaseordernumber: '',
+    expectedlifespan: '',
+    assettag: '',
+    salvagevalue: 0,
+    attachments: [] as File[],
   };
 
-  const [formData, setFormData] = useState(getInitialFormData);
-
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    const dataToSave = {
-      ...formData,
-      // Convert Date objects to strings for JSON serialization
-      dateofinvoice: formData.dateofinvoice?.toISOString() || null,
-      dateofentry: formData.dateofentry?.toISOString() || null,
-      dateofissue: formData.dateofissue?.toISOString() || null,
-      expectedreturndate: formData.expectedreturndate?.toISOString() || null,
-      // Don't save File objects
-      attachments: undefined,
-    };
-    localStorage.setItem('addInventoryFormData', JSON.stringify(dataToSave));
-  }, [formData]);
+  const [formData, setFormData] = usePersistedFormState('addInventoryFormData', defaultFormData);
 
   // Function to clear saved form data
   const clearSavedFormData = () => {
-    localStorage.removeItem('addInventoryFormData');
+    setFormData(defaultFormData);
   };
 
   // Auto-generate unique ID functions

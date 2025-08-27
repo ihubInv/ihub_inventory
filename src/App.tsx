@@ -11,6 +11,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { InventoryProvider } from './contexts/InventoryContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AppStateProvider } from './contexts/AppStateContext';
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
 import RegisterPage from './components/auth/RegisterPage';
@@ -96,14 +97,16 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <AuthProvider>
-        <InventoryProvider>
-          <NotificationProvider>
-            <AppContent />
-            <Toaster />
-          </NotificationProvider>
-        </InventoryProvider>
-      </AuthProvider>
+      <AppStateProvider>
+        <AuthProvider>
+          <InventoryProvider>
+            <NotificationProvider>
+              <AppContent />
+              <Toaster />
+            </NotificationProvider>
+          </InventoryProvider>
+        </AuthProvider>
+      </AppStateProvider>
     </Router>
   );
 };

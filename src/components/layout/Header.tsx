@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ChevronDown, 
   Menu, 
@@ -26,6 +26,24 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
   const { user, logout } = useAuth();
   const { requests } = useInventory();
   const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   if (!user) return null;
 
@@ -96,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
   return (
     <>
       {/* Enhanced Main Header */}
-      <div className="relative flex items-center justify-between w-full px-4 py-4 bg-white/90 backdrop-blur-lg shadow-xl sm:px-6 lg:px-8 border-b border-gray-200/50">
+      <div className="relative flex items-center justify-between w-full px-4 py-4 bg-white/90 backdrop-blur-lg shadow-xl sm:px-6 lg:px-8 border-b border-gray-200/50" style={{ zIndex: 999999 }}>
         
         {/* Left Section - Mobile Menu & Logo */}
         <div className="flex items-center space-x-4">
@@ -152,15 +170,15 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
           </button>
 
           {/* Desktop Profile Section */}
-          <div className="relative hidden md:block">
+          <div className="relative hidden md:block" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
-                {user.profilePicture ? (
+                {user.profilepicture ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.profilepicture}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
@@ -179,15 +197,15 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               <ChevronDown size={16} className="text-gray-400" />
             </button>
 
-            {/* Desktop Dropdown Menu */}
+            {/* Desktop Dropdown Menu - Fixed positioning and z-index */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 z-50 w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+              <div className="absolute right-0 top-full w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl" style={{ zIndex: 999999 }}>
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
-                      {user.profilePicture ? (
+                      {user.profilepicture ? (
                         <img
-                          src={user.profilePicture}
+                          src={user.profilepicture}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />
@@ -251,11 +269,11 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
         </div>
       </div>
 
-      {/* Mobile Profile Menu */}
+      {/* Mobile Profile Menu - Fixed z-index */}
       {isProfileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 lg:hidden" style={{ zIndex: 999999 }}>
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsProfileMenuOpen(false)} />
-          <div className="fixed right-0 top-0 h-full w-64 bg-white shadow-lg">
+          <div className="fixed right-0 top-0 h-full w-64 bg-white shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">Profile Menu</h3>
               <button

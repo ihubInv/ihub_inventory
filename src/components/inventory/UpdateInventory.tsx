@@ -186,23 +186,39 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-2xl mx-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-semibold text-gray-900">
-            Edit Inventory Item
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100"
-          >
-            <X size={24} />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden bg-white rounded-3xl shadow-2xl border border-gray-100">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-600 to-green-700 px-8 py-6 rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white bg-opacity-20 rounded-xl">
+                <Package className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Edit Asset</h2>
+                <p className="text-green-100 text-sm">Update inventory information</p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="p-3 text-white hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(95vh-120px)] p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Basic Information Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <Package className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Unique ID
@@ -337,10 +353,16 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 onChange={(value) => handleDropdownChange('unitofmeasurement', value)}
               />
             </div>
-          </div>
+              </div>
+            </div>
 
-          {/* Additional Details */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Additional Details Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <FileText className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Additional Details</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Make/Model
@@ -508,12 +530,16 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 onChange={(value) => handleDropdownChange('depreciationmethod', value)}
               />
             </div>
+              </div>
+            </div>
 
-
-          </div>
-
-          {/* Additional Information */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Financial & Maintenance Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <DollarSign className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Financial & Maintenance</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Warranty Information
@@ -541,10 +567,16 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-          </div>
+              </div>
+            </div>
 
-          {/* Issuance Information */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Issuance & Dates Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <Calendar className="w-5 h-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Issuance & Dates</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Issued To
@@ -569,10 +601,10 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 placeholderText="Select expected return date"
               />
             </div>
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              </div>
+              
+              {/* Dates Grid */}
+              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Date of Invoice
@@ -605,138 +637,144 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 placeholderText="Select date"
               />
             </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description || ''}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Attachments */}
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Attachments
-            </label>
-            
-            {/* Existing Attachments */}
-            {item.attachments && item.attachments.length > 0 && (
-              <div className="mb-4">
-                <h4 className="mb-2 text-sm font-medium text-gray-700">Current Attachments:</h4>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                  {item.attachments.map((attachment, index) => (
-                    <div key={index} className="relative group">
-                      {attachment instanceof File ? (
-                        <img
-                          src={URL.createObjectURL(attachment)}
-                          alt={attachment.name}
-                          className="object-cover w-full h-24 border border-gray-200 rounded-lg"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center w-full h-24 bg-gray-100 border border-gray-200 rounded-lg">
-                          <span className="text-sm text-gray-500">File</span>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeExistingAttachment(attachment instanceof File ? attachment.name : String(attachment))}
-                        className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
-                        title="Remove attachment"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
               </div>
-            )}
-
-            {/* New Attachments */}
-            <div>
-              <input
-                type="file"
-                multiple
-                accept="image/*,.pdf,.doc,.docx"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="file-upload"
-              />
-              <label
-                htmlFor="file-upload"
-                className="flex items-center justify-center w-full px-4 py-2 transition-colors border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-gray-400"
-              >
-                <Upload size={20} className="mr-2 text-gray-400" />
-                <span className="text-gray-600">Add new attachments</span>
-              </label>
             </div>
 
-            {/* New Attachments Preview */}
-            {newAttachments.length > 0 && (
-              <div className="mt-4">
-                <h4 className="mb-2 text-sm font-medium text-gray-700">New Attachments:</h4>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                  {newAttachments.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="object-cover w-full h-24 border border-gray-200 rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeNewAttachment(index)}
-                        className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
-                        title="Remove attachment"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+            {/* Description Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <FileText className="w-5 h-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Description</h3>
               </div>
-            )}
-          </div>
+              <textarea
+                name="description"
+                value={formData.description || ''}
+                onChange={handleInputChange}
+                rows={4}
+                placeholder="Enter detailed description of the asset..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+            {/* Attachments Section */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <Image className="w-5 h-5 text-pink-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Attachments</h3>
+              </div>
+              {/* Existing Attachments */}
+              {item.attachments && item.attachments.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="mb-4 text-sm font-medium text-gray-700">Current Attachments:</h4>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    {item.attachments.map((attachment, index) => (
+                      <div key={index} className="relative group">
+                        {attachment instanceof File ? (
+                          <img
+                            src={URL.createObjectURL(attachment)}
+                            alt={attachment.name}
+                            className="object-cover w-full h-24 border border-gray-200 rounded-lg"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-24 bg-gray-100 border border-gray-200 rounded-lg">
+                            <span className="text-sm text-gray-500">File</span>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeExistingAttachment(attachment instanceof File ? attachment.name : String(attachment))}
+                          className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
+                          title="Remove attachment"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Attachments Upload */}
+              <div className="mb-6">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center justify-center w-full px-6 py-4 transition-colors border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:border-gray-400 hover:bg-gray-50"
+                >
+                  <Upload size={20} className="mr-2 text-gray-400" />
+                  <span className="text-gray-600 font-medium">Add new attachments</span>
+                </label>
+              </div>
+
+              {/* New Attachments Preview */}
+              {newAttachments.length > 0 && (
+                <div>
+                  <h4 className="mb-4 text-sm font-medium text-gray-700">New Attachments:</h4>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    {newAttachments.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="object-cover w-full h-24 border border-gray-200 rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeNewAttachment(index)}
+                          className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
+                          title="Remove attachment"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-8 py-6 rounded-b-3xl">
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="flex items-center px-4 py-2 space-x-2 text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               <Trash2 size={16} />
               <span>Delete Item</span>
             </button>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 text-gray-700 transition-all duration-200 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg"
               >
                 <Save size={16} />
                 <span>{isSubmitting ? 'Updating...' : 'Update Item'}</span>
               </button>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

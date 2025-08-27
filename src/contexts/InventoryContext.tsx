@@ -757,7 +757,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   // const addCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
-  //   debugger
+  //   
   //   await insertCategory(category);
   //   const updated = await fetchCategories();
   //   setCategories(updated);

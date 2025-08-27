@@ -62,7 +62,7 @@ const CategoryManagement: React.FC = () => {
   
 
   const handleAddCategory = async (e: React.FormEvent) => {
-    debugger
+    
     e.preventDefault();
     try {
       const loadingToast = CRUDToasts.creating('category');

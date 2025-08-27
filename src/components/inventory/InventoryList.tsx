@@ -325,10 +325,10 @@ const InventoryList: React.FC = () => {
 
 
   const handleAddCategory = async (e: React.FormEvent) => {
-    debugger
+    
     e.preventDefault();
     try {
-      debugger;
+      ;
       await addInventoryItem({
         ...formData,
         createdby: user?.id || 'unknown'

@@ -23,7 +23,7 @@ export interface EmailData {
   status?: string;
 }
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
-  debugger;
+  ;
   try {
     const result = await emailjs.send(
       EMAIL_SERVICE_ID,

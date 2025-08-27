@@ -279,7 +279,7 @@ const AddInventory: React.FC = () => {
   };
 
   // const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  //   debugger
+  //   
   //   const assetcategory = e.target.value;
   //   setFormData(prev => ({
   //     ...prev,
@@ -298,7 +298,7 @@ const handleFile = (file?: File) => {
 
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    debugger
+    
     const selectedName = e.target.value;
 
     // Find the full category object by name
@@ -316,7 +316,7 @@ const handleFile = (file?: File) => {
 
 
   // const handleSubmit = async (e: React.FormEvent) => {
-  //   debugger
+  //   
   //   e.preventDefault();
   //   setIsSubmitting(true);
   //   const payload: any = {

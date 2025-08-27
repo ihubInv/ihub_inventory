@@ -313,7 +313,7 @@ const handleUpdateUser = async (userId: string, updatedData: Partial<{
   department: string;
   isactive: boolean;
 }>) => {
-  debugger
+  
   try {
     console.log('Updating user:', userId, updatedData);
     const loadingToast = CRUDToasts.updating('user');

@@ -5,7 +5,7 @@ import { Clock, CheckCircle, XCircle, FileText, Search, Filter } from 'lucide-re
 import FilterDropdown from '../common/FilterDropdown';
 
 const RequestStatus: React.FC = () => {
-  debugger
+  
   const { requests } = useInventory();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');

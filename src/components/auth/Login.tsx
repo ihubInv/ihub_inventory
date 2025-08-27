@@ -6,7 +6,7 @@ import { AuthToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
-  debugger
+  
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

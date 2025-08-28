@@ -34,16 +34,43 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
   const [depreciation, setDepreciation] = useState<DepreciationResult | null>(null);
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
-  useEffect(() => {
-    if (assetValue > 0 && usefulLife > 0) {
-      const result = calculateDepreciation();
-      setDepreciation(result);
-      onCalculate?.(result);
+  // Ensure purchaseDate is a valid Date object
+  const safePurchaseDate = React.useMemo(() => {
+    if (purchaseDate instanceof Date && !isNaN(purchaseDate.getTime())) {
+      return purchaseDate;
     }
-  }, [assetValue, salvageValue, usefulLife, purchaseDate, method]);
+    // If purchaseDate is not a valid Date, use current date
+    console.warn('DepreciationCalculator: Invalid purchaseDate provided, using current date instead:', purchaseDate);
+    return new Date();
+  }, [purchaseDate]);
+
+  // Validate other required props
+  const isValidInput = React.useMemo(() => {
+    return assetValue > 0 && usefulLife > 0 && salvageValue >= 0 && salvageValue < assetValue;
+  }, [assetValue, usefulLife, salvageValue]);
+
+  useEffect(() => {
+    if (isValidInput) {
+      try {
+        const result = calculateDepreciation();
+        setDepreciation(result);
+        onCalculate?.(result);
+      } catch (error) {
+        console.error('Error calculating depreciation:', error);
+        setDepreciation(null);
+      }
+    } else {
+      setDepreciation(null);
+    }
+  }, [assetValue, salvageValue, usefulLife, safePurchaseDate, method, isValidInput]);
 
   const calculateDepreciation = (): DepreciationResult => {
-    const purchaseYear = purchaseDate.getFullYear();
+    // Additional safety check
+    if (!isValidInput) {
+      throw new Error('Invalid input parameters for depreciation calculation');
+    }
+
+    const purchaseYear = safePurchaseDate.getFullYear();
     const yearsElapsed = currentYear - purchaseYear;
     
     let yearlyDepreciation = 0;
@@ -213,7 +240,7 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
           onChange={(e) => setCurrentYear(Number(e.target.value))}
           className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {Array.from({ length: usefulLife + 1 }, (_, i) => purchaseDate.getFullYear() + i).map(year => (
+          {Array.from({ length: usefulLife + 1 }, (_, i) => safePurchaseDate.getFullYear() + i).map(year => (
             <option key={year} value={year}>{year}</option>
           ))}
         </select>

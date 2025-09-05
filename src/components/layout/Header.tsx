@@ -288,6 +288,27 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               </div>
             </button>
           </div>
+          {/* Mobile Profile Button */}
+          <div className="relative lg:hidden" ref={dropdownRef}>
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center justify-center p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 bg-white shadow-sm border border-gray-200"
+            >
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
+                {user.profilepicture ? (
+                  <img
+                    src={user.profilepicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-white">
+                    {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
       </div>
 
       {/* Mobile Profile Menu - Fixed z-index */}
@@ -327,6 +348,37 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
             
             <div className="p-4">
               {/* User Info Card */}
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
+                  {user.profilepicture ? (
+                    <img
+                      src={user.profilepicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-white">
+                      {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${roleInfo.bgColor}`}>
+                    {roleInfo.title}
+                  </span>
+                </div>
+              </div>
+                <div className="text-center text-white">
+                  <p className="font-medium">{user.email}</p>
+                  <p className="text-sm opacity-90">{user.department || 'No Department'}</p>
+                </div>
+              </div>
+              
+              {/* Menu Items */}
+              <div className="space-y-2">
+            <div className="p-4">
+              {/* User Info Card */}
               <div className={`p-4 rounded-xl bg-gradient-to-r ${roleInfo.color} mb-4`}>
                 <div className="text-center text-white">
                   <p className="font-medium">{user.email}</p>
@@ -336,17 +388,16 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               
               {/* Menu Items */}
               <div className="space-y-2">
-              <button
                 onClick={handleProfile}
                 className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-              >
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
                 <User size={16} className="mr-3" />
                 View Profile
               </button>
               <button
                 onClick={handleNotification}
                 className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-              >
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
                 <Bell size={16} className="mr-3" />
                 Notifications
                 {notificationCount > 0 && (
@@ -361,17 +412,18 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   setIsProfileMenuOpen(false);
                 }}
                 className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-              >
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
                 <Settings size={16} className="mr-3" />
                 Dashboard
               </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
-              >
+                className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
                 <LogOut size={16} className="mr-3" />
                 Sign Out
               </button>
+              </div>
               </div>
             </div>
           </div>
@@ -382,3 +434,4 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 };
 
 export default Header;
+          <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl">

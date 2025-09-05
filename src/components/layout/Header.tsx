@@ -120,21 +120,21 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
         <div className="flex items-center space-x-4">
           {/* Enhanced Mobile Menu Button */}
           <button
-            className="p-3 text-gray-600 transition-all duration-200 rounded-xl md:hidden hover:text-blue-600 hover:bg-blue-50 hover:scale-105"
+            className="flex items-center justify-center p-3 text-gray-600 transition-all duration-200 rounded-xl lg:hidden hover:text-blue-600 hover:bg-blue-50 hover:scale-105 bg-white shadow-md border border-gray-200"
             onClick={onMobileToggle}
           >
-            <Menu size={20} />
+            <Menu size={22} className="font-bold" />
           </button>
 
           {/* Enhanced Logo & Title */}
-          <div className={`flex items-center space-x-4 ${mobileOpen ? 'hidden' : 'flex'} md:flex`}>
+          <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:w-12 sm:h-12">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg">
                 <span className="text-lg font-bold text-white sm:text-xl">I</span>
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse sm:w-4 sm:h-4"></div>
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden md:block">
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent lg:text-2xl">
                 iHub Inventory
               </h1>
@@ -144,9 +144,9 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
         </div>
 
         {/* Center Section - User Info (Mobile) */}
-        <div className="flex items-center space-x-2 md:hidden">
+        <div className="flex items-center space-x-2 lg:hidden">
           <div className="text-center">
-            <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+            <p className="text-xs font-semibold text-gray-900 truncate max-w-[120px]">{user.name}</p>
             <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${roleInfo.bgColor}`}>
               {roleInfo.title}
             </span>
@@ -159,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
           {/* Notification Button */}
           <button 
             onClick={handleNotification}
-            className="relative p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50"
+            className="relative p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 bg-white shadow-sm border border-gray-200"
           >
             <Bell size={18} className="sm:w-5 sm:h-5" />
             {notificationCount > 0 && (
@@ -170,10 +170,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
           </button>
 
           {/* Desktop Profile Section */}
-          <div className="relative hidden md:block" ref={dropdownRef}>
+          <div className="relative hidden lg:block" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm border border-gray-200"
             >
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
                 {user.profilepicture ? (
@@ -188,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   </span>
                 )}
               </div>
-              <div className="hidden lg:block text-left">
+              <div className="text-left">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
                 <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${roleInfo.bgColor}`}>
                   {roleInfo.title}
@@ -267,15 +267,56 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
             )}
           </div>
         </div>
+          {/* Mobile Profile Button */}
+          <div className="relative lg:hidden" ref={dropdownRef}>
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center justify-center p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 bg-white shadow-sm border border-gray-200"
+            >
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
+                {user.profilepicture ? (
+                  <img
+                    src={user.profilepicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-white">
+                    {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
       </div>
 
       {/* Mobile Profile Menu - Fixed z-index */}
       {isProfileMenuOpen && (
         <div className="fixed inset-0 lg:hidden" style={{ zIndex: 999999 }}>
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsProfileMenuOpen(false)} />
-          <div className="fixed right-0 top-0 h-full w-64 bg-white shadow-2xl">
+          <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Profile Menu</h3>
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
+                  {user.profilepicture ? (
+                    <img
+                      src={user.profilepicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-white">
+                      {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${roleInfo.bgColor}`}>
+                    {roleInfo.title}
+                  </span>
+                </div>
+              </div>
               <button
                 onClick={() => setIsProfileMenuOpen(false)}
                 className="p-1 text-gray-400 transition-colors rounded hover:text-gray-600"
@@ -284,17 +325,27 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               </button>
             </div>
             
-            <div className="p-4 space-y-2">
+            <div className="p-4">
+              {/* User Info Card */}
+              <div className={`p-4 rounded-xl bg-gradient-to-r ${roleInfo.color} mb-4`}>
+                <div className="text-center text-white">
+                  <p className="font-medium">{user.email}</p>
+                  <p className="text-sm opacity-90">{user.department || 'No Department'}</p>
+                </div>
+              </div>
+              
+              {/* Menu Items */}
+              <div className="space-y-2">
               <button
                 onClick={handleProfile}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
               >
                 <User size={16} className="mr-3" />
                 View Profile
               </button>
               <button
                 onClick={handleNotification}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
               >
                 <Bell size={16} className="mr-3" />
                 Notifications
@@ -309,18 +360,19 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   navigate(`/${user.role}`);
                   setIsProfileMenuOpen(false);
                 }}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
               >
                 <Settings size={16} className="mr-3" />
                 Dashboard
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
               >
                 <LogOut size={16} className="mr-3" />
                 Sign Out
               </button>
+              </div>
             </div>
           </div>
         </div>

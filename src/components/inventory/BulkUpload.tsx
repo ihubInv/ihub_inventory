@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Download, AlertTriangle, CheckCircle, X, FileSpreadsheet, FileText, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
 
 interface BulkUploadProps {
   onUpload: (data: any[]) => Promise<void>;
@@ -81,7 +82,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
     ];
 
     if (!validTypes.includes(selectedFile.type) && !selectedFile.name.endsWith('.csv')) {
-      alert('Please select a valid Excel (.xlsx, .xls) or CSV file');
+      toast.error('Please select a valid Excel (.xlsx, .xls) or CSV file');
       return;
     }
 
@@ -198,12 +199,12 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
             const workbook = XLSX.read(e.target?.result, { type: 'binary' });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
             
             if (rawData.length > 0) {
-              const headers = rawData[0].map((h: any) => h.toString().toLowerCase().trim());
+              const headers = rawData[0].map((h: unknown) => String(h).toLowerCase().trim());
               const rows = rawData.slice(1);
-              data = rows.map((row: any[]) => {
+              data = rows.map((row: unknown[]) => {
                 const obj: any = {};
                 headers.forEach((header: string, index: number) => {
                   obj[header] = row[index] || '';

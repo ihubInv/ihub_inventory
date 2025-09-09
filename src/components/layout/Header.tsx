@@ -6,25 +6,26 @@ import {
   User,
   LogOut,
   Settings,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { useInventory } from '../../contexts/InventoryContext';
 
 interface HeaderProps {
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileToggle: () => void;
+  onOpenEmailSetup: () => void; // New prop to open EmailSetup modal
 }
 
-const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
+const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle, onOpenEmailSetup }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { requests } = useInventory();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -47,19 +48,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
   if (!user) return null;
 
-  // Calculate notification count based on user role
-  const getNotificationCount = () => {
-    if (user.role === 'employee') {
-      // Employees see count of their own pending requests
-      return requests.filter(req => req.employeeid === user.id && req.status === 'pending').length;
-    } else if (user.role === 'admin' || user.role === 'stock-manager') {
-      // Admins and stock managers see count of all pending requests
-      return requests.filter(req => req.status === 'pending').length;
-    }
-    return 0;
-  };
-
-  const notificationCount = getNotificationCount();
+  const notificationCount = unreadCount;
 
   const getRoleInfo = (role: string) => {
     switch (role) {
@@ -114,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
   return (
     <>
       {/* Enhanced Main Header */}
-      <div className="relative flex items-center justify-between w-full px-4 py-4 bg-white/90 backdrop-blur-lg shadow-xl sm:px-6 lg:px-8 border-b border-gray-200/50" style={{ zIndex: 999999 }}>
+      <div className="relative flex items-center justify-between w-full px-4 py-4 bg-white/90 backdrop-blur-lg shadow-xl sm:px-6 lg:px-8 border-b border-gray-200/50 z-40">
         
         {/* Left Section - Mobile Menu & Logo */}
         <div className="flex items-center space-x-4">
@@ -199,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
             {/* Desktop Dropdown Menu - Fixed positioning and z-index */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 top-full w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl" style={{ zIndex: 999999 }}>
+              <div className="absolute right-0 top-full w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-40">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
@@ -244,6 +233,16 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                         {notificationCount > 9 ? '9+' : notificationCount}
                       </span>
                     )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsProfileMenuOpen(false); 
+                      onOpenEmailSetup(); 
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Mail size={16} className="mr-3" />
+                    Email Settings
                   </button>
                   <button
                     onClick={() => navigate(`/${user.role}`)}
@@ -405,6 +404,16 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                     {notificationCount > 9 ? '9+' : notificationCount}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={() => {
+                  setIsProfileMenuOpen(false); 
+                  onOpenEmailSetup(); 
+                }}
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
+              >
+                <Mail size={16} className="mr-3" />
+                Email Settings
               </button>
               <button
                 onClick={() => {

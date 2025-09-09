@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Settings, Check, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface EmailSetupProps {
   onClose: () => void;
@@ -18,7 +19,7 @@ const EmailSetup: React.FC<EmailSetupProps> = ({ onClose }) => {
   const handleSave = () => {
     // In a real app, you would save these to environment variables or backend
     localStorage.setItem('emailjs_config', JSON.stringify(config));
-    alert('Email configuration saved! Please restart the application for changes to take effect.');
+    toast.success('Email configuration saved! Please restart the application for changes to take effect.');
     onClose();
   };
 

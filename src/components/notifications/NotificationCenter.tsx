@@ -4,10 +4,11 @@ import { sendNotificationEmail } from '../../services/emailService';
 import { Bell, Check, Trash2, AlertTriangle, CheckCircle, XCircle, Package, User, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const NotificationCenter: React.FC = () => {
   const { notifications, deleteNotification } = useNotifications();
-  const { requests, updateRequestStatus } = useInventory();
+  const { requests, updateRequestStatus, users } = useInventory();
   const { user } = useAuth();
   
   // State for managing approval/rejection
@@ -82,21 +83,50 @@ const NotificationCenter: React.FC = () => {
 
   const handleAction = async () => {
     if (!selectedRequest || !selectedAction || !reason.trim()) {
-      alert(`Please provide a reason for ${selectedAction}`);
+      toast.error(`Please provide a reason for ${selectedAction}`);
       return;
     }
     
     setIsProcessing(true);
     try {
-      await updateRequestStatus(selectedRequest, selectedAction === 'approve' ? 'approved' : 'rejected', reason, user?.id);
+      const requestToUpdate = requests.find(req => req.id === selectedRequest);
+      if (!requestToUpdate) {
+        toast.error("Request not found.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const employee = users.find(u => u.id === requestToUpdate.employeeid);
+      if (!employee) {
+        toast.error("Employee not found for this request.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const newStatus = selectedAction === 'approve' ? 'approved' : 'rejected';
+      await updateRequestStatus(selectedRequest, newStatus, reason, user?.id);
+      
+      // Send email to employee
+      sendNotificationEmail(
+        selectedAction === 'approve' ? 'requestApproved' : 'requestRejected',
+        employee.email,
+        employee.name,
+        {
+          employeename: employee.name,
+          itemtype: requestToUpdate.itemtype,
+          quantity: requestToUpdate.quantity,
+          remarks: reason,
+          from_name: user?.name || 'Admin/Stock Manager',
+        }
+      );
       setSelectedRequest(null);
       setSelectedAction(null);
       setReason('');
       // Show success message
-      alert(`Request ${selectedAction}d successfully!`);
+      toast.success(`Request ${selectedAction}d successfully!`);
     } catch (error) {
       console.error(`Error ${selectedAction}ing request:`, error);
-      alert(`Failed to ${selectedAction} request. Please try again.`);
+      toast.error(`Failed to ${selectedAction} request. Please try again.`);
     } finally {
       setIsProcessing(false);
     }

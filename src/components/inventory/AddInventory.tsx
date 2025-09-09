@@ -363,7 +363,7 @@ const handleFile = (file?: File) => {
     
     // Validate that unique ID is complete (no placeholders)
     if (formData.uniqueid.includes('--')) {
-      alert('Please fill in all required fields (Financial Year, Asset Name, and Location) to generate a complete unique ID.');
+      toast.error('Please fill in all required fields (Financial Year, Asset Name, and Location) to generate a complete unique ID.');
       return;
     }
     
@@ -403,7 +403,7 @@ const handleFile = (file?: File) => {
   for (const file of formData.attachments || []) {
     // Validate file type
     if (!validateFileType(file)) {
-      alert(`File type not supported: ${file.name}. Please upload images, PDFs, or documents.`);
+      toast.error(`File type not supported: ${file.name}. Please upload images, PDFs, or documents.`);
       setIsSubmitting(false);
       return;
     }
@@ -419,7 +419,7 @@ const handleFile = (file?: File) => {
 
     if (error) {
       console.error('File upload error:', error.message);
-      alert(`Failed to upload file: ${file.name}`);
+      toast.error(`Failed to upload file: ${file.name}`);
       setIsSubmitting(false);
       return;
     }

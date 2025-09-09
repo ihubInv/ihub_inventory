@@ -1,14 +1,14 @@
 import emailjs from '@emailjs/browser';
+import toast from 'react-hot-toast';
+
+const EMAIL_SERVICE_ID = import.meta.env.VITE_EMAIL_SERVICE_ID;
+const EMAIL_TEMPLATE_ID = import.meta.env.VITE_EMAIL_TEMPLATE_ID;
+const EMAIL_PUBLIC_KEY = import.meta.env.VITE_EMAIL_PUBLIC_KEY;
 
 
-const EMAIL_SERVICE_ID = import.meta.env.EMAIL_SERVICE_ID;
-const EMAIL_TEMPLATE_ID = import.meta.env.EMAIL_TEMPLATE_ID;
-const EMAIL_PUBLIC_KEY = import.meta.env.EMAIL_PUBLIC_KEY;
 
-
-// pass   gscm ehni cabl nebh
-// Initialize EmailJS
-emailjs.init(EMAIL_PUBLIC_KEY);
+// Initialize EmailJS (moved to sendEmail for dynamic config)
+// emailjs.init(EMAIL_PUBLIC_KEY);
 
 export interface EmailData {
   [key: string]: unknown;  // ✅ This line fixes the TS2345 error
@@ -22,12 +22,32 @@ export interface EmailData {
   quantity?: string;
   status?: string;
 }
+
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
-  ;
   try {
+    let serviceId = EMAIL_SERVICE_ID;
+    let templateId = EMAIL_TEMPLATE_ID;
+    let publicKey = EMAIL_PUBLIC_KEY;
+
+    const storedConfig = localStorage.getItem('emailjs_config');
+    if (storedConfig) {
+      const localConfig = JSON.parse(storedConfig);
+      serviceId = localConfig.serviceId || serviceId;
+      templateId = localConfig.templateId || templateId;
+      publicKey = localConfig.publicKey || publicKey;
+    }
+
+    if (!serviceId || !templateId || !publicKey) {
+      toast.error('Email service is incomplete. Please check your configuration in settings or .env file.');
+      console.error('Missing EmailJS configuration: serviceId, templateId, or publicKey.');
+      return false;
+    }
+
+    emailjs.init(publicKey); // Initialize with dynamic public key
+
     const result = await emailjs.send(
-      EMAIL_SERVICE_ID,
-      EMAIL_TEMPLATE_ID,
+      serviceId,
+      templateId,
       emailData
     );
     
@@ -35,9 +55,11 @@ export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
       console.log('Email sent successfully:', result);
       return true;
     }
+    console.error('Email failed to send with status:', result.status, result.text);
     return false;
   } catch (error) {
     console.error('Failed to send email:', error);
+    toast.error('Failed to send email. Please check your settings and network connection.');
     return false;
   }
 };

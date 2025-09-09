@@ -59,6 +59,11 @@ export function usePersistedFormState<T>(
     }
   });
 
+  // Clear the persisted state when the component mounts to ensure a fresh form on full page refresh
+  useEffect(() => {
+    localStorage.removeItem(key);
+  }, []);
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {

@@ -53,18 +53,17 @@ const CreateRequest: React.FC = () => {
         message: `${user?.name} has requested ${formData.quantity} ${formData.itemtype} for ${formData.purpose}`
       });
 
-     
-      // const adminUsers = users.filter(u => u.role === 'admin' || u.role === 'stock-manager');
+      const adminUsers = users.filter(u => u.role === 'admin' || u.role === 'stock-manager');
 
-      // adminUsers.forEach(admin => {
-      //   sendNotificationEmail('newRequest', admin.email, admin.name, {
-      //     employeename: user?.name || '',
-      //     itemtype: formData.itemtype,
-      //     quantity: formData.quantity,
-      //     purpose: formData.purpose,
-      //     from_name: user?.name || 'Employee',   // ✅ who is sending this request
-      //   });
-      // });
+      adminUsers.forEach(admin => {
+        sendNotificationEmail('newRequest', admin.email, admin.name, {
+          employeename: user?.name || '',
+          itemtype: formData.itemtype,
+          quantity: formData.quantity,
+          purpose: formData.purpose,
+          from_name: user?.name || 'Employee',   // ✅ who is sending this request
+        });
+      });
 
       // Reset form
       setFormData({

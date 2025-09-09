@@ -94,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
   return (
     <>
       {/* Enhanced Desktop Sidebar */}
-      <div className={`hidden lg:flex bg-white/95 backdrop-blur-lg shadow-2xl flex-col h-full fixed left-0 top-0 z-30 transition-all duration-300 ${
+      <div className={`hidden lg:flex bg-white/95 backdrop-blur-lg shadow-2xl flex-col h-full fixed left-0 top-0 z-40 transition-all duration-300 ${
         collapsed ? 'w-20' : 'w-64'
       }`}>
       

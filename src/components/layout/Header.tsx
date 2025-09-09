@@ -312,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
       {/* Mobile Profile Menu - Fixed z-index */}
       {isProfileMenuOpen && (
-        <div className="fixed inset-0 lg:hidden" style={{ zIndex: 999999 }}>
+        <div className="fixed inset-0 lg:hidden z-50">
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsProfileMenuOpen(false)} />
           <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -347,37 +347,6 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
             
             <div className="p-4">
               {/* User Info Card */}
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
-                  {user.profilepicture ? (
-                    <img
-                      src={user.profilepicture}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-white">
-                      {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${roleInfo.bgColor}`}>
-                    {roleInfo.title}
-                  </span>
-                </div>
-              </div>
-                <div className="text-center text-white">
-                  <p className="font-medium">{user.email}</p>
-                  <p className="text-sm opacity-90">{user.department || 'No Department'}</p>
-                </div>
-              </div>
-              
-              {/* Menu Items */}
-              <div className="space-y-2">
-            <div className="p-4">
-              {/* User Info Card */}
               <div className={`p-4 rounded-xl bg-gradient-to-r ${roleInfo.color} mb-4`}>
                 <div className="text-center text-white">
                   <p className="font-medium">{user.email}</p>
@@ -387,52 +356,52 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               
               {/* Menu Items */}
               <div className="space-y-2">
-                onClick={handleProfile}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                <User size={16} className="mr-3" />
-                View Profile
-              </button>
-              <button
-                onClick={handleNotification}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                <Bell size={16} className="mr-3" />
-                Notifications
-                {notificationCount > 0 && (
-                  <span className="ml-auto px-2 py-0.5 text-xs font-medium text-white bg-red-500 rounded-full">
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setIsProfileMenuOpen(false); 
-                  onOpenEmailSetup(); 
-                }}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
-              >
-                <Mail size={16} className="mr-3" />
-                Email Settings
-              </button>
-              <button
-                onClick={() => {
-                  navigate(`/${user.role}`);
-                  setIsProfileMenuOpen(false);
-                }}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                <Settings size={16} className="mr-3" />
-                Dashboard
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
-                className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
-                <LogOut size={16} className="mr-3" />
-                Sign Out
-              </button>
-              </div>
+                <button
+                  onClick={handleProfile}
+                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
+                >
+                  <User size={16} className="mr-3" />
+                  View Profile
+                </button>
+                <button
+                  onClick={handleNotification}
+                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
+                >
+                  <Bell size={16} className="mr-3" />
+                  Notifications
+                  {notificationCount > 0 && (
+                    <span className="ml-auto px-2 py-0.5 text-xs font-medium text-white bg-red-500 rounded-full">
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false); 
+                    onOpenEmailSetup(); 
+                  }}
+                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
+                >
+                  <Mail size={16} className="mr-3" />
+                  Email Settings
+                </button>
+                <button
+                  onClick={() => {
+                    navigate(`/${user.role}`);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
+                >
+                  <Settings size={16} className="mr-3" />
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
+                >
+                  <LogOut size={16} className="mr-3" />
+                  Sign Out
+                </button>
               </div>
             </div>
           </div>

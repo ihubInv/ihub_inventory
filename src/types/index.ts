@@ -19,8 +19,8 @@ export interface InventoryItem {
   uniqueid: string;
   financialyear: string;
   assetcategory: string;
-  dateofinvoice: Date;
-  dateofentry: Date;
+  dateofinvoice: Date | null;
+  dateofentry: Date | null;
   invoicenumber: string;
   assetcategoryid: string;
   assetname: string;
@@ -38,7 +38,7 @@ export interface InventoryItem {
   balancequantityinstock: number;
   description: string;
   unitofmeasurement: string;
-  depreciationmethod?: 'straight-line' | 'declining-balance' | 'sum-of-years';
+  depreciationmethod?: string;
   warrantyinformation?: string;
   maintenanceschedule?: string;
   conditionofasset: 'excellent' | 'good' | 'fair' | 'poor' | 'damaged';
@@ -52,6 +52,11 @@ export interface InventoryItem {
   lastmodifiedby: string;
   lastmodifieddate: Date;
   createdat: Date;
+}
+
+export interface Attachment {
+  name: string;
+  url: string;
 }
 
 

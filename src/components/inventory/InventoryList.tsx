@@ -24,6 +24,47 @@ import StatusDropdown from '../common/StatusDropdown';
 import CategoryDropdown from '../common/CategoryDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
 import InventoryPivotTable from './InventoryPivotTable';
+import { InventoryItem, Attachment } from '../../types'; // Import Attachment type
+
+interface AddInventoryFormData {
+  uniqueid: string;
+  financialyear: string;
+  dateofinvoice: Date | null;
+  dateofentry: Date | null;
+  invoicenumber: string;
+  assetcategory: string;
+  assetcategoryid: string;
+  assetname: string;
+  specification: string;
+  makemodel: string;
+  productserialnumber: string;
+  vendorname: string;
+  quantityperitem: number;
+  rateinclusivetax: number;
+  totalcost: number;
+  locationofitem: string;
+  issuedto: string;
+  dateofissue: Date | null;
+  expectedreturndate: Date | null;
+  balancequantityinstock: number;
+  description: string;
+  unitofmeasurement: string;
+  depreciationmethod: '' | 'straight-line' | 'declining-balance' | 'sum-of-years';
+  warrantyinformation: string | undefined;
+  maintenanceschedule: string | undefined;
+  conditionofasset: 'excellent' | 'good' | 'fair' | 'poor' | 'damaged';
+  status: 'available' | 'issued' | 'maintenance' | 'retired';
+  minimumstocklevel: number;
+  purchaseordernumber: string | undefined;
+  expectedlifespan: string | undefined;
+  assettag: string | undefined;
+  salvagevalue: number | undefined;
+  attachments: (File | Attachment)[] | undefined;
+  createdby: string;
+  lastmodifiedby?: string;
+  lastmodifieddate?: Date;
+}
+
 // import UpdateInventory from './updateInventory';
 
 const InventoryList: React.FC = () => {
@@ -33,7 +74,6 @@ const InventoryList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem('inventoryListSearchTerm') || '';
   });
-  const [showAddModal, setShowAddModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [viewingCategory, setViewingCategory] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState(() => {
@@ -125,11 +165,11 @@ const InventoryList: React.FC = () => {
     }
   };
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AddInventoryFormData>({
     uniqueid: '',
     financialyear: '2024-25',
-    dateofinvoice: null as Date | null,
-    dateofentry: new Date(),
+    dateofinvoice: null,
+    dateofentry: null,
     invoicenumber: '',
     assetcategory: '',
     assetcategoryid: "",
@@ -143,21 +183,25 @@ const InventoryList: React.FC = () => {
     totalcost: 0,
     locationofitem: '',
     issuedto: '',
-    dateofissue: null as Date | null,
-    expectedreturndate: null as Date | null,
+    dateofissue: null,
+    expectedreturndate: null,
     balancequantityinstock: 0,
     description: '',
     unitofmeasurement: 'Pieces',
     depreciationmethod: '',
-    warrantyinformation: '',
-    maintenanceschedule: '',
-    conditionofasset: 'excellent' as const,
-    status: 'available' as const,
+    warrantyinformation: undefined,
+    maintenanceschedule: undefined,
+    conditionofasset: 'excellent',
+    status: 'available',
     minimumstocklevel: 5,
-    purchaseordernumber: '',
-             expectedlifespan: '',
-             assettag: '',
-    salvagevalue: 0,
+    purchaseordernumber: undefined,
+    expectedlifespan: undefined,
+    assettag: undefined,
+    salvagevalue: undefined,
+    attachments: [],
+    createdby: user?.id || 'unknown',
+    lastmodifiedby: user?.id || 'unknown',
+    lastmodifieddate: new Date(),
   });
 
   // Save filter states to localStorage whenever they change
@@ -266,36 +310,44 @@ const InventoryList: React.FC = () => {
       balancequantityinstock: item.balancequantityinstock,
       description: item.description,
       unitofmeasurement: item.unitofmeasurement,
-      depreciationmethod: item.depreciationmethod,
+      depreciationmethod: item.depreciationmethod as AddInventoryFormData['depreciationmethod'],
       warrantyinformation: item.warrantyinformation,
       maintenanceschedule: item.maintenanceschedule,
       conditionofasset: item.conditionofasset,
       status: item.status,
       minimumstocklevel: item.minimumstocklevel,
       purchaseordernumber: item.purchaseordernumber,
-              expectedlifespan: item.expectedlifespan,
-        assettag: item.assettag,
-        salvagevalue: item.salvagevalue,
-        attachments: item.attachments ?? [],
-      lastmodifiedby: user?.id || 'unknown',
+      expectedlifespan: item.expectedlifespan,
+      assettag: item.assettag,
+      salvagevalue: item.salvagevalue,
+      attachments: item.attachments ?? undefined,
+      createdby: item.createdby,
+      lastmodifiedby: item.lastmodifiedby,
       lastmodifieddate: item.lastmodifieddate,
-      createdat: item.createdat,
-
-
     });
-    setShowAddModal(true);
   };
 
   const handleUpdateCategory = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCategory) {
-      updateInventoryItem(editingCategory.id, formData);
+      const updatedItem: Partial<InventoryItem> = {
+        ...formData, // Spread formData into a new object
+        lastmodifiedby: user?.id || 'unknown', // Explicitly add lastmodifiedby
+        lastmodifieddate: new Date(), // Explicitly add lastmodifieddate
+        attachments: formData.attachments?.map(att => ({
+          name: (att as File).name || (att as Attachment).name,
+          url: (att as File).name ? URL.createObjectURL(att as File) : (att as Attachment).url
+        })) || [],
+        id: editingCategory.id,
+        createdat: editingCategory.createdat,
+      };
+      updateInventoryItem(editingCategory.id, updatedItem);
       setEditingCategory(null);
       setFormData({
         uniqueid: '',
         financialyear: '2024-25',
-        dateofinvoice: null as Date | null,
-        dateofentry: new Date(),
+        dateofinvoice: null,
+        dateofentry: null,
         invoicenumber: '',
         assetcategory: '',
         assetcategoryid: "",
@@ -309,23 +361,26 @@ const InventoryList: React.FC = () => {
         totalcost: 0,
         locationofitem: '',
         issuedto: '',
-        dateofissue: null as Date | null,
-        expectedreturndate: null as Date | null,
+        dateofissue: null,
+        expectedreturndate: null,
         balancequantityinstock: 0,
         description: '',
         unitofmeasurement: 'Pieces',
         depreciationmethod: '',
-        warrantyinformation: '',
-        maintenanceschedule: '',
-        conditionofasset: 'excellent' as const,
-        status: 'available' as const,
+        warrantyinformation: undefined,
+        maintenanceschedule: undefined,
+        conditionofasset: 'excellent',
+        status: 'available',
         minimumstocklevel: 5,
-        purchaseordernumber: '',
-                 expectedlifespan: '',
-         assettag: '',
-         salvagevalue: 0,
+        purchaseordernumber: undefined,
+        expectedlifespan: undefined,
+        assettag: undefined,
+        salvagevalue: undefined,
+        attachments: [],
+        createdby: user?.id || 'unknown',
+        lastmodifiedby: user?.id || 'unknown',
+        lastmodifieddate: new Date(),
       });
-      setShowAddModal(false);
     }
   };
 
@@ -337,16 +392,21 @@ const InventoryList: React.FC = () => {
     
     e.preventDefault();
     try {
-      ;
-      await addInventoryItem({
+      const newItem: Omit<InventoryItem, 'id' | 'createdat' | 'updatedat'> = {
         ...formData,
-        createdby: user?.id || 'unknown'
-      });
+        lastmodifiedby: user?.id || 'unknown', // Explicitly add lastmodifiedby
+        lastmodifieddate: new Date(), // Explicitly add lastmodifieddate
+        attachments: formData.attachments?.map(att => ({
+          name: (att as File).name || (att as Attachment).name,
+          url: (att as File).name ? URL.createObjectURL(att as File) : (att as Attachment).url
+        })) || [],
+      };
+      await addInventoryItem(newItem);
       setFormData({
         uniqueid: '',
         financialyear: '2024-25',
-        dateofinvoice: null as Date | null,
-        dateofentry: new Date(),
+        dateofinvoice: null,
+        dateofentry: null,
         invoicenumber: '',
         assetcategory: '',
         assetcategoryid: "",
@@ -360,23 +420,26 @@ const InventoryList: React.FC = () => {
         totalcost: 0,
         locationofitem: '',
         issuedto: '',
-        dateofissue: null as Date | null,
-        expectedreturndate: null as Date | null,
+        dateofissue: null,
+        expectedreturndate: null,
         balancequantityinstock: 0,
         description: '',
         unitofmeasurement: 'Pieces',
         depreciationmethod: '',
-        warrantyinformation: '',
-        maintenanceschedule: '',
-        conditionofasset: 'excellent' as const,
-        status: 'available' as const,
+        warrantyinformation: undefined,
+        maintenanceschedule: undefined,
+        conditionofasset: 'excellent',
+        status: 'available',
         minimumstocklevel: 5,
-        purchaseordernumber: '',
-                 expectedlifespan: '',
-         assettag: '',
-         salvagevalue: 0,
+        purchaseordernumber: undefined,
+        expectedlifespan: undefined,
+        assettag: undefined,
+        salvagevalue: undefined,
+        attachments: [],
+        createdby: user?.id || 'unknown',
+        lastmodifiedby: user?.id || 'unknown',
+        lastmodifieddate: new Date(),
       });
-      setShowAddModal(false);
     } catch (err) {
       console.error('Failed to add category:', err);
       // Optional: show toast or error message
@@ -1530,9 +1593,8 @@ const InventoryList: React.FC = () => {
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Category</th>
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Condition</th>
-                                     <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Quantity</th>
+                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Quantity</th>
                    <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Location</th>
-                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Depreciation</th>
                    <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -1587,18 +1649,6 @@ const InventoryList: React.FC = () => {
                        {item.locationofitem}
                      </td>
                      
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       {item.depreciationmethod && item.expectedlifespan ? (
-                         <div className="flex items-center space-x-2">
-                           <Calculator className="w-4 h-4 text-blue-600" />
-                           <span className="text-sm text-gray-700">
-                             {item.depreciationmethod}
-                           </span>
-                         </div>
-                       ) : (
-                         <span className="text-sm text-gray-400">Not set</span>
-                       )}
-                     </td>
                      
                      <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <div className="flex items-center space-x-2">
@@ -1641,19 +1691,6 @@ const InventoryList: React.FC = () => {
         )}
       </div>
       {/* Add/Edit Category Modal */}
-      {showAddModal && (
-        <UpdateInventory
-          showAddModal={showAddModal}
-          setShowAddModal={setShowAddModal}
-          editingCategory={editingCategory}
-          setEditingCategory={setEditingCategory}
-          formData={formData}
-          setFormData={setFormData}
-          handleAddCategory={handleAddCategory}
-          handleUpdateCategory={handleUpdateCategory}
-        />
-      )}
-
       {/* Update Inventory Modal */}
       {showUpdateModal && itemToUpdate && (
         <UpdateInventory

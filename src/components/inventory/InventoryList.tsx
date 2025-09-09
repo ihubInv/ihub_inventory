@@ -25,6 +25,7 @@ import CategoryDropdown from '../common/CategoryDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
 import InventoryPivotTable from './InventoryPivotTable';
 import { InventoryItem, Attachment } from '../../types'; // Import Attachment type
+import AttractiveLoader from '../common/AttractiveLoader'; // Import AttractiveLoader
 
 interface AddInventoryFormData {
   uniqueid: string;
@@ -1286,14 +1287,7 @@ const InventoryList: React.FC = () => {
 
   // Show loading state while data is being fetched
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block w-12 h-12 border-b-2 border-indigo-600 rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-600">Loading inventory data...</p>
-        </div>
-      </div>
-    );
+    return <AttractiveLoader message="Loading inventory data..." variant="fullscreen" />;
   }
 
   return (

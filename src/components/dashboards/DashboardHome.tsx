@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import StatsCard from '../common/StatsCard';
 import RecentActivity from '../common/RecentActivity';
-import AttractiveLoader from '../common/AttractiveLoader';
+import AttractiveLoader from '../common/AttractiveLoader'; // Add back AttractiveLoader import
 import { useNavigate } from 'react-router-dom';
 
 const DashboardHome: React.FC = () => {

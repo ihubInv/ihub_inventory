@@ -188,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
             {/* Desktop Dropdown Menu - Fixed positioning and z-index */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 top-full w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-40">
+              <div className="absolute right-0 top-full w-64 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[45]">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
@@ -216,7 +216,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                 
                 <div className="py-2">
                   <button
-                    onClick={handleProfile}
+                    onClick={() => {
+                      handleProfile();
+                      setIsProfileMenuOpen(false); // Close dropdown after action
+                    }}
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <User size={16} className="mr-3" />
@@ -234,18 +237,23 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                       </span>
                     )}
                   </button>
+                  <div className="relative group">
+                    <button
+                      onClick={() => setIsProfileMenuOpen(false)} // Only close dropdown, do nothing else
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <Mail size={16} className="mr-3" />
+                      Email Settings
+                    </button>
+                    <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap ">
+                      Coming Soon
+                    </span>
+                  </div>
                   <button
                     onClick={() => {
-                      setIsProfileMenuOpen(false); 
-                      onOpenEmailSetup(); 
+                      navigate(`/${user.role}`);
+                      setIsProfileMenuOpen(false); // Close dropdown after action
                     }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
-                  >
-                    <Mail size={16} className="mr-3" />
-                    Email Settings
-                  </button>
-                  <button
-                    onClick={() => navigate(`/${user.role}`)}
                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <Settings size={16} className="mr-3" />
@@ -266,48 +274,6 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
             )}
           </div>
         </div>
-          {/* Mobile Profile Button */}
-          <div className="relative lg:hidden" ref={dropdownRef}>
-            <button
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center justify-center p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 bg-white shadow-sm border border-gray-200"
-            >
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
-                {user.profilepicture ? (
-                  <img
-                    src={user.profilepicture}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-medium text-white">
-                    {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                  </span>
-                )}
-              </div>
-            </button>
-          </div>
-          {/* Mobile Profile Button */}
-          <div className="relative lg:hidden" ref={dropdownRef}>
-            <button
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center justify-center p-2 text-gray-600 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 bg-white shadow-sm border border-gray-200"
-            >
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
-                {user.profilepicture ? (
-                  <img
-                    src={user.profilepicture}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-medium text-white">
-                    {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                  </span>
-                )}
-              </div>
-            </button>
-          </div>
       </div>
 
       {/* Mobile Profile Menu - Fixed z-index */}
@@ -357,7 +323,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               {/* Menu Items */}
               <div className="space-y-2">
                 <button
-                  onClick={handleProfile}
+                  onClick={() => {
+                    handleProfile();
+                    setIsProfileMenuOpen(false); // Close dropdown after action
+                  }}
                   className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
                 >
                   <User size={16} className="mr-3" />
@@ -375,16 +344,18 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                     </span>
                   )}
                 </button>
-                <button
-                  onClick={() => {
-                    setIsProfileMenuOpen(false); 
-                    onOpenEmailSetup(); 
-                  }}
-                  className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
-                >
-                  <Mail size={16} className="mr-3" />
-                  Email Settings
-                </button>
+                <div className="relative group">
+                  <button
+                    onClick={() => setIsProfileMenuOpen(false)} // Only close dropdown, do nothing else
+                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-50 border border-gray-200"
+                  >
+                    <Mail size={16} className="mr-3" />
+                    Email Settings
+                  </button>
+                  <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap shadow-lg">
+                    Coming Soon
+                  </span>
+                </div>
                 <button
                   onClick={() => {
                     navigate(`/${user.role}`);
@@ -396,7 +367,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   Dashboard
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    handleLogout();
+                    setIsProfileMenuOpen(false); // Close dropdown after action
+                  }}
                   className="flex items-center w-full px-4 py-3 text-sm text-red-600 transition-colors rounded-lg hover:bg-red-50 border border-red-200"
                 >
                   <LogOut size={16} className="mr-3" />

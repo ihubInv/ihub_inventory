@@ -656,13 +656,14 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
               />
             </div>
 
+            <div className="mt-8 bg-white rounded-2xl border border-gray-200 p-6"></div>
             {/* Attachments Section */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Image className="w-5 h-5 text-pink-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Attachments</h3>
               </div>
-              {/* Existing Attachments */}
+              
               {item.attachments && item.attachments.length > 0 && (
                 <div className="mb-6">
                   <h4 className="mb-4 text-sm font-medium text-gray-700">Current Attachments:</h4>
@@ -694,7 +695,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 </div>
               )}
 
-              {/* New Attachments Upload */}
+           
               <div className="mb-6">
                 <input
                   type="file"
@@ -713,7 +714,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 </label>
               </div>
 
-              {/* New Attachments Preview */}
+             
               {newAttachments.length > 0 && (
                 <div>
                   <h4 className="mb-4 text-sm font-medium text-gray-700">New Attachments:</h4>
@@ -738,7 +739,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
           </form>
         </div>
 

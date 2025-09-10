@@ -525,9 +525,9 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
               <p className="text-gray-700 leading-relaxed">{processedCategory.description}</p>
             </div>
           )}
-
+<div className="mt-8 bg-white rounded-2xl border border-gray-200 p-6"></div>
           {/* Attachments Section */}
-          <div className="mt-8 bg-white rounded-2xl border border-gray-200 p-6">
+          {/* <div className="mt-8 bg-white rounded-2xl border border-gray-200 p-6">
             <div className="flex items-center space-x-2 mb-6">
               <Image className="w-5 h-5 text-pink-600" />
               <h4 className="text-lg font-semibold text-gray-900">Attachments</h4>
@@ -542,7 +542,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
 
                   return (
                     <div key={index} className="group bg-gray-50 rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200">
-                      {/* Image Preview */}
+                      
                       <div className="relative aspect-square bg-white overflow-hidden">
                         <img
                           src={fileUrl}
@@ -565,7 +565,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
                         />
                       </div>
 
-                      {/* File Info */}
+                    
                       <div className="p-4 space-y-3">
                         <p className="text-sm font-medium text-gray-900 truncate" title={fileName}>
                           {fileName}
@@ -611,7 +611,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
                 <p className="text-gray-500 text-sm">No attachments available</p>
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Footer Actions */}

@@ -1254,7 +1254,7 @@ const handleFile = (file?: File) => {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-200">
+          {/* <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
               <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
                 <Image className="w-5 h-5 text-white" />
@@ -1262,7 +1262,7 @@ const handleFile = (file?: File) => {
               <h3 className="text-lg font-semibold text-gray-900">Upload Your File</h3>
             </div>
             <div className="pt-6 border-t border-gray-200">
-              {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Your File</h3> */}
+             
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Upload Your File
               </label>
@@ -1275,7 +1275,7 @@ const handleFile = (file?: File) => {
                 onFileChange={handleFile}
               />
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

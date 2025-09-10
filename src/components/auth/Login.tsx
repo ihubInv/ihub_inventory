@@ -17,7 +17,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
 
   const demoAccounts = [
-    { email: 'rohit@ihubiitmandi.in', role: 'admin', password: 'rohit@' },
+    { email: 'avnish@ihubiitmandi.in', role: 'admin', password: 'avnish@456~^*&' },
     { email: 'printi@ihubiitmandi.in', role: 'stock-manager', password: 'printi@' },
     { email: 'rksaklani9090@gmail.com', role: 'employee', password: 'rksaklani9090@' },
   ];
@@ -197,7 +197,7 @@ const Login: React.FC = () => {
           </p>
         </div>
           {/* Demo Accounts */}
-          <div className="pt-6 mt-8 border-t border-gray-200">
+          {/* <div className="pt-6 mt-8 border-t border-gray-200">
             <p className="mb-3 text-sm font-medium text-gray-700">Demo Accounts:</p>
             <div className="space-y-2">
               {demoAccounts.map((acc, idx) => (
@@ -219,7 +219,7 @@ const Login: React.FC = () => {
             <p className="mt-3 text-xs text-gray-500">
               All demo accounts use password: <code className="px-1 bg-gray-100 rounded">password</code>
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

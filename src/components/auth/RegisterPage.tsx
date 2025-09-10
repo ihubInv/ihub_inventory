@@ -345,7 +345,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
               />
             </div>
 
-            <div className="relative">
+            {/* <div className="relative">
               <RoleDropdown
                 label="Role"
                 value={formData.role}
@@ -354,7 +354,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                 error={errors.role}
                 required
               />
-            </div>
+            </div> */}
 
 
             {/* Register Button */}

@@ -349,6 +349,7 @@ import {
   deleteInventoryItemById,
   insertRequest,
   updateRequestStatusById,
+  deleteRequestById,
   insertUser,
   updateUserById,
   deleteUserById,
@@ -369,6 +370,7 @@ interface InventoryContextType {
   deleteInventoryItem: (id: string) => Promise<void>;
   submitRequest: (request: Omit<Request, 'id' | 'submittedat' | 'status'>) => Promise<void>;
   updateRequestStatus: (id: string, status: 'approved' | 'rejected', remarks?: string, reviewerid?: string) => Promise<void>;
+  deleteRequest: (id: string) => Promise<void>;
   addUser: (user: Omit<User, 'id' | 'createdat'>) => Promise<void>;
   updateUser: (id: string, user: Partial<User>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
@@ -732,6 +734,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     saveToCache(inventoryItems, updated, users, categories);
   };
 
+  const deleteRequest = async (id: string) => {
+    await deleteRequestById(id);
+    const updated = await fetchRequests();
+    setRequests(updated);
+    // Update cache
+    saveToCache(inventoryItems, updated, users, categories);
+  };
+
   const addUser = async (user: Omit<User, 'id' | 'createdat'>) => {
     await insertUser(user);
     const updated = await fetchUsers();
@@ -810,6 +820,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       deleteInventoryItem,
       submitRequest,
       updateRequestStatus,
+      deleteRequest,
       addUser,
       updateUser,
       deleteUser,

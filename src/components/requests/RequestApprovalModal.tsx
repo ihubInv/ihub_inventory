@@ -67,11 +67,22 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
     const loadingToast = CRUDToasts.updating('request');
 
     try {
+      console.log('Starting approval process:', { action, request, selectedAsset, reason });
+      
       // Update request status
       await updateRequestStatus(request.id, action === 'approve' ? 'approved' : 'rejected', reason, user?.id);
+      console.log('Request status updated successfully');
 
       // If approving, issue the selected asset
       if (action === 'approve' && selectedAsset) {
+        console.log('Updating inventory item:', selectedAsset.id, {
+          status: 'issued',
+          issuedto: request.employeename,
+          issuedby: user?.name || 'Admin',
+          issueddate: new Date().toISOString(),
+          dateofissue: new Date().toISOString()
+        });
+        
         await updateInventoryItem(selectedAsset.id, {
           status: 'issued',
           issuedto: request.employeename,
@@ -79,7 +90,8 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
           issueddate: new Date().toISOString(),
           dateofissue: new Date().toISOString()
         });
-
+        
+        console.log('Inventory item updated successfully');
         // Send success notification
         toast.success(`Request approved and ${selectedAsset.assetname} issued to ${request.employeename}`);
       } else if (action === 'reject') {

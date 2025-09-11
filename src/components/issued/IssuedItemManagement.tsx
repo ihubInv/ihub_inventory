@@ -24,7 +24,7 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const IssuedItemManagement: React.FC = () => {
-  const { inventoryItems, updateInventoryItem } = useInventory();
+  const { inventoryItems, updateInventoryItem, refreshData } = useInventory();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('issued');
@@ -143,7 +143,17 @@ const IssuedItemManagement: React.FC = () => {
             <span>Issue Item</span>
           </button>
           <button
-            onClick={() => window.location.reload()}
+            onClick={async () => {
+              const loadingToast = toast.loading('Refreshing data...');
+              try {
+                await refreshData();
+                toast.dismiss(loadingToast);
+                toast.success('Data refreshed successfully');
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error('Failed to refresh data');
+              }
+            }}
             className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <RefreshCw size={16} />

@@ -7,6 +7,10 @@ interface NotificationContextType {
   notifications: Notification[];
   addNotification: (notification: Notification) => void;
   deleteNotification: (index: number) => void;
+  deleteNotificationById: (employeeId: string, submittedAt: string) => void;
+  deleteApprovedNotifications: () => void;
+  deleteRejectedNotifications: () => void;
+  deleteAllNotifications: () => void;
   pendingNotifications: Notification[];
   approvedNotifications: Notification[];
   rejectedNotifications: Notification[];
@@ -36,6 +40,28 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setNotifications(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Delete notification by employee ID and submission date (unique identifier)
+  const deleteNotificationById = (employeeId: string, submittedAt: string) => {
+    setNotifications(prev => prev.filter(notification => 
+      !(notification.employeeid === employeeId && notification.submittedat === submittedAt)
+    ));
+  };
+
+  // Delete all approved notifications
+  const deleteApprovedNotifications = () => {
+    setNotifications(prev => prev.filter(notification => notification.status !== 'approved'));
+  };
+
+  // Delete all rejected notifications
+  const deleteRejectedNotifications = () => {
+    setNotifications(prev => prev.filter(notification => notification.status !== 'rejected'));
+  };
+
+  // Delete all notifications
+  const deleteAllNotifications = () => {
+    setNotifications([]);
+  };
+
   // Calculate unread count based on user role and pending requests
   const getUnreadCount = () => {
     if (!user) return 0;
@@ -61,6 +87,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       notifications,
       addNotification,
       deleteNotification,
+      deleteNotificationById,
+      deleteApprovedNotifications,
+      deleteRejectedNotifications,
+      deleteAllNotifications,
       pendingNotifications,
       approvedNotifications,
       rejectedNotifications,

@@ -103,6 +103,16 @@ export const updateRequestStatusById = async (
   }
 };
 
+export const deleteRequestById = async (id: string) => {
+  try {
+    const { error } = await supabase.from('requests').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    console.error('Failed to delete request:', err);
+    throw err;
+  }
+};
+
 // ------------------- Users -------------------
 export const fetchUsers = async (): Promise<User[]> => {
   try {

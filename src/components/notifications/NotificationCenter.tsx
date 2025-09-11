@@ -8,8 +8,15 @@ import RequestApprovalModal from '../requests/RequestApprovalModal';
 import toast from 'react-hot-toast';
 
 const NotificationCenter: React.FC = () => {
-  const { notifications, deleteNotification } = useNotifications();
-  const { requests, updateRequestStatus, users } = useInventory();
+  const { 
+    notifications, 
+    deleteNotification, 
+    deleteNotificationById,
+    deleteApprovedNotifications,
+    deleteRejectedNotifications,
+    deleteAllNotifications
+  } = useNotifications();
+  const { requests, updateRequestStatus, deleteRequest, users } = useInventory();
   const { user } = useAuth();
   
   // State for managing approval/rejection
@@ -73,11 +80,88 @@ const NotificationCenter: React.FC = () => {
   const approvedNotifications = filteredNotifications.filter(n => n.status === 'approved');
   const rejectedNotifications = filteredNotifications.filter(n => n.status === 'rejected');
 
-  const handleDeleteNotification = (notificationId: string) => {
-    // Find the index of the notification in the requests array
-    const index = requests.findIndex(req => req.id === notificationId);
-    if (index !== -1) {
-      deleteNotification(index);
+  const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      await deleteRequest(notificationId);
+      toast.success('Request deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+      toast.error('Failed to delete request');
+    }
+  };
+
+  // Delete specific notification by employee ID and submission date
+  const handleDeleteNotificationById = async (employeeId: string, submittedAt: string) => {
+    try {
+      const requestToDelete = requests.find(req => 
+        req.employeeid === employeeId && req.submittedat === submittedAt
+      );
+      if (requestToDelete) {
+        await deleteRequest(requestToDelete.id);
+        toast.success('Request deleted successfully');
+      } else {
+        toast.error('Request not found');
+      }
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+      toast.error('Failed to delete request');
+    }
+  };
+
+  // Delete all approved notifications
+  const handleDeleteApprovedNotifications = async () => {
+    if (approvedNotifications.length === 0) {
+      toast.error('No approved requests to delete');
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete all ${approvedNotifications.length} approved requests?`)) {
+      try {
+        const deletePromises = approvedNotifications.map(request => deleteRequest(request.id));
+        await Promise.all(deletePromises);
+        toast.success(`${approvedNotifications.length} approved requests deleted successfully`);
+      } catch (error) {
+        console.error('Failed to delete approved requests:', error);
+        toast.error('Failed to delete approved requests');
+      }
+    }
+  };
+
+  // Delete all rejected notifications
+  const handleDeleteRejectedNotifications = async () => {
+    if (rejectedNotifications.length === 0) {
+      toast.error('No rejected requests to delete');
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete all ${rejectedNotifications.length} rejected requests?`)) {
+      try {
+        const deletePromises = rejectedNotifications.map(request => deleteRequest(request.id));
+        await Promise.all(deletePromises);
+        toast.success(`${rejectedNotifications.length} rejected requests deleted successfully`);
+      } catch (error) {
+        console.error('Failed to delete rejected requests:', error);
+        toast.error('Failed to delete rejected requests');
+      }
+    }
+  };
+
+  // Delete all notifications
+  const handleDeleteAllNotifications = async () => {
+    if (filteredNotifications.length === 0) {
+      toast.error('No requests to delete');
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete all ${filteredNotifications.length} requests?`)) {
+      try {
+        const deletePromises = filteredNotifications.map(request => deleteRequest(request.id));
+        await Promise.all(deletePromises);
+        toast.success(`${filteredNotifications.length} requests deleted successfully`);
+      } catch (error) {
+        console.error('Failed to delete requests:', error);
+        toast.error('Failed to delete requests');
+      }
     }
   };
 
@@ -100,6 +184,38 @@ const NotificationCenter: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
           <p className="mt-1 text-gray-600">Stay updated with your request status</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          {approvedNotifications.length > 0 && (
+            <button
+              onClick={handleDeleteApprovedNotifications}
+              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+              title="Delete all approved notifications"
+            >
+              <Trash2 size={16} />
+              <span>Clear Approved</span>
+            </button>
+          )}
+          {rejectedNotifications.length > 0 && (
+            <button
+              onClick={handleDeleteRejectedNotifications}
+              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700"
+              title="Delete all rejected notifications"
+            >
+              <Trash2 size={16} />
+              <span>Clear Rejected</span>
+            </button>
+          )}
+          {filteredNotifications.length > 0 && (
+            <button
+              onClick={handleDeleteAllNotifications}
+              className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+              title="Delete all notifications"
+            >
+              <Trash2 size={16} />
+              <span>Clear All</span>
+            </button>
+          )}
         </div>
       </div>
 

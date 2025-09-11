@@ -36,6 +36,7 @@ const CategoryManagement: React.FC = () => {
 
   const [newCategory, setNewCategory] = useState({
     name: '',
+    assetname: '',
     type: 'major' as const,
     description: '',
     isactive: true
@@ -73,6 +74,7 @@ const CategoryManagement: React.FC = () => {
       toast.dismiss(loadingToast);
       setNewCategory({
         name: '',
+        assetname: '',
         type: 'major',
         description: '',
         isactive: true
@@ -90,6 +92,7 @@ const CategoryManagement: React.FC = () => {
     setEditingCategory(category);
     setNewCategory({
       name: category.name,
+      assetname: category.assetname || '',
       type: category.type,
       description: category.description || '',
       isactive: category.isactive
@@ -107,6 +110,7 @@ const CategoryManagement: React.FC = () => {
         setEditingCategory(null);
         setNewCategory({
           name: '',
+          assetname: '',
           type: 'major',
           description: '',
           isactive: true
@@ -166,7 +170,7 @@ const CategoryManagement: React.FC = () => {
 
   // Chart data for category distribution
   const categoryChartData = {
-    categories: ['Tangible', 'Intangible'],
+    categories: ['Major', 'Minor'],
     counts: [stats.major, stats.minor],
   };
 console.log("viewingCategory",viewingCategory)
@@ -204,7 +208,7 @@ console.log("viewingCategory",viewingCategory)
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Tangible</p>
+              <p className="text-sm font-medium text-gray-600">Major</p>
               <p className="text-2xl font-bold text-gray-900">{stats.major}</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
@@ -216,7 +220,7 @@ console.log("viewingCategory",viewingCategory)
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Intangible</p>
+              <p className="text-sm font-medium text-gray-600">Minor</p>
               <p className="text-2xl font-bold text-gray-900">{stats.minor}</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
@@ -459,6 +463,18 @@ console.log("viewingCategory",viewingCategory)
               </div>
 
               <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Asset Name *</label>
+                <input
+                  type="text"
+                  value={newCategory.assetname}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, assetname: e.target.value }))}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Dell Laptop, Office Chair, Printer"
+                />
+              </div>
+              
+              <div>
                 <CategoryTypeDropdown
                   label="Asset Type *"
                   value={newCategory.type}
@@ -501,6 +517,7 @@ console.log("viewingCategory",viewingCategory)
                     setEditingCategory(null);
                     setNewCategory({
                       name: '',
+                      assetname: '',
                       type: 'major',
                       description: '',
                       isactive: true
@@ -557,6 +574,13 @@ console.log("viewingCategory",viewingCategory)
                     {viewingCategory?.type?.charAt(0)?.toUpperCase() + viewingCategory?.type?.slice(1)}
                   </span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Asset Name</label>
+                <p className="p-3 text-gray-900 rounded-lg bg-gray-50">
+                  {viewingCategory.assetname || 'No asset name provided'}
+                </p>
               </div>
 
               <div>

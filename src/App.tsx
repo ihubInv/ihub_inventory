@@ -10,6 +10,7 @@ import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { InventoryProvider } from './contexts/InventoryContext';
+import { LocationProvider } from './contexts/LocationContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AppStateProvider } from './contexts/AppStateContext';
 import Layout from './components/layout/Layout';
@@ -100,10 +101,12 @@ const App: React.FC = () => {
       <AppStateProvider>
         <AuthProvider>
           <InventoryProvider>
-            <NotificationProvider>
-              <AppContent />
-              <Toaster />
-            </NotificationProvider>
+            <LocationProvider>
+              <NotificationProvider>
+                <AppContent />
+                <Toaster />
+              </NotificationProvider>
+            </LocationProvider>
           </InventoryProvider>
         </AuthProvider>
       </AppStateProvider>

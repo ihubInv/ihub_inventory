@@ -14,7 +14,8 @@ import {
   FolderPlus,
   ChevronLeft,
   ChevronRight,
-  TrendingDown
+  TrendingDown,
+  MapPin
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -44,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: PackagePlus, label: 'Add Inventory', path: `${baseUrl}/add-inventory` },
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
+          { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
@@ -56,6 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: PackagePlus, label: 'Add Inventory', path: `${baseUrl}/add-inventory` },
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
+          { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
@@ -131,9 +134,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center space-x-3">
               <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
-                {user.profilePicture ? (
+                {user.profilepicture ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.profilepicture}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
@@ -218,9 +221,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
-              {user.profilePicture ? (
+              {user.profilepicture ? (
                 <img
-                  src={user.profilePicture}
+                  src={user.profilepicture}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

@@ -12,6 +12,7 @@ import DepreciationCalculator from '../common/DepreciationCalculator';
 import CategoryDropdown from '../common/CategoryDropdown';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
 import AssetNameDropdown from '../common/AssetNameDropdown';
+import LocationDropdown from '../common/LocationDropdown';
 import StatusDropdown from '../common/StatusDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
 import UnitDropdown from '../common/UnitDropdown';
@@ -1043,17 +1044,17 @@ const handleFile = (file?: File) => {
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  name="locationofitem"
+                <LocationDropdown
+                  label="Location *"
+                  inventoryItems={inventoryItems}
                   value={formData.locationofitem}
-                  onChange={handleInputChange}
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    locationofitem: value
+                  }))}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Workstation-2, IT-Department"
+                  placeholder="Select location"
+                  searchable
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   📍 Used as-is in unique ID

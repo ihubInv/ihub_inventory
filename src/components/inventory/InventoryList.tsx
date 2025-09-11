@@ -241,7 +241,7 @@ const InventoryList: React.FC = () => {
   const categories = categoryNames.map(name => ({
     id: name,
     name: name,
-    type: 'tangible' as const,
+    type: 'major' as const,
     description: `${name} category`,
     isactive: true,
     createdat: new Date(),

@@ -79,7 +79,7 @@ export interface Request {
 export interface Category {
   id: string;
   name: string;
-  type: 'tangible' | 'intangible';
+  type: 'major' | 'minor';
   description?: string;
   isactive: boolean;
   createdat: Date;

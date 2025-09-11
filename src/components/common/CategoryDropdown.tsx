@@ -30,7 +30,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     .map(category => ({
       value: category.name,
       label: category.name,
-      icon: category.type === 'tangible' ? <Tag className="w-4 h-4 text-blue-500" /> : <Folder className="w-4 h-4 text-purple-500" />,
+      icon: category.type === 'major' ? <Tag className="w-4 h-4 text-blue-500" /> : <Folder className="w-4 h-4 text-purple-500" />,
       description: category.description || `${category.type} asset category`
     }));
 

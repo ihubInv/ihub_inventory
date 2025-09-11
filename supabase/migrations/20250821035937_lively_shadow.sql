@@ -20,7 +20,7 @@
 CREATE TABLE IF NOT EXISTS categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text UNIQUE NOT NULL,
-  type text NOT NULL CHECK (type IN ('tangible', 'intangible')),
+  type text NOT NULL CHECK (type IN ('major', 'minor')),
   description text,
   isactive boolean DEFAULT true,
   createdat timestamptz DEFAULT now(),
@@ -51,7 +51,7 @@ CREATE POLICY "Admins can manage categories"
 
 -- Insert sample categories
 INSERT INTO categories (name, type, description, isactive, createdby) VALUES
-  ('Computer Mouse', 'tangible', 'Computer input devices including wired and wireless mice', true, '1'),
-  ('Software License', 'intangible', 'Software licenses and digital assets', true, '1'),
-  ('Office Furniture', 'tangible', 'Desks, chairs, and other office furniture items', true, '1')
+  ('Computer Mouse', 'major', 'Computer input devices including wired and wireless mice', true, '1'),
+  ('Software License', 'minor', 'Software licenses and digital assets', true, '1'),
+  ('Office Furniture', 'major', 'Desks, chairs, and other office furniture items', true, '1')
 ON CONFLICT (name) DO NOTHING;

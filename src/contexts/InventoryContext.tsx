@@ -154,7 +154,7 @@
 //   {
 //     id: '1',
 //     name: 'Computer Mouse',
-//     type: 'tangible',
+//     type: 'major',
 //     description: 'Computer input devices including wired and wireless mice',
 //     isActive: true,
 //     createdAt: new Date('2024-01-01'),
@@ -164,7 +164,7 @@
 //   {
 //     id: '2',
 //     name: 'Software License',
-//     type: 'intangible',
+//     type: 'minor',
 //     description: 'Software licenses and digital assets',
 //     isActive: true,
 //     createdAt: new Date('2024-01-02'),
@@ -174,7 +174,7 @@
 //   {
 //     id: '3',
 //     name: 'Office Furniture',
-//     type: 'tangible',
+//     type: 'major',
 //     description: 'Desks, chairs, and other office furniture items',
 //     isActive: true,
 //     createdAt: new Date('2024-01-03'),

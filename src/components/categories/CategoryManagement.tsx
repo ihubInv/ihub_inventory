@@ -36,7 +36,7 @@ const CategoryManagement: React.FC = () => {
 
   const [newCategory, setNewCategory] = useState({
     name: '',
-    type: 'tangible' as const,
+    type: 'major' as const,
     description: '',
     isactive: true
   });
@@ -62,7 +62,7 @@ const CategoryManagement: React.FC = () => {
   
 
   const handleAddCategory = async (e: React.FormEvent) => {
-    
+    debugger
     e.preventDefault();
     const loadingToast = CRUDToasts.creating('category');
     try {
@@ -73,7 +73,7 @@ const CategoryManagement: React.FC = () => {
       toast.dismiss(loadingToast);
       setNewCategory({
         name: '',
-        type: 'tangible',
+        type: 'major',
         description: '',
         isactive: true
       });
@@ -107,7 +107,7 @@ const CategoryManagement: React.FC = () => {
         setEditingCategory(null);
         setNewCategory({
           name: '',
-          type: 'tangible',
+          type: 'major',
           description: '',
           isactive: true
         });
@@ -141,11 +141,11 @@ const CategoryManagement: React.FC = () => {
   };
 
   const getTypeIcon = (type: string) => {
-    return type === 'tangible' ? Package : Zap;
+    return type === 'major' ? Package : Zap;
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'tangible' 
+    return type === 'major' 
       ? 'bg-blue-100 text-blue-800' 
       : 'bg-purple-100 text-purple-800';
   };
@@ -158,8 +158,8 @@ const CategoryManagement: React.FC = () => {
 
   const stats = {
     total: categories.length,
-    tangible: categories.filter(cat => cat.type === 'tangible').length,
-    intangible: categories.filter(cat => cat.type === 'intangible').length,
+    major: categories.filter(cat => cat.type === 'major').length,
+    minor: categories.filter(cat => cat.type === 'minor').length,
     active: categories.filter(cat => cat.isactive).length,
     inactive: categories.filter(cat => !cat.isactive).length
   };
@@ -167,7 +167,7 @@ const CategoryManagement: React.FC = () => {
   // Chart data for category distribution
   const categoryChartData = {
     categories: ['Tangible', 'Intangible'],
-    counts: [stats.tangible, stats.intangible],
+    counts: [stats.major, stats.minor],
   };
 console.log("viewingCategory",viewingCategory)
   return (
@@ -205,7 +205,7 @@ console.log("viewingCategory",viewingCategory)
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Tangible</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.tangible}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.major}</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
               <Package className="w-6 h-6 text-white" />
@@ -217,7 +217,7 @@ console.log("viewingCategory",viewingCategory)
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Intangible</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.intangible}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.minor}</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
               <Zap className="w-6 h-6 text-white" />
@@ -353,7 +353,7 @@ console.log("viewingCategory",viewingCategory)
                         <div className="flex items-center">
                           <div className="flex-shrink-0 w-10 h-10">
                             <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${
-                              category.type === 'tangible' 
+                              category.type === 'major' 
                                 ? 'from-blue-500 to-cyan-600' 
                                 : 'from-purple-500 to-pink-600'
                             } flex items-center justify-center`}>
@@ -460,10 +460,10 @@ console.log("viewingCategory",viewingCategory)
 
               <div>
                 <CategoryTypeDropdown
-                  label="Category Type *"
+                  label="Asset Type *"
                   value={newCategory.type}
-                  onChange={(value) => setNewCategory((prev:any) => ({ ...prev, type: value as 'tangible' | 'intangible' }))}
-                  placeholder="Select category type"
+                  onChange={(value) => setNewCategory((prev:any) => ({ ...prev, type: value as 'major' | 'minor' }))}
+                  placeholder="Select asset type"
                   required
                   size="sm"
                 />
@@ -501,7 +501,7 @@ console.log("viewingCategory",viewingCategory)
                     setEditingCategory(null);
                     setNewCategory({
                       name: '',
-                      type: 'tangible',
+                      type: 'major',
                       description: '',
                       isactive: true
                     });
@@ -541,11 +541,11 @@ console.log("viewingCategory",viewingCategory)
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className={`p-3 rounded-xl bg-gradient-to-r ${
-                  viewingCategory.type === 'tangible' 
+                  viewingCategory.type === 'major' 
                     ? 'from-blue-500 to-cyan-600' 
                     : 'from-purple-500 to-pink-600'
                 }`}>
-                  {viewingCategory.type === 'tangible' ? (
+                  {viewingCategory.type === 'major' ? (
                     <Package className="w-6 h-6 text-white" />
                   ) : (
                     <Zap className="w-6 h-6 text-white" />

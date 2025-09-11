@@ -22,14 +22,14 @@ const CategoryTypeDropdown: React.FC<CategoryTypeDropdownProps> = ({
 }) => {
   const options = [
     { 
-      value: 'tangible', 
-      label: 'Tangible', 
+      value: 'major', 
+      label: 'Major', 
       icon: <Package className="w-4 h-4 text-blue-500" />,
       description: 'Physical items'
     },
     { 
-      value: 'intangible', 
-      label: 'Intangible', 
+      value: 'minor', 
+      label: 'Minor', 
       icon: <Zap className="w-4 h-4 text-purple-500" />,
       description: 'Digital assets'
     }

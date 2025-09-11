@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabaseClient';
 import DepreciationCalculator from '../common/DepreciationCalculator';
 import CategoryDropdown from '../common/CategoryDropdown';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
+import AssetNameDropdown from '../common/AssetNameDropdown';
 import StatusDropdown from '../common/StatusDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
 import UnitDropdown from '../common/UnitDropdown';
@@ -55,6 +56,7 @@ const AddInventory: React.FC = () => {
     assetcategory: '',
     assetcategoryid: "",
     assetname: '',
+    assetnamefromcategory: '',
     specification: '',
     makemodel: '',
     productserialnumber: '',
@@ -126,7 +128,8 @@ const AddInventory: React.FC = () => {
   };
 
   const generateUniqueId = async (): Promise<string> => {
-    const { financialyear, assetname, locationofitem } = formData;
+    const { financialyear, assetnamefromcategory, assetname, locationofitem } = formData;
+    const currentAssetName = assetnamefromcategory || assetname;
     
     // Always start with ihub prefix
     let uniqueId = 'ihub/';
@@ -140,8 +143,8 @@ const AddInventory: React.FC = () => {
     uniqueId += '/';
     
     // Add asset code or placeholder
-    if (assetname) {
-      uniqueId += generateAssetCode(assetname);
+    if (currentAssetName) {
+      uniqueId += generateAssetCode(currentAssetName);
     } else {
       uniqueId += '--';
     }
@@ -156,7 +159,7 @@ const AddInventory: React.FC = () => {
     uniqueId += '/';
     
     // Add serial number only if all required fields are present
-    if (financialyear && assetname && locationofitem) {
+    if (financialyear && currentAssetName && locationofitem) {
       const serialNumber = await getNextSerialNumber();
       uniqueId += serialNumber;
     } else {
@@ -194,7 +197,7 @@ const AddInventory: React.FC = () => {
     };
     
     updateUniqueId();
-  }, [formData.financialyear, formData.assetname, formData.locationofitem, inventoryItems]);
+  }, [formData.financialyear, formData.assetnamefromcategory, formData.assetname, formData.locationofitem, inventoryItems]);
 
   // Handle bulk upload
   const handleBulkUpload = async (data: any[]) => {
@@ -287,7 +290,8 @@ const handleFile = (file?: File) => {
       ...prev,
       categorytype: categoryType,
       assetcategory: '', // Reset category when type changes
-      assetcategoryid: '' // Reset category ID when type changes
+      assetcategoryid: '', // Reset category ID when type changes
+      assetnamefromcategory: '' // Reset asset name when type changes
     }));
   };
 
@@ -302,7 +306,8 @@ const handleFile = (file?: File) => {
       setFormData(prev => ({
         ...prev,
         assetcategoryid: selectedCategory.id,  // ✅ store the ID
-        assetcategory: selectedCategory.name   // optional if needed for display
+        assetcategory: selectedCategory.name,   // optional if needed for display
+        assetnamefromcategory: '' // Reset asset name when category changes
       }));
     }
   };
@@ -494,6 +499,7 @@ const handleFile = (file?: File) => {
       assetcategory: '',
       assetcategoryid: "",
       assetname: '',
+      assetnamefromcategory: '',
       specification: '',
       makemodel: '',
       productserialnumber: '',
@@ -650,11 +656,11 @@ const handleFile = (file?: File) => {
                       </span>
                       <span className="text-gray-400">/</span>
                       <span className={`font-mono px-2 py-1 rounded border ${
-                        formData.assetname 
+                        (formData.assetnamefromcategory || formData.assetname)
                           ? 'bg-green-100 border-green-300 text-green-700' 
                           : 'bg-red-100 border-red-300 text-red-500'
                       }`}>
-                        {generateAssetCode(formData.assetname) || '--'}
+                        {generateAssetCode(formData.assetnamefromcategory || formData.assetname) || '--'}
                       </span>
                       <span className="text-gray-400">/</span>
                       <span className={`font-mono px-2 py-1 rounded border ${
@@ -683,23 +689,23 @@ const handleFile = (file?: File) => {
                         style={{ 
                           width: `${[
                             formData.financialyear,
-                            formData.assetname,
+                            formData.assetnamefromcategory || formData.assetname,
                             formData.locationofitem
                           ].filter(Boolean).length * 25 + 25}%` 
                         }}
                       ></div>
                     </div>
                     <span className="text-xs font-medium text-gray-500">
-                      {[formData.financialyear, formData.assetname, formData.locationofitem].filter(Boolean).length + 1}/4 Complete
+                      {[formData.financialyear, formData.assetnamefromcategory || formData.assetname, formData.locationofitem].filter(Boolean).length + 1}/4 Complete
                     </span>
                   </div>
                   
                   {/* Missing fields reminder */}
-                  {(!formData.financialyear || !formData.assetname || !formData.locationofitem) && (
+                  {(!formData.financialyear || !(formData.assetnamefromcategory || formData.assetname) || !formData.locationofitem) && (
                     <div className="mt-2 text-xs text-amber-600">
                       ⚠️ Missing: {[
                         !formData.financialyear && 'Financial Year',
-                        !formData.assetname && 'Asset Name',
+                        !(formData.assetnamefromcategory || formData.assetname) && 'Asset Name',
                         !formData.locationofitem && 'Location'
                       ].filter(Boolean).join(', ')}
                     </div>
@@ -827,23 +833,30 @@ const handleFile = (file?: File) => {
 
 
 
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Asset Name *
-              </label>
-              <input
-                type="text"
-                name="assetname"
-                value={formData.assetname}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Computer, Laptop, Printer"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                🔤 First 3 letters will be used as asset code: <span className="font-mono font-semibold text-blue-600">{generateAssetCode(formData.assetname) || 'XXX'}</span>
-              </p>
-            </div>
+            {formData.assetcategory && (
+              <div>
+                <AssetNameDropdown
+                  label={`Asset Name * (${formData.categorytype === 'major' ? 'Major' : 'Minor'})`}
+                  categories={availableCategories}
+                  categoryType={formData.categorytype}
+                  assetCategory={formData.assetcategory}
+                  value={formData.assetnamefromcategory}
+                  onChange={(value) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      assetnamefromcategory: value,
+                      assetname: value // Also update the main assetname field
+                    }));
+                  }}
+                  required
+                  placeholder="Select asset name from category"
+                  searchable
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  🔤 First 3 letters will be used as asset code: <span className="font-mono font-semibold text-blue-600">{generateAssetCode(formData.assetnamefromcategory || formData.assetname) || 'XXX'}</span>
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -1324,6 +1337,7 @@ const handleFile = (file?: File) => {
                       assetcategory: '',
                       assetcategoryid: "",
                       assetname: '',
+                      assetnamefromcategory: '',
                       specification: '',
                       makemodel: '',
                       productserialnumber: '',

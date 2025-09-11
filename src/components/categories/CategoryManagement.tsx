@@ -415,7 +415,7 @@ console.log("viewingCategory",viewingCategory)
                           >
                             {category.isactive ? '⏸' : '▶'}
                           </button>
-                          {user?.role === 'admin' || user?.role === 'stock-manager' && (
+                          {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                             <button
                               onClick={() => handleDeleteCategory(category.id)}
                               className="p-1 text-red-600 transition-colors rounded hover:text-red-900"

@@ -64,8 +64,8 @@ const CategoryManagement: React.FC = () => {
   const handleAddCategory = async (e: React.FormEvent) => {
     
     e.preventDefault();
+    const loadingToast = CRUDToasts.creating('category');
     try {
-      const loadingToast = CRUDToasts.creating('category');
       await addCategory({
         ...newCategory,
         createdby: user?.id || 'unknown'
@@ -100,8 +100,8 @@ const CategoryManagement: React.FC = () => {
   const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCategory) {
+      const loadingToast = CRUDToasts.updating('category');
       try {
-        const loadingToast = CRUDToasts.updating('category');
         await updateCategory(editingCategory.id, newCategory);
         toast.dismiss(loadingToast);
         setEditingCategory(null);
@@ -122,9 +122,9 @@ const CategoryManagement: React.FC = () => {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+    // if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+      const loadingToast = CRUDToasts.deleting('category');
       try {
-        const loadingToast = CRUDToasts.deleting('category');
         await deleteCategory(categoryId);
         toast.dismiss(loadingToast);
         CRUDToasts.deleted('category');
@@ -133,7 +133,7 @@ const CategoryManagement: React.FC = () => {
         toast.dismiss(loadingToast);
         CRUDToasts.deleteError('category', 'Please try again');
       }
-    }
+    // }
   };
 
   const toggleCategoryStatus = (categoryId: string, currentStatus: boolean) => {
@@ -411,7 +411,7 @@ console.log("viewingCategory",viewingCategory)
                           >
                             {category.isactive ? '⏸' : '▶'}
                           </button>
-                          {user?.role === 'admin' && (
+                          {user?.role === 'admin' || user?.role === 'stock-manager' && (
                             <button
                               onClick={() => handleDeleteCategory(category.id)}
                               className="p-1 text-red-600 transition-colors rounded hover:text-red-900"

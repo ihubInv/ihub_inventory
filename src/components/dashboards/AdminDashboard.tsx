@@ -8,6 +8,7 @@ import NotificationCenter from '../notifications/NotificationCenter';
 import Profile from '../profile/Profile';
 import CategoryManagement from '../categories/CategoryManagement';
 import LocationManagement from '../location/LocationManagement';
+import IssuedItemManagement from '../issued/IssuedItemManagement';
 import DepreciationReport from '../reports/DepreciationReport';
 import RequestStatus from '../requests/RequestStatus';
 
@@ -18,7 +19,8 @@ const AdminDashboard: React.FC = () => {
       <Route path="/inventory" element={<InventoryList />} />
       <Route path="/add-inventory" element={<AddInventory />} />
       <Route path="/add-category" element={<CategoryManagement />} />
-      <Route path="/location" element={<LocationManagement />} />
+            <Route path="/issued-items" element={<IssuedItemManagement />} />
+            <Route path="/location" element={<LocationManagement />} />
       <Route path="/users" element={<UserManagement />} />
       <Route path="/notifications" element={<NotificationCenter />} />
       <Route path="/profile" element={<Profile />} />

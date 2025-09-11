@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingDown,
-  MapPin
+  MapPin,
+  UserCheck
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -45,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: PackagePlus, label: 'Add Inventory', path: `${baseUrl}/add-inventory` },
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
+          { icon: UserCheck, label: 'Issued Items', path: `${baseUrl}/issued-items` },
           { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
@@ -58,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: PackagePlus, label: 'Add Inventory', path: `${baseUrl}/add-inventory` },
           { icon: FolderPlus, label: 'Add Category', path: `${baseUrl}/add-category` },
           { icon: Package, label: 'Total Inventory', path: `${baseUrl}/inventory` },
+          { icon: UserCheck, label: 'Issued Items', path: `${baseUrl}/issued-items` },
           { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
@@ -155,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path || 
                             (item.path !== '/admin' && item.path !== '/stock-manager' && item.path !== '/employee' && location.pathname.startsWith(item.path));
@@ -241,7 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path || 
                             (item.path !== '/admin' && item.path !== '/stock-manager' && item.path !== '/employee' && location.pathname.startsWith(item.path));

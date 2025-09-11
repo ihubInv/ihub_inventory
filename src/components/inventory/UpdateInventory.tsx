@@ -3,7 +3,6 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Save, X, Package, Calendar, DollarSign, MapPin, Image, Upload, Trash2, FileText } from 'lucide-react';
 import { InventoryItem } from '../../types';
-import { supabase } from '../../lib/supabaseClient';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 import CustomDatePicker from '../common/DatePicker';
@@ -13,6 +12,7 @@ import ConditionDropdown from '../common/ConditionDropdown';
 import UnitDropdown from '../common/UnitDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
+import LocationDropdown from '../common/LocationDropdown';
 
 interface UpdateInventoryProps {
   item: InventoryItem | null;
@@ -28,7 +28,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   onUpdate
 }) => {
   const { user } = useAuth();
-  const { categories } = useInventory();
+  const { categories, inventoryItems, updateInventoryItem, deleteInventoryItem } = useInventory();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<InventoryItem>>({});
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
@@ -69,7 +69,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   const handleDateChange = (field: string, date: Date | undefined) => {
     setFormData(prev => ({
       ...prev,
-      [field]: date
+      [field]: date || null
     }));
   };
 
@@ -95,55 +95,35 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !item) return;
 
     setIsSubmitting(true);
     const loadingToast = CRUDToasts.updating('inventory item');
 
     try {
-      // Upload new attachments
-      const uploadedFiles: { name: string; url: string }[] = [];
-      
-      for (const file of newAttachments) {
-        const filePath = `${Date.now()}-${file.name}`;
-        const { data, error } = await supabase.storage
-          .from('profile-pictures')
-          .upload(filePath, file);
-
-        if (error) throw error;
-
-        const { data: urlData } = supabase.storage
-          .from('profile-pictures')
-          .getPublicUrl(filePath);
-
-        uploadedFiles.push({
-          name: file.name,
-          url: urlData.publicUrl
-        });
-      }
-
-      // Prepare update data
-      const updateData = {
+      // Prepare update data - keep dates as Date objects for the interface
+      const updateData: Partial<InventoryItem> = {
         ...formData,
         lastmodifiedby: user.id,
         lastmodifieddate: new Date(),
-        // For now, just use the new attachments as Files
-        attachments: newAttachments
       };
 
-      // Update in database
-      const { error } = await supabase
-        .from('inventory_items')
-        .update(updateData)
-        .eq('id', item.id);
+      // Remove undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
 
-      if (error) throw error;
+      // Update using context method
+      await updateInventoryItem(item.id, updateData);
 
-      // Call the onUpdate callback
-      onUpdate({
+      // Call the onUpdate callback with updated data
+      const updatedItem: InventoryItem = {
         ...item,
         ...updateData
-      });
+      } as InventoryItem;
+      onUpdate(updatedItem);
 
       toast.dismiss(loadingToast);
       CRUDToasts.updated('inventory item');
@@ -158,7 +138,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this inventory item? This action cannot be undone.')) {
+    if (!item || !confirm('Are you sure you want to delete this inventory item? This action cannot be undone.')) {
       return;
     }
 
@@ -166,13 +146,8 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
     const loadingToast = CRUDToasts.deleting('inventory item');
 
     try {
-      const { error } = await supabase
-        .from('inventory_items')
-        .delete()
-        .eq('id', item.id);
-
-      if (error) throw error;
-
+      await deleteInventoryItem(item.id);
+      
       toast.dismiss(loadingToast);
       CRUDToasts.deleted('inventory item');
       onClose();
@@ -274,12 +249,10 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
               <label className="block mb-2 text-sm font-medium text-gray-700">
                 Location
               </label>
-              <input
-                type="text"
-                name="locationofitem"
+              <LocationDropdown
+                inventoryItems={inventoryItems}
                 value={formData.locationofitem || ''}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(value) => handleDropdownChange('locationofitem', value)}
               />
             </div>
 
@@ -596,9 +569,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Expected Return Date
               </label>
               <CustomDatePicker
-                selected={formData.expectedreturndate}
-                onChange={(date) => handleDateChange('expectedreturndate', date)}
-                placeholderText="Select expected return date"
+                selected={formData.expectedreturndate || null}
+                onChange={(date) => handleDateChange('expectedreturndate', date || undefined)}
+                placeholder="Select expected return date"
               />
             </div>
               </div>
@@ -610,9 +583,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Date of Invoice
               </label>
               <CustomDatePicker
-                selected={formData.dateofinvoice}
-                onChange={(date) => handleDateChange('dateofinvoice', date)}
-                placeholderText="Select date"
+                selected={formData.dateofinvoice || null}
+                onChange={(date) => handleDateChange('dateofinvoice', date || undefined)}
+                placeholder="Select date"
               />
             </div>
 
@@ -621,9 +594,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Date of Entry
               </label>
               <CustomDatePicker
-                selected={formData.dateofentry}
-                onChange={(date) => handleDateChange('dateofentry', date)}
-                placeholderText="Select date"
+                selected={formData.dateofentry || null}
+                onChange={(date) => handleDateChange('dateofentry', date || undefined)}
+                placeholder="Select date"
               />
             </div>
 
@@ -632,9 +605,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 Date of Issue
               </label>
               <CustomDatePicker
-                selected={formData.dateofissue}
-                onChange={(date) => handleDateChange('dateofissue', date)}
-                placeholderText="Select date"
+                selected={formData.dateofissue || null}
+                onChange={(date) => handleDateChange('dateofissue', date || undefined)}
+                placeholder="Select date"
               />
             </div>
               </div>
@@ -740,41 +713,41 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 </div>
               )}
             </div> */}
-          </form>
-        </div>
 
-        {/* Footer Actions */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-8 py-6 rounded-b-3xl">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-              className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-            >
-              <Trash2 size={16} />
-              <span>Delete Item</span>
-            </button>
+            {/* Footer Actions */}
+            <div className="mt-8 bg-white rounded-2xl border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                  className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Item</span>
+                </button>
 
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="px-6 py-3 text-gray-700 transition-all duration-200 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg"
-              >
-                <Save size={16} />
-                <span>{isSubmitting ? 'Updating...' : 'Update Item'}</span>
-              </button>
+                <div className="flex items-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                    className="px-6 py-3 text-gray-700 transition-all duration-200 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg"
+                  >
+                    <Save size={16} />
+                    <span>{isSubmitting ? 'Updating...' : 'Update Item'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>

@@ -35,7 +35,7 @@ const AttractiveLoader: React.FC<AttractiveLoaderProps> = ({
 
   const AnimatedLoader = () => (
     <>
-      <style jsx>{`
+      <style>{`
         @keyframes dashArray {
           0% {
             stroke-dasharray: 0 1 359 0;

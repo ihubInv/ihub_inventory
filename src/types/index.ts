@@ -19,6 +19,7 @@ export interface InventoryItem {
   uniqueid: string;
   financialyear: string;
   assetcategory: string;
+  categoryname?: string; // Added for display purposes
   dateofinvoice: Date | null;
   dateofentry: Date | null;
   invoicenumber: string;
@@ -33,7 +34,9 @@ export interface InventoryItem {
   totalcost: number;
   locationofitem: string;
   issuedto?: string;
+  issuedby?: string; // Added for tracking who issued the item
   dateofissue?: Date | null;
+  issueddate?: Date | null; // Added as alias for dateofissue
   expectedreturndate?: Date | null;
   balancequantityinstock: number;
   description: string;

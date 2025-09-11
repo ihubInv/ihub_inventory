@@ -10,7 +10,7 @@ import RequestItemDropdown from '../common/RequestItemDropdown';
 import PurposeDropdown from '../common/PurposeDropdown';
 
 const CreateRequest: React.FC = () => {
-  const { submitRequest } = useInventory();
+  const { submitRequest, inventoryItems } = useInventory();
   const { users } = useInventory();
   const { user } = useAuth();
   const { addNotification } = useNotifications();
@@ -83,23 +83,24 @@ const CreateRequest: React.FC = () => {
     setIsSubmitting(false);
   };
 
-  const commonItems = [
-    'Laptop',
-    'Desktop Computer',
-    'Monitor',
-    'Keyboard',
-    'Mouse',
-    'Office Chair',
-    'Desk',
-    'Printer',
-    'Mobile Phone',
-    'Tablet',
-    'Headphones',
-    'Webcam',
-    'Software License',
-    'Office Supplies',
-    'Other'
-  ];
+  // Get asset categories from inventory
+  const getAssetCategories = () => {
+    const assetCategories = new Set<string>();
+    
+    // Add asset categories from inventory
+    inventoryItems.forEach(item => {
+      if (item.assetcategory && item.assetcategory.trim()) {
+        assetCategories.add(item.assetcategory.trim());
+      }
+    });
+    
+    // Add 'Other' option for items not in inventory
+    assetCategories.add('Other');
+    
+    return Array.from(assetCategories).sort();
+  };
+
+  const availableAssetCategories = getAssetCategories();
 
   const commonPurposes = [
     'New Employee Setup',
@@ -156,8 +157,16 @@ const CreateRequest: React.FC = () => {
         <div className="p-6 space-y-6">
           {/* Item Type */}
           <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Item Type *
+              </label>
+              <span className="text-xs text-gray-500">
+                {availableAssetCategories.length - 1} categories available
+              </span>
+            </div>
             <RequestItemDropdown
-              label="Item Type *"
+              options={availableAssetCategories}
               value={formData.itemtype}
               onChange={(value) => setFormData(prev => ({ ...prev, itemtype: value }))}
               placeholder="Select an item type"

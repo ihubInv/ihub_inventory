@@ -4,6 +4,7 @@ import { sendNotificationEmail } from '../../services/emailService';
 import { Bell, Check, Trash2, AlertTriangle, CheckCircle, XCircle, Package, User, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
+import RequestApprovalModal from '../requests/RequestApprovalModal';
 import toast from 'react-hot-toast';
 
 const NotificationCenter: React.FC = () => {
@@ -12,10 +13,9 @@ const NotificationCenter: React.FC = () => {
   const { user } = useAuth();
   
   // State for managing approval/rejection
-  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedAction, setSelectedAction] = useState<'approve' | 'reject' | null>(null);
-  const [reason, setReason] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
 
   // Filter notifications based on user role
   const getFilteredNotifications = () => {
@@ -81,67 +81,16 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const handleAction = async () => {
-    if (!selectedRequest || !selectedAction || !reason.trim()) {
-      toast.error(`Please provide a reason for ${selectedAction}`);
-      return;
-    }
-    
-    setIsProcessing(true);
-    try {
-      const requestToUpdate = requests.find(req => req.id === selectedRequest);
-      if (!requestToUpdate) {
-        toast.error("Request not found.");
-        setIsProcessing(false);
-        return;
-      }
-
-      const employee = users.find(u => u.id === requestToUpdate.employeeid);
-      if (!employee) {
-        toast.error("Employee not found for this request.");
-        setIsProcessing(false);
-        return;
-      }
-
-      const newStatus = selectedAction === 'approve' ? 'approved' : 'rejected';
-      await updateRequestStatus(selectedRequest, newStatus, reason, user?.id);
-      
-      // Send email to employee
-      sendNotificationEmail(
-        selectedAction === 'approve' ? 'requestApproved' : 'requestRejected',
-        employee.email,
-        employee.name,
-        {
-          employeename: employee.name,
-          itemtype: requestToUpdate.itemtype,
-          quantity: requestToUpdate.quantity,
-          remarks: reason,
-          from_name: user?.name || 'Admin/Stock Manager',
-        }
-      );
-      setSelectedRequest(null);
-      setSelectedAction(null);
-      setReason('');
-      // Show success message
-      toast.success(`Request ${selectedAction}d successfully!`);
-    } catch (error) {
-      console.error(`Error ${selectedAction}ing request:`, error);
-      toast.error(`Failed to ${selectedAction} request. Please try again.`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const openReasonModal = (requestId: string, action: 'approve' | 'reject') => {
-    setSelectedRequest(requestId);
+  const openApprovalModal = (request: any, action: 'approve' | 'reject') => {
+    setSelectedRequest(request);
     setSelectedAction(action);
-    setReason('');
+    setShowApprovalModal(true);
   };
 
-  const closeReasonModal = () => {
+  const closeApprovalModal = () => {
     setSelectedRequest(null);
     setSelectedAction(null);
-    setReason('');
+    setShowApprovalModal(false);
   };
 
   return (
@@ -254,14 +203,14 @@ const NotificationCenter: React.FC = () => {
                           {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                             <>
                               <button
-                                onClick={() => openReasonModal(notification.id, 'approve')}
+                                onClick={() => openApprovalModal(notification, 'approve')}
                                 className="p-2 text-green-600 transition-colors rounded-lg hover:text-green-700 hover:bg-green-50"
                                 title="Approve Request"
                               >
                                 <ThumbsUp size={16} />
                               </button>
                               <button
-                                onClick={() => openReasonModal(notification.id, 'reject')}
+                                onClick={() => openApprovalModal(notification, 'reject')}
                                 className="p-2 text-red-600 transition-colors rounded-lg hover:text-red-700 hover:bg-red-50"
                                 title="Reject Request"
                               >
@@ -415,72 +364,13 @@ const NotificationCenter: React.FC = () => {
         )}
       </div>
 
-      {/* Reason Modal */}
-      {selectedRequest && selectedAction && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={closeReasonModal}
-        >
-          <div 
-            className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Provide Reason for {selectedAction === 'approve' ? 'Approval' : 'Rejection'}
-              </h3>
-              <button
-                onClick={closeReasonModal}
-                className="p-1 text-gray-400 transition-colors rounded hover:text-gray-600"
-              >
-                <XCircle size={20} />
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Reason *
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder={`Enter your reason for ${selectedAction === 'approve' ? 'approval' : 'rejection'}...`}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={4}
-                autoFocus
-              />
-            </div>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={handleAction}
-                disabled={isProcessing || !reason.trim()}
-                className={`flex-1 px-4 py-2 text-white font-medium transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedAction === 'approve' 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                {isProcessing ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
-                  </div>
-                ) : (
-                  selectedAction === 'approve' ? 'Approve Request' : 'Reject Request'
-                )}
-              </button>
-              <button
-                onClick={closeReasonModal}
-                disabled={isProcessing}
-                className="px-6 py-2 text-gray-600 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Request Approval Modal */}
+      <RequestApprovalModal
+        isOpen={showApprovalModal}
+        onClose={closeApprovalModal}
+        request={selectedRequest}
+        action={selectedAction || 'approve'}
+      />
     </div>
   );
 };

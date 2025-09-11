@@ -24,15 +24,31 @@ interface RequestItemDropdownProps {
   className?: string;
   error?: string;
   size?: 'sm' | 'md' | 'lg';
+  searchable?: boolean;
+  options?: string[]; // Add dynamic options prop
 }
 
 const RequestItemDropdown: React.FC<RequestItemDropdownProps> = ({
   value,
   onChange,
   placeholder = "Select item type",
+  options: customOptions,
   ...props
 }) => {
-  const options = [
+  // Use custom options if provided, otherwise use default static options
+  const getOptions = () => {
+    if (customOptions && customOptions.length > 0) {
+      // Convert string array to dropdown options format
+      return customOptions.map(item => ({
+        value: item,
+        label: item,
+        icon: <Package className="w-4 h-4 text-blue-500" />,
+        description: 'Available in inventory'
+      }));
+    }
+    
+    // Default static options (fallback)
+    return [
     { 
       value: 'Laptop', 
       label: 'Laptop', 
@@ -105,7 +121,10 @@ const RequestItemDropdown: React.FC<RequestItemDropdownProps> = ({
       icon: <Package className="w-4 h-4 text-gray-400" />,
       description: 'Specify custom item'
     }
-  ];
+    ];
+  };
+
+  const options = getOptions();
 
   return (
     <AttractiveDropdown

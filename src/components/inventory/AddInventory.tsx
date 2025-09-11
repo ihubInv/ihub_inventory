@@ -803,7 +803,7 @@ const handleFile = (file?: File) => {
 
             <div>
               <CategoryTypeDropdown
-                label="Category Type *"
+                label="  Asset Type *"
                 value={formData.categorytype}
                 onChange={handleCategoryTypeChange}
                 required
@@ -814,7 +814,7 @@ const handleFile = (file?: File) => {
             {formData.categorytype && (
               <div>
                 <CategoryDropdown
-                  label={`Asset Category * (${formData.categorytype === 'major' ? 'Major' : 'Minor'})`}
+                  label={`Category Type *  (${formData.categorytype === 'major' ? 'Major' : 'Minor'})`}
                   categories={filteredCategories}
                   value={formData.assetcategory}
                   onChange={(value) => {

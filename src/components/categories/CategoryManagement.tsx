@@ -450,6 +450,16 @@ console.log("viewingCategory",viewingCategory)
             </h3>
             
             <form onSubmit={editingCategory ? handleUpdateCategory : handleAddCategory} className="space-y-4">
+            <div>
+                <CategoryTypeDropdown
+                  label="Asset Type *"
+                  value={newCategory.type}
+                  onChange={(value) => setNewCategory((prev:any) => ({ ...prev, type: value as 'major' | 'minor' }))}
+                  placeholder="Select asset type"
+                  required
+                  size="sm"
+                />
+              </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Category Name *</label>
                 <input
@@ -474,16 +484,7 @@ console.log("viewingCategory",viewingCategory)
                 />
               </div>
               
-              <div>
-                <CategoryTypeDropdown
-                  label="Asset Type *"
-                  value={newCategory.type}
-                  onChange={(value) => setNewCategory((prev:any) => ({ ...prev, type: value as 'major' | 'minor' }))}
-                  placeholder="Select asset type"
-                  required
-                  size="sm"
-                />
-              </div>
+         
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Description</label>

@@ -3,6 +3,7 @@ import { useInventory } from '../../contexts/InventoryContext';
 import { useAuth } from '../../contexts/AuthContext';
 import DateRangePicker from '../common/DateRangePicker';
 import FilterDropdown, { statusFilters } from '../common/FilterDropdown';
+import IssueItemModal from './IssueItemModal';
 import { 
   UserCheck, 
   Search, 
@@ -16,7 +17,8 @@ import {
   Eye,
   RefreshCw,
   Download,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
@@ -29,9 +31,13 @@ const IssuedItemManagement: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [viewingItem, setViewingItem] = useState<any>(null);
+  const [showIssueModal, setShowIssueModal] = useState(false);
 
   // Filter issued items
   const issuedItems = inventoryItems.filter(item => item.status === 'issued');
+  
+  // Get available items for issuing
+  const availableItems = inventoryItems.filter(item => item.status === 'available');
 
   const filteredItems = issuedItems.filter(item => {
     const matchesSearch = item.assetname.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -42,7 +48,7 @@ const IssuedItemManagement: React.FC = () => {
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     
     let matchesDate = true;
-    if (startDate && endDate) {
+    if (startDate && endDate && item.issueddate) {
       const itemDate = new Date(item.issueddate);
       matchesDate = itemDate >= startDate && itemDate <= endDate;
     }
@@ -55,11 +61,9 @@ const IssuedItemManagement: React.FC = () => {
     try {
       await updateInventoryItem(itemId, {
         status: 'available',
-        issuedto: null,
-        issuedby: null,
-        issueddate: null,
-        returndate: new Date().toISOString(),
-        returnedby: user?.id || 'unknown'
+        issuedto: undefined,
+        issuedby: undefined,
+        issueddate: undefined
       });
       toast.dismiss(loadingToast);
       CRUDToasts.updated('item');
@@ -83,6 +87,27 @@ const IssuedItemManagement: React.FC = () => {
     }
   };
 
+  // Calculate stock levels for each category
+  const stockLevels = inventoryItems.reduce((acc, item) => {
+    if (!acc[item.assetcategory]) {
+      acc[item.assetcategory] = {
+        total: 0,
+        available: 0,
+        issued: 0,
+        maintenance: 0,
+        lowStock: 0
+      };
+    }
+    acc[item.assetcategory].total += item.balancequantityinstock || 0;
+    if (item.status === 'available') acc[item.assetcategory].available += item.balancequantityinstock || 0;
+    if (item.status === 'issued') acc[item.assetcategory].issued += item.balancequantityinstock || 0;
+    if (item.status === 'maintenance') acc[item.assetcategory].maintenance += item.balancequantityinstock || 0;
+    if ((item.balancequantityinstock || 0) <= (item.minimumstocklevel || 0)) {
+      acc[item.assetcategory].lowStock += 1;
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
   const stats = {
     total: issuedItems.length,
     overdue: issuedItems.filter(item => {
@@ -97,7 +122,8 @@ const IssuedItemManagement: React.FC = () => {
       const daysSinceIssued = Math.floor((Date.now() - issuedDate.getTime()) / (1000 * 60 * 60 * 24));
       return daysSinceIssued <= 7; // Recent within 7 days
     }).length,
-    totalValue: issuedItems.reduce((sum, item) => sum + (item.totalcost || 0), 0)
+    totalValue: issuedItems.reduce((sum, item) => sum + (item.totalcost || 0), 0),
+    lowStockCategories: Object.values(stockLevels).reduce((sum: number, level: any) => sum + level.lowStock, 0)
   };
 
   return (
@@ -109,6 +135,13 @@ const IssuedItemManagement: React.FC = () => {
           <p className="mt-1 text-gray-600">Track and manage all issued inventory items</p>
         </div>
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowIssueModal(true)}
+            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+          >
+            <Plus size={16} />
+            <span>Issue Item</span>
+          </button>
           <button
             onClick={() => window.location.reload()}
             className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -164,11 +197,11 @@ const IssuedItemManagement: React.FC = () => {
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Value</p>
-              <p className="text-2xl font-bold text-gray-900">₹{stats.totalValue.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.lowStockCategories}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
-              <Package className="w-6 h-6 text-white" />
+            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-orange-600">
+              <AlertCircle className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
@@ -230,8 +263,50 @@ const IssuedItemManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* Stock Level Overview */}
+      <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Stock Level Overview</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-gray-200 bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Asset Name</th>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Total</th>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Available</th>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Issued</th>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Maintenance</th>
+                <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Low Stock</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {inventoryItems.map((item) => (
+                <tr key={item.id} className="transition-colors hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.assetname}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{item.balancequantityinstock || 0}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-green-600">
+                    {item.status === 'available' ? item.balancequantityinstock || 0 : 0}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-orange-600">
+                    {item.status === 'issued' ? item.balancequantityinstock || 0 : 0}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-yellow-600">
+                    {item.status === 'maintenance' ? item.balancequantityinstock || 0 : 0}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-red-600">
+                    {(item.balancequantityinstock || 0) <= (item.minimumstocklevel || 0) ? 1 : 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Items Table */}
-      <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
+      {/* <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
+      <h3 className="mb-4 text-lg font-semibold text-gray-900">Issued Items</h3> */}
+      <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+      <h3 className="mb-4 text-lg font-semibold text-gray-900">Issued Items</h3>
         {filteredItems.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -241,7 +316,8 @@ const IssuedItemManagement: React.FC = () => {
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Issued To</th>
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Issued By</th>
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Issue Date</th>
-                  <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Location</th>
+                  <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Days Out</th>
+                  <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Stock Level</th>
                   <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -271,7 +347,33 @@ const IssuedItemManagement: React.FC = () => {
                       {item.issueddate ? new Date(item.issueddate).toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                      {item.locationofitem}
+                      {item.issueddate ? (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          Math.floor((Date.now() - new Date(item.issueddate).getTime()) / (1000 * 60 * 60 * 24)) > 30
+                            ? 'bg-red-100 text-red-800'
+                            : Math.floor((Date.now() - new Date(item.issueddate).getTime()) / (1000 * 60 * 60 * 24)) > 15
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {Math.floor((Date.now() - new Date(item.issueddate).getTime()) / (1000 * 60 * 60 * 24))} days
+                        </span>
+                      ) : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          (item.balancequantityinstock || 0) <= (item.minimumstocklevel || 0)
+                            ? 'bg-red-100 text-red-800'
+                            : (item.balancequantityinstock || 0) <= (item.minimumstocklevel || 0) * 2
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {item.balancequantityinstock || 0}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          (min: {item.minimumstocklevel || 0})
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <div className="flex items-center space-x-2">
@@ -372,6 +474,13 @@ const IssuedItemManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Issue Item Modal */}
+      <IssueItemModal
+        isOpen={showIssueModal}
+        onClose={() => setShowIssueModal(false)}
+        availableItems={availableItems}
+      />
     </div>
   );
 };

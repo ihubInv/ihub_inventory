@@ -10,6 +10,7 @@ import UploadDropzone from '../common/UploadDropzone';
 import { supabase } from '../../lib/supabaseClient';
 import DepreciationCalculator from '../common/DepreciationCalculator';
 import CategoryDropdown from '../common/CategoryDropdown';
+import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
 import StatusDropdown from '../common/StatusDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
 import UnitDropdown from '../common/UnitDropdown';
@@ -50,6 +51,7 @@ const AddInventory: React.FC = () => {
     dateofinvoice: null as Date | null,
     dateofentry: new Date(),
     invoicenumber: '',
+    categorytype: '',
     assetcategory: '',
     assetcategoryid: "",
     assetname: '',
@@ -247,11 +249,11 @@ const AddInventory: React.FC = () => {
 
     // Auto-calculate total cost
     if (name === 'quantityperitem' || name === 'rateinclusivetax') {
-      const quantity = name === 'quantityperitem' ? (value === '' ? '' : parseFloat(value)) : formData.quantityperitem;
-      const rate = name === 'rateinclusivetax' ? (value === '' ? '' : parseFloat(value)) : formData.rateinclusivetax;
+      const quantity = name === 'quantityperitem' ? (value === '' ? 0 : parseFloat(value)) : formData.quantityperitem;
+      const rate = name === 'rateinclusivetax' ? (value === '' ? 0 : parseFloat(value)) : formData.rateinclusivetax;
       
-      const calculatedTotalCost = (typeof quantity === 'number' && typeof rate === 'number') ? quantity * rate : '';
-      const calculatedBalanceQuantityInStock = typeof quantity === 'number' ? quantity : '';
+      const calculatedTotalCost = quantity * rate;
+      const calculatedBalanceQuantityInStock = quantity;
 
       setFormData(prev => ({
         ...prev,
@@ -279,6 +281,15 @@ const handleFile = (file?: File) => {
   }
 };
 
+
+  const handleCategoryTypeChange = (categoryType: string) => {
+    setFormData(prev => ({
+      ...prev,
+      categorytype: categoryType,
+      assetcategory: '', // Reset category when type changes
+      assetcategoryid: '' // Reset category ID when type changes
+    }));
+  };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     
@@ -479,6 +490,7 @@ const handleFile = (file?: File) => {
       dateofinvoice: null as Date | null,
       dateofentry: new Date(),
       invoicenumber: '',
+      categorytype: '',
       assetcategory: '',
       assetcategoryid: "",
       assetname: '',
@@ -527,6 +539,12 @@ const handleFile = (file?: File) => {
 
 
   const availableCategories = categories.filter(cat => cat.isactive);
+  
+  // Filter categories based on selected type
+  const filteredCategories = formData.categorytype 
+    ? availableCategories.filter(cat => cat.type === formData.categorytype)
+    : availableCategories;
+  
   const units = ['Pieces', 'Kg', 'Liters', 'Meters', 'Sets', 'Boxes'];
   const conditions = ['excellent', 'good', 'fair', 'poor', 'damaged'];
   const statuses = ['available', 'issued', 'maintenance', 'retired'];
@@ -777,23 +795,35 @@ const handleFile = (file?: File) => {
             </div>
 
             <div>
-              <CategoryDropdown
-                label="Asset Category *"
-                categories={availableCategories}
-                value={formData.assetcategory}
-                onChange={(value) => {
-                  const category = availableCategories.find(cat => cat.name === value);
-                  setFormData(prev => ({
-                    ...prev,
-                    assetcategory: value,
-                    assetcategoryid: category?.id || ""
-                  }));
-                }}
+              <CategoryTypeDropdown
+                label="Category Type *"
+                value={formData.categorytype}
+                onChange={handleCategoryTypeChange}
                 required
-                placeholder="Select Category"
-                searchable
+                placeholder="Choose Major or Minor"
               />
             </div>
+
+            {formData.categorytype && (
+              <div>
+                <CategoryDropdown
+                  label={`Asset Category * (${formData.categorytype === 'major' ? 'Major' : 'Minor'})`}
+                  categories={filteredCategories}
+                  value={formData.assetcategory}
+                  onChange={(value) => {
+                    const category = filteredCategories.find(cat => cat.name === value);
+                    setFormData(prev => ({
+                      ...prev,
+                      assetcategory: value,
+                      assetcategoryid: category?.id || ""
+                    }));
+                  }}
+                  required
+                  placeholder={`Select ${formData.categorytype === 'major' ? 'Major' : 'Minor'} Category`}
+                  searchable
+                />
+              </div>
+            )}
 
 
 
@@ -1290,6 +1320,7 @@ const handleFile = (file?: File) => {
                       dateofinvoice: null,
                       dateofentry: new Date(),
                       invoicenumber: '',
+                      categorytype: '',
                       assetcategory: '',
                       assetcategoryid: "",
                       assetname: '',

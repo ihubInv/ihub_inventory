@@ -336,7 +336,7 @@
 
 // ✅ Updated InventoryProvider using Supabase
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { InventoryItem, Request, User, Category } from '../types';
+import { InventoryItem, Request, User, Category, Asset } from '../types';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import {
@@ -355,7 +355,11 @@ import {
   deleteUserById,
   insertCategory,
   updateCategoryById,
-  deleteCategoryById
+  deleteCategoryById,
+  fetchAssets,
+  insertAsset,
+  updateAssetById,
+  deleteAssetById
 } from '../services/supabaseInventoryService';
 
 interface InventoryContextType {
@@ -363,6 +367,7 @@ interface InventoryContextType {
   requests: Request[];
   users: User[];
   categories: Category[];
+  assets: Asset[];
   loading: boolean;
   isInitialized: boolean;
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'createdat' | 'lastmodifieddate'>) => Promise<void>;
@@ -377,6 +382,9 @@ interface InventoryContextType {
   addCategory: (category: Omit<Category, 'id' | 'createdat' | 'updatedat'>) => Promise<void>;
   updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  addAsset: (asset: Omit<Asset, 'id' | 'createdat' | 'updatedat'>) => Promise<void>;
+  updateAsset: (id: string, asset: Partial<Asset>) => Promise<void>;
+  deleteAsset: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
@@ -395,6 +403,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [requests, setRequests] = useState<Request[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -404,6 +413,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     requests: 'requestsCache',
     users: 'usersCache',
     categories: 'categoriesCache',
+    assets: 'assetsCache',
     lastFetch: 'lastDataFetch'
   };
 
@@ -422,6 +432,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
         const cachedRequests = localStorage.getItem(CACHE_KEYS.requests);
         const cachedUsers = localStorage.getItem(CACHE_KEYS.users);
         const cachedCategories = localStorage.getItem(CACHE_KEYS.categories);
+        const cachedAssets = localStorage.getItem(CACHE_KEYS.assets);
 
         if (cachedInventory) {
           const parsedInventory = JSON.parse(cachedInventory);
@@ -468,6 +479,16 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
           setCategories(categoriesWithDates);
         }
 
+        if (cachedAssets) {
+          const parsedAssets = JSON.parse(cachedAssets);
+          const assetsWithDates = parsedAssets.map((asset: any) => ({
+            ...asset,
+            createdat: asset.createdat ? new Date(asset.createdat) : null,
+            updatedat: asset.updatedat ? new Date(asset.updatedat) : null,
+          }));
+          setAssets(assetsWithDates);
+        }
+
         console.log('Data loaded from cache');
         return true; // Cache was used
       }
@@ -478,12 +499,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   // Save data to cache
-  const saveToCache = (inventory: InventoryItem[], requests: Request[], users: User[], categories: Category[]) => {
+  const saveToCache = (inventory: InventoryItem[], requests: Request[], users: User[], categories: Category[], assets: Asset[]) => {
     try {
       localStorage.setItem(CACHE_KEYS.inventory, JSON.stringify(inventory));
       localStorage.setItem(CACHE_KEYS.requests, JSON.stringify(requests));
       localStorage.setItem(CACHE_KEYS.users, JSON.stringify(users));
       localStorage.setItem(CACHE_KEYS.categories, JSON.stringify(categories));
+      localStorage.setItem(CACHE_KEYS.assets, JSON.stringify(assets));
       localStorage.setItem(CACHE_KEYS.lastFetch, Date.now().toString());
       console.log('Data saved to cache');
     } catch (error) {
@@ -498,6 +520,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       localStorage.removeItem(CACHE_KEYS.requests);
       localStorage.removeItem(CACHE_KEYS.users);
       localStorage.removeItem(CACHE_KEYS.categories);
+      localStorage.removeItem(CACHE_KEYS.assets);
       localStorage.removeItem(CACHE_KEYS.lastFetch);
       console.log('Cache cleared');
     } catch (error) {
@@ -513,6 +536,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       setRequests([]);
       setUsers([]);
       setCategories([]);
+      setAssets([]);
       setLoading(false);
       clearCache(); // Clear cache when not authenticated
       return;
@@ -530,25 +554,28 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
     
     try {
-      const [inventoryData, requestsData, usersData, categoriesData] = await Promise.allSettled([
+      const [inventoryData, requestsData, usersData, categoriesData, assetsData] = await Promise.allSettled([
         fetchInventoryItems(),
         fetchRequests(),
         fetchUsers(),
-        fetchCategories()
+        fetchCategories(),
+        fetchAssets()
       ]);
       
       const inventory = inventoryData.status === 'fulfilled' ? inventoryData.value : [];
       const requests = requestsData.status === 'fulfilled' ? requestsData.value : [];
       const users = usersData.status === 'fulfilled' ? usersData.value : [];
       const categories = categoriesData.status === 'fulfilled' ? categoriesData.value : [];
+      const assets = assetsData.status === 'fulfilled' ? assetsData.value : [];
       
       setInventoryItems(inventory);
       setRequests(requests);
       setUsers(users);
       setCategories(categories);
+      setAssets(assets);
       
       // Save to cache
-      saveToCache(inventory, requests, users, categories);
+      saveToCache(inventory, requests, users, categories, assets);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -699,7 +726,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const updated = await fetchInventoryItems();
     setInventoryItems(updated);
     // Update cache
-    saveToCache(updated, requests, users, categories);
+    saveToCache(updated, requests, users, categories, assets);
   };
 
   const updateInventoryItem = async (id: string, item: Partial<InventoryItem>) => {
@@ -707,7 +734,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const updated = await fetchInventoryItems();
     setInventoryItems(updated);
     // Update cache
-    saveToCache(updated, requests, users, categories);
+    saveToCache(updated, requests, users, categories, assets);
   };
 
   const deleteInventoryItem = async (id: string) => {
@@ -715,55 +742,55 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const updated = await fetchInventoryItems();
     setInventoryItems(updated);
     // Update cache
-    saveToCache(updated, requests, users, categories);
+    saveToCache(updated, requests, users, categories, assets);
   };
 
   const submitRequest = async (request: Omit<Request, 'id' | 'submittedat' | 'status'>) => {
     await insertRequest(request);
     const updated = await fetchRequests();
     setRequests(updated);
-    // Update cache
-    saveToCache(inventoryItems, updated, users, categories);
+      // Update cache
+      saveToCache(inventoryItems, updated, users, categories, assets);
   };
 
   const updateRequestStatus = async (id: string, status: 'approved' | 'rejected', remarks?: string, reviewerid?: string) => {
     await updateRequestStatusById(id, status, remarks, reviewerid);
     const updated = await fetchRequests();
     setRequests(updated);
-    // Update cache
-    saveToCache(inventoryItems, updated, users, categories);
+      // Update cache
+      saveToCache(inventoryItems, updated, users, categories, assets);
   };
 
   const deleteRequest = async (id: string) => {
     await deleteRequestById(id);
     const updated = await fetchRequests();
     setRequests(updated);
-    // Update cache
-    saveToCache(inventoryItems, updated, users, categories);
+      // Update cache
+      saveToCache(inventoryItems, updated, users, categories, assets);
   };
 
   const addUser = async (user: Omit<User, 'id' | 'createdat'>) => {
     await insertUser(user);
     const updated = await fetchUsers();
     setUsers(updated);
-    // Update cache
-    saveToCache(inventoryItems, requests, updated, categories);
+      // Update cache
+      saveToCache(inventoryItems, requests, updated, categories, assets);
   };
 
   const updateUser = async (id: string, user: Partial<User>) => {
     await updateUserById(id, user);
     const updated = await fetchUsers();
     setUsers(updated);
-    // Update cache
-    saveToCache(inventoryItems, requests, updated, categories);
+      // Update cache
+      saveToCache(inventoryItems, requests, updated, categories, assets);
   };
 
   const deleteUser = async (id: string) => {
     await deleteUserById(id);
     const updated = await fetchUsers();
     setUsers(updated);
-    // Update cache
-    saveToCache(inventoryItems, requests, updated, categories);
+      // Update cache
+      saveToCache(inventoryItems, requests, updated, categories, assets);
   };
 
   // const addCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -779,7 +806,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       const updated = await fetchCategories();
       setCategories(updated);
       // Update cache
-      saveToCache(inventoryItems, requests, users, updated);
+      saveToCache(inventoryItems, requests, users, updated, assets);
     } catch (error) {
       console.error('Error inserting category:', error);
       throw error; // propagate back to handler
@@ -792,7 +819,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const updated = await fetchCategories();
     setCategories(updated);
     // Update cache
-    saveToCache(inventoryItems, requests, users, updated);
+    saveToCache(inventoryItems, requests, users, updated, assets);
   };
 
   const deleteCategory = async (id: string) => {
@@ -800,7 +827,37 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     const updated = await fetchCategories();
     setCategories(updated);
     // Update cache
-    saveToCache(inventoryItems, requests, users, updated);
+    saveToCache(inventoryItems, requests, users, updated, assets);
+  };
+
+  const addAsset = async (asset: Omit<Asset, 'id' | 'createdat' | 'updatedat'>) => {
+    try {
+      console.log('Adding asset:', asset);
+      await insertAsset(asset);
+      const updated = await fetchAssets();
+      setAssets(updated);
+      // Update cache
+      saveToCache(inventoryItems, requests, users, categories, updated);
+    } catch (error) {
+      console.error('Error inserting asset:', error);
+      throw error; // propagate back to handler
+    }
+  };
+
+  const updateAsset = async (id: string, asset: Partial<Asset>) => {
+    await updateAssetById(id, asset);
+    const updated = await fetchAssets();
+    setAssets(updated);
+    // Update cache
+    saveToCache(inventoryItems, requests, users, categories, updated);
+  };
+
+  const deleteAsset = async (id: string) => {
+    await deleteAssetById(id);
+    const updated = await fetchAssets();
+    setAssets(updated);
+    // Update cache
+    saveToCache(inventoryItems, requests, users, categories, updated);
   };
 
   const refreshData = async () => {
@@ -813,6 +870,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       requests,
       users,
       categories,
+      assets,
       loading,
       isInitialized,
       addInventoryItem,
@@ -827,6 +885,9 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
       addCategory,
       updateCategory,
       deleteCategory,
+      addAsset,
+      updateAsset,
+      deleteAsset,
       refreshData
     }}>
       {children}

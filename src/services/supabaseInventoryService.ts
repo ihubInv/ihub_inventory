@@ -1,6 +1,6 @@
 // supabaseInventoryService.ts
 import { supabase } from '../lib/supabaseClient';
-import { InventoryItem, Request, User, Category } from '../types';
+import { InventoryItem, Request, User, Category, Asset } from '../types';
 
 // ------------------- Inventory -------------------
 export const fetchInventoryItems = async (): Promise<InventoryItem[]> => {
@@ -209,6 +209,59 @@ export const deleteCategoryById = async (id: string) => {
     if (error) throw new Error(error.message);
   } catch (err) {
     console.error('Failed to delete category:', err);
+    throw err;
+  }
+};
+
+// ------------------- Assets -------------------
+export const fetchAssets = async (): Promise<Asset[]> => {
+  try {
+    const { data, error } = await supabase.from('assets').select('*');
+    if (error) {
+      console.warn('Assets table not found or accessible:', error.message);
+      return [];
+    }
+    return data as Asset[];
+  } catch (err) {
+    console.warn('Failed to fetch assets:', err);
+    return [];
+  }
+};
+
+export const insertAsset = async (asset: Omit<Asset, 'id' | 'createdat' | 'updatedat'>) => {
+  try {
+    console.log('Inserting asset:', asset);
+    const { error } = await supabase.from('assets').insert([{ 
+      ...asset,
+      createdat: new Date().toISOString(),
+      updatedat: new Date().toISOString()
+    }]);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    console.error('Failed to insert asset:', err);
+    throw err;
+  }
+};
+
+export const updateAssetById = async (id: string, asset: Partial<Asset>) => {
+  try {
+    const { error } = await supabase
+      .from('assets')
+      .update({ ...asset, updatedat: new Date().toISOString() })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    console.error('Failed to update asset:', err);
+    throw err;
+  }
+};
+
+export const deleteAssetById = async (id: string) => {
+  try {
+    const { error } = await supabase.from('assets').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    console.error('Failed to delete asset:', err);
     throw err;
   }
 };

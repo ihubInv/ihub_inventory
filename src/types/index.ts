@@ -90,6 +90,16 @@ export interface Category {
   createdby: string;
 }
 
+export interface Asset {
+  id: string;
+  name: string;
+  description?: string;
+  isactive: boolean;
+  createdat: Date;
+  updatedat: Date;
+  createdby: string;
+}
+
 // export interface Notification {
 //   id: string;
 //   userId: string;

@@ -5,6 +5,7 @@ import DateRangePicker from '../common/DateRangePicker';
 import { CategoryDistributionChart } from '../charts/ChartComponents';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
 import FilterDropdown, { categoryTypeFilters, statusFilters } from '../common/FilterDropdown';
+import AssetSelectionDropdown from '../common/AssetSelectionDropdown';
 import { 
   FolderPlus, 
   Plus, 
@@ -17,22 +18,28 @@ import {
   Zap,
   Eye,
   Save,
-  X
+  X,
+  Layers,
+  Box
 } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const CategoryManagement: React.FC = () => {
-  const { categories, addCategory, updateCategory, deleteCategory } = useInventory();
+  const { categories, addCategory, updateCategory, deleteCategory, assets, addAsset, updateAsset, deleteAsset } = useInventory();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState<'categories' | 'assets'>('categories');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddAssetModal, setShowAddAssetModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingAsset, setEditingAsset] = useState<any>(null);
   const [viewingCategory, setViewingCategory] = useState<any>(null);
+  const [viewingAsset, setViewingAsset] = useState<any>(null);
 
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -41,6 +48,12 @@ const CategoryManagement: React.FC = () => {
     description: '',
     isactive: true
   });
+
+  const [newAsset, setNewAsset] = useState({
+    name: '',
+    description: ''
+  });
+
 
   const filteredCategories = categories.filter(category => {
     const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,6 +74,83 @@ const CategoryManagement: React.FC = () => {
   });
 
   
+
+  const handleAddAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newAsset.name.trim()) {
+      const loadingToast = CRUDToasts.creating('asset');
+      try {
+        await addAsset({
+          name: newAsset.name.trim(),
+          description: newAsset.description.trim(),
+          isactive: true,
+          createdby: user?.id || 'unknown'
+        });
+        toast.dismiss(loadingToast);
+        setNewAsset({
+          name: '',
+          description: ''
+        });
+        setShowAddAssetModal(false);
+        CRUDToasts.created('asset');
+      } catch (err) {
+        console.error('Failed to add asset:', err);
+        toast.dismiss(loadingToast);
+        CRUDToasts.createError('asset', 'Please try again');
+      }
+    }
+  };
+
+  const handleEditAsset = (asset: any) => {
+    setEditingAsset(asset);
+    setNewAsset({
+      name: asset.name,
+      description: asset.description || ''
+    });
+    setShowAddAssetModal(true);
+  };
+
+  const handleUpdateAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingAsset && newAsset.name.trim()) {
+      const loadingToast = CRUDToasts.updating('asset');
+      try {
+        await updateAsset(editingAsset.id, {
+          name: newAsset.name.trim(),
+          description: newAsset.description.trim()
+        });
+        toast.dismiss(loadingToast);
+        setEditingAsset(null);
+        setNewAsset({
+          name: '',
+          description: ''
+        });
+        setShowAddAssetModal(false);
+        CRUDToasts.updated('asset');
+      } catch (err) {
+        console.error('Failed to update asset:', err);
+        toast.dismiss(loadingToast);
+        CRUDToasts.updateError('asset', 'Please try again');
+      }
+    }
+  };
+
+  const handleDeleteAsset = async (assetId: string) => {
+    const loadingToast = CRUDToasts.deleting('asset');
+    try {
+      await deleteAsset(assetId);
+      toast.dismiss(loadingToast);
+      CRUDToasts.deleted('asset');
+    } catch (err) {
+      console.error('Failed to delete asset:', err);
+      toast.dismiss(loadingToast);
+      CRUDToasts.deleteError('asset', 'Please try again');
+    }
+  };
+
+  const handleViewAsset = (asset: any) => {
+    setViewingAsset(asset);
+  };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     debugger
@@ -182,16 +272,40 @@ console.log("viewingCategory",viewingCategory)
           <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
           <p className="mt-1 text-gray-600">Manage inventory categories and their classifications</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
-        >
-          <Plus size={16} />
-          <span>Add Category</span>
-        </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Tab Navigation */}
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`flex items-center px-6 py-4 space-x-2 font-medium transition-all duration-200 border-b-2 ${
+              activeTab === 'categories'
+                ? 'text-blue-600 border-blue-600 bg-blue-50'
+                : 'text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Layers size={20} />
+            <span>Categories ({categories.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('assets')}
+            className={`flex items-center px-6 py-4 space-x-2 font-medium transition-all duration-200 border-b-2 ${
+              activeTab === 'assets'
+                ? 'text-green-600 border-green-600 bg-green-50'
+                : 'text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Box size={20} />
+            <span>Assets ({assets.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'categories' && (
+        <>
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between">
@@ -265,6 +379,20 @@ console.log("viewingCategory",viewingCategory)
         </div>
         <div className="h-64">
           <CategoryDistributionChart data={categoryChartData} />
+        </div>
+      </div>
+
+      {/* Category Management Header */}
+      <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Category Management</h3>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+          >
+            <Plus size={16} />
+            <span>Add Category</span>
+          </button>
         </div>
       </div>
 
@@ -468,19 +596,20 @@ console.log("viewingCategory",viewingCategory)
                   onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Computer Mouse"
+                  placeholder="e.g., Electronics, Furniture, Office Supplies"
                 />
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Asset Name *</label>
-                <input
-                  type="text"
+                <AssetSelectionDropdown
+                  assets={assets}
                   value={newCategory.assetname}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, assetname: e.target.value }))}
+                  onChange={(value) => setNewCategory(prev => ({ ...prev, assetname: value }))}
+                  label="Asset Name"
+                  placeholder="Select an asset"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Dell Laptop, Office Chair, Printer"
+                  searchable
+                  size="sm"
                 />
               </div>
               
@@ -634,6 +763,352 @@ console.log("viewingCategory",viewingCategory)
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+        </>
+      )}
+
+      {/* Assets Tab Content */}
+      {activeTab === 'assets' && (
+        <>
+          {/* Asset Stats Cards */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Assets</p>
+                  <p className="text-2xl font-bold text-gray-900">{assets.length}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+                  <Box className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Active Assets</p>
+                  <p className="text-2xl font-bold text-gray-900">{assets.filter(asset => asset.isactive).length}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600">
+                  <Box className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">With Description</p>
+                  <p className="text-2xl font-bold text-gray-900">{assets.filter(asset => asset.description).length}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
+                  <Box className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Added Today</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {assets.filter(asset => 
+                      new Date(asset.createdat).toDateString() === new Date().toDateString()
+                    ).length}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
+                  <Box className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Asset Distribution Chart */}
+          <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Asset Distribution</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-teal-500"></div>
+                <span className="text-sm text-gray-600">Current data</span>
+              </div>
+            </div>
+            <div className="h-64">
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="grid grid-cols-2 gap-8 mb-6">
+                    <div className="text-center">
+                      <div className="w-20 h-20 mx-auto mb-2 rounded-full bg-gradient-to-r from-green-500 to-teal-600 flex items-center justify-center">
+                        <Box className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">{assets.length}</p>
+                      <p className="text-sm text-gray-600">Total Assets</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-20 h-20 mx-auto mb-2 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center">
+                        <Box className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900">{assets.filter(asset => asset.isactive).length}</p>
+                      <p className="text-sm text-gray-600">Active Assets</p>
+                    </div>
+                  </div>
+                  <div className="text-gray-500">
+                    <p>Asset distribution visualization</p>
+                    <p className="text-sm">Charts will appear here as more data is added</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Asset Management Header */}
+          <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Asset Management</h3>
+              <button
+                onClick={() => setShowAddAssetModal(true)}
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 hover:shadow-xl"
+              >
+                <Plus size={16} />
+                <span>Add Asset</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Assets Table */}
+          <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
+            {assets.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b border-gray-200 bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Asset</th>
+                      <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Description</th>
+                      <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                      <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Added Date</th>
+                      <th className="px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {assets.map((asset) => (
+                      <tr key={asset.id} className="transition-colors hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-10 h-10">
+                              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 flex items-center justify-center">
+                                <Box className="w-5 h-5 text-white" />
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{asset.name}</div>
+                              <div className="text-sm text-gray-500">ID: {asset.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 max-w-xs truncate">
+                            {asset.description || 'No description'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            asset.isactive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {asset.isactive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                          {new Date(asset.createdat).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleViewAsset(asset)}
+                              className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900"
+                              title="View Details"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleEditAsset(asset)}
+                              className="p-1 text-green-600 transition-colors rounded hover:text-green-900"
+                              title="Edit Asset"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAsset(asset.id)}
+                              className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
+                              title="Delete Asset"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-12 text-center">
+                <Box className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="mb-2 text-lg font-medium text-gray-900">No assets found</h3>
+                <p className="text-gray-600 mb-4">Get started by adding your first asset</p>
+                <button
+                  onClick={() => setShowAddAssetModal(true)}
+                  className="inline-flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 hover:shadow-xl"
+                >
+                  <Plus size={16} />
+                  <span>Add Asset</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* View Asset Modal */}
+          {viewingAsset && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+              <div className="w-full max-w-lg p-6 bg-white rounded-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Asset Details</h3>
+                  <button
+                    onClick={() => setViewingAsset(null)}
+                    className="text-gray-400 transition-colors hover:text-gray-600"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+                      <Box className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-900">{viewingAsset.name}</h4>
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Description</label>
+                    <p className="p-3 text-gray-900 rounded-lg bg-gray-50">
+                      {viewingAsset.description || 'No description provided'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">Asset ID</label>
+                      <p className="font-mono text-sm text-gray-600">{viewingAsset.id}</p>
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">Status</label>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        viewingAsset.isactive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {viewingAsset.isactive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Added Date</label>
+                    <p className="text-sm text-gray-900">{new Date(viewingAsset.createdat).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end pt-6 mt-6 space-x-3 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setViewingAsset(null);
+                      handleEditAsset(viewingAsset);
+                    }}
+                    className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Asset</span>
+                  </button>
+                  <button
+                    onClick={() => setViewingAsset(null)}
+                    className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Add Asset Modal */}
+      {showAddAssetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="w-full max-w-md p-6 bg-white rounded-2xl">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">
+              {editingAsset ? 'Edit Asset' : 'Add New Asset'}
+            </h3>
+            
+            <form onSubmit={editingAsset ? handleUpdateAsset : handleAddAsset} className="space-y-4">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Asset Name *</label>
+                <input
+                  type="text"
+                  value={newAsset.name}
+                  onChange={(e) => setNewAsset(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="e.g., Dell Laptop, Office Chair, HP Printer"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Description (Optional)</label>
+                <textarea
+                  value={newAsset.description}
+                  onChange={(e) => setNewAsset(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Brief description of this asset..."
+                />
+              </div>
+
+              <div className="flex items-center justify-end pt-4 space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddAssetModal(false);
+                    setEditingAsset(null);
+                    setNewAsset({
+                      name: '',
+                      description: ''
+                    });
+                  }}
+                  className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <X size={16} />
+                  <span>Cancel</span>
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 hover:shadow-xl"
+                >
+                  <Save size={16} />
+                  <span>{editingAsset ? 'Update' : 'Add'} Asset</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

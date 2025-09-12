@@ -1305,7 +1305,7 @@ const InventoryList: React.FC = () => {
               {/* Selection status indicator */}
               {selectedItems.length > 0 && (
                 <div className="flex items-center px-3 py-1 text-sm border border-blue-200 rounded-lg bg-blue-50">
-                  <CheckSquare size={16} className="mr-2 text-blue-600" />
+                  <CheckSquare size={16} className="mr-2 text-green-500" />
                   <span className="text-blue-700">{selectedItems.length} selected</span>
                 </div>
               )}
@@ -1317,15 +1317,15 @@ const InventoryList: React.FC = () => {
                     onClick={() => setSelectedItems([])}
                     className="flex items-center px-3 py-2 space-x-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
-                    <X size={16} />
+                    <X size={16} className="text-red-500" />
                     <span>Clear</span>
                   </button>
                   
                   <button
                     onClick={handleBulkDelete}
-                    className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                    className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} className="text-red-500" />
                     <span>Delete Selected ({selectedItems.length})</span>
                   </button>
                 </>
@@ -1338,9 +1338,9 @@ const InventoryList: React.FC = () => {
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
                 disabled={isExporting}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Download size={16} />
+                <Download size={16} className="text-blue-500" />
                 <span>{isExporting ? 'Exporting...' : 'Export'}</span>
                 <ChevronDown 
                   size={16} 
@@ -1483,7 +1483,7 @@ const InventoryList: React.FC = () => {
                 <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Asset Condition Overview</h3>
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]"></div>
                   </div>
                   <div className="h-64" ref={conditionChartRef}>
                     <AssetConditionChart data={conditionData} />
@@ -1494,7 +1494,7 @@ const InventoryList: React.FC = () => {
                 <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Category Distribution</h3>
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]"></div>
                   </div>
                   <div className="h-64" ref={categoryChartRef}>
                     <CategoryDistributionChart data={categoryChartData} />
@@ -1576,7 +1576,7 @@ const InventoryList: React.FC = () => {
                         className="flex items-center justify-center w-5 h-5 text-blue-600 border border-gray-300 rounded hover:bg-blue-50"
                       >
                         {selectedItems.length === filteredItems.length && filteredItems.length > 0 ? (
-                          <CheckSquare size={16} />
+                          <CheckSquare size={16} className="text-green-500" />
                         ) : (
                           <Square size={16} />
                         )}
@@ -1603,7 +1603,7 @@ const InventoryList: React.FC = () => {
                           className="flex items-center justify-center w-5 h-5 text-blue-600 border border-gray-300 rounded hover:bg-blue-50"
                         >
                           {selectedItems.includes(item.id) ? (
-                            <CheckSquare size={16} />
+                            <CheckSquare size={16} className="text-green-500" />
                           ) : (
                             <Square size={16} />
                           )}
@@ -1613,7 +1613,7 @@ const InventoryList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-10 h-10">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                             <Package className="w-5 h-5 text-white" />
                           </div>
                         </div>
@@ -1649,14 +1649,14 @@ const InventoryList: React.FC = () => {
                         <button className="p-1 text-blue-600 rounded hover:text-blue-900"
                           onClick={() => setViewingCategory(item)}
                         >
-                          <Eye size={16} />
+                          <Eye size={16} className="text-blue-500" />
                         </button>
                         {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                           <>
                             <button className="p-1 text-green-600 rounded hover:text-green-900"
                               onClick={() => handleUpdate(item)}
                             >
-                              <Edit size={16} />
+                              <Edit size={16} className="text-blue-500" />
                             </button>
                             {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                               <button
@@ -1664,7 +1664,7 @@ const InventoryList: React.FC = () => {
                                 className="p-1 text-red-600 rounded hover:text-red-900 hover:bg-red-50"
                                 title="Delete item"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={16} className="text-red-500" />
                               </button>
                             )}
                           </>
@@ -1821,7 +1821,7 @@ const InventoryList: React.FC = () => {
         <div className="fixed z-40 transform -translate-x-1/2 bottom-6 left-1/2">
           <div className="flex items-center px-6 py-3 space-x-3 bg-white border border-gray-200 rounded-full shadow-2xl">
             <div className="flex items-center px-3 py-1 text-sm border border-blue-200 rounded-full bg-blue-50">
-              <CheckSquare size={16} className="mr-2 text-blue-600" />
+              <CheckSquare size={16} className="mr-2 text-green-500" />
               <span className="font-medium text-blue-700">{selectedItems.length} item{selectedItems.length > 1 ? 's' : ''} selected</span>
             </div>
             
@@ -1829,7 +1829,7 @@ const InventoryList: React.FC = () => {
               onClick={() => setSelectedItems([])}
               className="flex items-center px-4 py-2 space-x-2 text-gray-600 transition-all duration-200 bg-gray-100 rounded-full hover:bg-gray-200"
             >
-              <X size={16} />
+              <X size={16} className="text-red-500" />
               <span>Clear</span>
             </button>
             
@@ -1837,7 +1837,7 @@ const InventoryList: React.FC = () => {
               onClick={handleBulkDelete}
               className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-full shadow-lg hover:bg-red-700"
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} className="text-red-500" />
               <span>Delete Selected</span>
             </button>
           </div>

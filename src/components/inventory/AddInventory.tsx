@@ -579,7 +579,7 @@ const handleFile = (file?: File) => {
               }`}
             >
               <div className="flex items-center space-x-2">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 text-green-500" />
                 <span>Add Single Item</span>
               </div>
             </button>
@@ -593,7 +593,7 @@ const handleFile = (file?: File) => {
                 }`}
               >
                 <div className="flex items-center space-x-2">
-                  <Upload className="w-4 h-4" />
+                  <Upload className="w-4 h-4 text-blue-500" />
                   <span>Bulk Upload</span>
                 </div>
               </button>
@@ -609,7 +609,7 @@ const handleFile = (file?: File) => {
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                       <Package className="w-6 h-6 text-white" />
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Asset Information</h2>
@@ -642,7 +642,7 @@ const handleFile = (file?: File) => {
                 </div>
               </div>
               {formData.uniqueid && (
-                <div className="p-2 mt-2 border border-blue-200 rounded-md bg-gradient-to-r from-blue-50 to-green-50">
+                <div className="p-2 mt-2 border border-blue-200 rounded-md bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10">
                   <div className="mb-2 text-xs font-medium text-blue-600">🔄 Real-time ID Generation:</div>
                   <div className="mt-1 space-y-1 text-xs text-gray-700">
                     <div className="flex flex-wrap items-center gap-1">
@@ -686,7 +686,7 @@ const handleFile = (file?: File) => {
                   <div className="flex items-center mt-2 space-x-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full">
                       <div 
-                        className="h-2 transition-all duration-300 rounded-full bg-gradient-to-r from-blue-500 to-green-500"
+                        className="h-2 transition-all duration-300 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]"
                         style={{ 
                           width: `${[
                             formData.financialyear,
@@ -895,7 +895,7 @@ const handleFile = (file?: File) => {
           {/* Invoice Information */}
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-teal-600">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Invoice Details</h3>
@@ -970,7 +970,7 @@ const handleFile = (file?: File) => {
           {/* Financial Information */}
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-600">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                 <DollarSign className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Financial Details</h3>
@@ -1041,7 +1041,7 @@ const handleFile = (file?: File) => {
           {/* Location and Status */}
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                 <MapPin className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Location & Status</h3>
@@ -1233,7 +1233,7 @@ const handleFile = (file?: File) => {
             {/* Depreciation Section */}
             {/* <div className="pt-6 border-t border-gray-200">
               <div className="flex items-center mb-4 space-x-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                   <TrendingDown className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Depreciation Information</h3>
@@ -1305,7 +1305,7 @@ const handleFile = (file?: File) => {
 
           {/* <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center mb-4 space-x-3">
-              <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                 <Image className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Upload Your File</h3>
@@ -1374,15 +1374,15 @@ const handleFile = (file?: File) => {
                   }}
                   className="flex items-center px-6 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <X size={16} />
+                  <X size={16} className="text-red-500" />
                   <span>Clear Form</span>
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Save size={16} />
+                  <Save size={16} className="text-green-500" />
                   <span>{isSubmitting ? 'Adding...' : 'Add Item'}</span>
                 </button>
               </div>

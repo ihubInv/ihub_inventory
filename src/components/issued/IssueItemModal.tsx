@@ -192,7 +192,7 @@ const IssueItemModal: React.FC<IssueItemModalProps> = ({ isOpen, onClose, availa
             onClick={handleClose}
             className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100"
           >
-            <XCircle size={20} />
+            <XCircle size={20} className="text-red-500" />
           </button>
         </div>
 
@@ -385,15 +385,15 @@ const IssueItemModal: React.FC<IssueItemModalProps> = ({ isOpen, onClose, availa
             onClick={handleClose}
             className="flex items-center justify-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 text-sm sm:text-base"
           >
-            <XCircle size={16} />
+            <XCircle size={16} className="text-red-500" />
             <span>Cancel</span>
           </button>
           <button
             onClick={handleIssueItem}
             disabled={!selectedItem || !selectedEmployee || isSubmitting}
-            className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+            className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
-            <CheckCircle size={16} />
+            <CheckCircle size={16} className="text-green-500" />
             <span>{isSubmitting ? 'Issuing...' : 'Issue Item'}</span>
           </button>
         </div>

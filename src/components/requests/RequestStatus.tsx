@@ -55,11 +55,11 @@ const RequestStatus: React.FC = () => {
   const getStatusGradient = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'from-yellow-500 to-orange-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       case 'approved':
-        return 'from-green-500 to-teal-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       case 'rejected':
-        return 'from-red-500 to-pink-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       default:
         return 'from-gray-500 to-gray-600';
     }
@@ -97,7 +97,7 @@ const RequestStatus: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Total Requests</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <FileText className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -109,7 +109,7 @@ const RequestStatus: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Pending</p>
               <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Clock className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -121,7 +121,7 @@ const RequestStatus: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Approved</p>
               <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <CheckCircle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -133,7 +133,7 @@ const RequestStatus: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Rejected</p>
               <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <XCircle className="w-6 h-6 text-white" />
             </div>
           </div>

@@ -54,11 +54,11 @@ const NotificationCenter: React.FC = () => {
   const getNotificationColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'from-blue-500 to-cyan-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       case 'approved':
-        return 'from-green-500 to-teal-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       case 'rejected':
-        return 'from-red-500 to-pink-600';
+        return 'from-[#0d559e] to-[#1a6bb8]';
       default:
         return 'from-gray-500 to-gray-600';
     }
@@ -189,20 +189,20 @@ const NotificationCenter: React.FC = () => {
           {approvedNotifications.length > 0 && (
             <button
               onClick={handleDeleteApprovedNotifications}
-              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               title="Delete all approved notifications"
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} className="text-red-500" />
               <span>Clear Approved</span>
             </button>
           )}
           {rejectedNotifications.length > 0 && (
             <button
               onClick={handleDeleteRejectedNotifications}
-              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700"
+              className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               title="Delete all rejected notifications"
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} className="text-red-500" />
               <span>Clear Rejected</span>
             </button>
           )}
@@ -212,7 +212,7 @@ const NotificationCenter: React.FC = () => {
               className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
               title="Delete all notifications"
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} className="text-red-500" />
               <span>Clear All</span>
             </button>
           )}
@@ -227,7 +227,7 @@ const NotificationCenter: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Total Requests</p>
               <p className="text-2xl font-bold text-gray-900">{filteredNotifications.length}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Bell className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -239,7 +239,7 @@ const NotificationCenter: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Pending</p>
               <p className="text-2xl font-bold text-yellow-600">{pendingNotifications.length}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <AlertTriangle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -251,7 +251,7 @@ const NotificationCenter: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Approved</p>
               <p className="text-2xl font-bold text-green-600">{approvedNotifications.length}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <CheckCircle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -263,7 +263,7 @@ const NotificationCenter: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Rejected</p>
               <p className="text-2xl font-bold text-red-600">{rejectedNotifications.length}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <XCircle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -338,7 +338,7 @@ const NotificationCenter: React.FC = () => {
                             onClick={() => handleDeleteNotification(notification.id)}
                             className="p-1 text-gray-400 transition-colors rounded hover:text-red-600 hover:bg-red-50"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={16} className="text-red-500" />
                           </button>
                         </div>
                       </div>
@@ -399,7 +399,7 @@ const NotificationCenter: React.FC = () => {
                           onClick={() => handleDeleteNotification(notification.id)}
                           className="p-1 text-gray-400 transition-colors rounded hover:text-red-600 hover:bg-red-50"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="text-red-500" />
                         </button>
                       </div>
                     </div>
@@ -459,7 +459,7 @@ const NotificationCenter: React.FC = () => {
                           onClick={() => handleDeleteNotification(notification.id)}
                           className="p-1 text-gray-400 transition-colors rounded hover:text-red-600 hover:bg-red-50"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} className="text-red-500" />
                         </button>
                       </div>
                     </div>

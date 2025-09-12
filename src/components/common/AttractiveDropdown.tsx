@@ -198,7 +198,7 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
                       </div>
                     </div>
                     {option.value === value && (
-                      <Check size={16} className="text-blue-600" />
+                      <Check size={16} className="text-green-500" />
                     )}
                   </button>
                 ))

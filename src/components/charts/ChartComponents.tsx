@@ -694,7 +694,7 @@ export const PivotHeatmap: React.FC<{ pivotData: any; config: any }> = ({ pivotD
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-gray-50 to-white rounded-xl p-4">
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-xl p-4">
       {/* Enhanced Legend */}
       <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between text-sm">
@@ -703,8 +703,8 @@ export const PivotHeatmap: React.FC<{ pivotData: any; config: any }> = ({ pivotD
             <span className="font-medium text-gray-700">Low</span>
           </div>
           <div className="flex-1 mx-6">
-            <div className="h-6 bg-gradient-to-r from-red-300 via-yellow-300 to-green-300 rounded-full shadow-inner relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-200 via-yellow-200 to-green-200 rounded-full opacity-50"></div>
+            <div className="h-6 bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] rounded-full shadow-inner relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0d559e]/50 via-[#1a6bb8]/50 to-[#2c7bc7]/50 rounded-full opacity-50"></div>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -721,8 +721,8 @@ export const PivotHeatmap: React.FC<{ pivotData: any; config: any }> = ({ pivotD
       <div className="flex-1 overflow-auto bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="min-w-full">
           {/* Enhanced Header Row */}
-          <div className="flex border-b-2 border-gray-300 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="w-40 p-4 text-sm font-bold text-gray-700 bg-gradient-to-r from-blue-100 to-indigo-100 border-r border-gray-300 flex items-center">
+          <div className="flex border-b-2 border-gray-300 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10">
+            <div className="w-40 p-4 text-sm font-bold text-gray-700 bg-gradient-to-r from-[#0d559e]/20 to-[#1a6bb8]/20 border-r border-gray-300 flex items-center">
               <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
@@ -778,7 +778,7 @@ export const PivotHeatmap: React.FC<{ pivotData: any; config: any }> = ({ pivotD
       </div>
 
       {/* Enhanced Summary Stats */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+      <div className="mt-6 p-4 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-xl border border-blue-200">
         <div className="flex items-center space-x-2 mb-3">
           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />

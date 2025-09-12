@@ -137,13 +137,13 @@ const [formData, setFormData] = useState<FormData>({
     { 
       value: 'active', 
       label: 'Active',
-      icon: <CheckCircle size={16} />,
+      icon: <CheckCircle size={16} className="text-green-500" />,
       description: 'Currently active users'
     },
     { 
       value: 'inactive', 
       label: 'Inactive',
-      icon: <XCircle size={16} />,
+      icon: <XCircle size={16} className="text-red-500" />,
       description: 'Deactivated users'
     }
   ];
@@ -412,8 +412,8 @@ const handleUserUpdate = (user:any) => {
         {currentUser?.role === 'admin' && (
           <button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-            <Plus size={16} />
+          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+            <Plus size={16} className="text-green-500" />
             <span>Add User</span>
           </button>
         )}
@@ -601,7 +601,7 @@ const handleUserUpdate = (user:any) => {
                           }`}
                           title={user.isactive ? 'Deactivate' : 'Activate'}
                         >
-                          {user.isactive ? <UserX size={16} /> : <UserCheck size={16} />}
+                          {user.isactive ? <UserX size={16} className="text-red-500" /> : <UserCheck size={16} className="text-green-500" />}
                         </button>
                         {currentUser?.role === 'admin' && (
                           <>
@@ -613,14 +613,14 @@ const handleUserUpdate = (user:any) => {
                               
                             }}
                             className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900">
-                              <Edit size={16} />
+                              <Edit size={16} className="text-blue-500" />
                             </button>
                             {user.id !== currentUser.id && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
                                 className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={16} className="text-red-500" />
                               </button>
                             )}
                           </>
@@ -700,7 +700,7 @@ const handleUserUpdate = (user:any) => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeOff size={20} className="text-blue-500" /> : <Eye size={20} className="text-blue-500" />}
             </button>
           </div>
         </div>
@@ -757,7 +757,7 @@ const handleUserUpdate = (user:any) => {
                 : 'hover:bg-gray-100'
             }`}
           >
-            <X size={16} className="mr-1" />
+            <X size={16} className="mr-1 text-red-500" />
             Cancel
           </button>
 
@@ -767,10 +767,10 @@ const handleUserUpdate = (user:any) => {
             className={`flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg ${
               isLoading 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
+                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl'
             }`}
           >
-            <Save size={16} className="mr-1" />
+            <Save size={16} className="mr-1 text-green-500" />
             {isLoading ? 'Adding User...' : 'Add User'}
           </button>
         </div>
@@ -880,15 +880,15 @@ const handleUserUpdate = (user:any) => {
       onClick={() => setUpdateModel(false)}
       className="flex items-center px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100"
     >
-      <X size={16} className="mr-1" />
+      <X size={16} className="mr-1 text-red-500" />
       Cancel
     </button>
 
     <button
       type="submit"
-      className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+      className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
     >
-      <Save size={16} className="mr-1" />
+      <Save size={16} className="mr-1 text-green-500" />
       Update User
     </button>
   </div>

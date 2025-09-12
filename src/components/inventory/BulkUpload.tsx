@@ -291,7 +291,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="text-center">
-        <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] rounded-2xl flex items-center justify-center shadow-lg">
           <Upload className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Bulk Asset Upload</h2>
@@ -302,7 +302,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
 
       <div className="space-y-6">
           {/* Instructions */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+          <div className="bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 border border-[#0d559e]/20 rounded-xl p-6 shadow-sm">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <Info className="w-6 h-6 text-blue-600" />
@@ -332,7 +332,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
           </div>
 
           {/* Template Download */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm">
+          <div className="bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 border border-[#0d559e]/20 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -345,9 +345,9 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
               </div>
               <button
                 onClick={downloadTemplate}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <Download size={18} />
+                <Download size={18} className="text-blue-500" />
                 <span className="font-medium">Download Template</span>
               </button>
             </div>
@@ -357,8 +357,8 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
           <div
             className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 cursor-pointer group ${
               dragActive 
-                ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 shadow-lg' 
-                : 'border-gray-300 hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-indigo-50'
+                ? 'border-[#0d559e] bg-gradient-to-br from-[#0d559e]/10 to-[#1a6bb8]/10 shadow-lg' 
+                : 'border-gray-300 hover:border-[#0d559e] hover:bg-gradient-to-br hover:from-[#0d559e]/10 hover:to-[#1a6bb8]/10'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -377,7 +377,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
             <div className="space-y-6">
               {file ? (
                 <div className="space-y-4">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                  <div className="mx-auto w-16 h-16 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-full flex items-center justify-center">
                     <CheckCircle className="w-8 h-8 text-white" />
                   </div>
                   <div>
@@ -390,10 +390,10 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-center space-x-2">
-                    <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                    <div className="w-16 h-16 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
                       <FileSpreadsheet className="w-8 h-8 text-white" />
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
+                    <div className="w-16 h-16 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-200">
                       <FileText className="w-8 h-8 text-white" />
                     </div>
                   </div>
@@ -488,7 +488,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUpload, onClose }) => {
               <button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg font-semibold"
+                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg font-semibold"
               >
                 {uploading ? (
                   <>

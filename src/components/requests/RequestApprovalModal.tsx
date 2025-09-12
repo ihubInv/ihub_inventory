@@ -122,7 +122,7 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
             onClick={onClose}
             className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100"
           >
-            <XCircle size={20} />
+            <XCircle size={20} className="text-red-500" />
           </button>
         </div>
 
@@ -255,7 +255,7 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
             onClick={onClose}
             className="flex items-center justify-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            <XCircle size={16} />
+            <XCircle size={16} className="text-red-500" />
             <span>Cancel</span>
           </button>
           <button
@@ -263,11 +263,11 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
             disabled={!reason.trim() || (action === 'approve' && !selectedAsset) || isProcessing}
             className={`flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg ${
               action === 'approve' 
-                ? 'bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700'
-                : 'bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700'
+                ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {action === 'approve' ? <CheckCircle size={16} /> : <XCircle size={16} />}
+            {action === 'approve' ? <CheckCircle size={16} className="text-green-500" /> : <XCircle size={16} className="text-red-500" />}
             <span>
               {isProcessing 
                 ? (action === 'approve' ? 'Approving & Issuing...' : 'Rejecting...') 

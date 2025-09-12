@@ -106,14 +106,14 @@ const AttractiveLoader: React.FC<AttractiveLoaderProps> = ({
           <defs xmlns="http://www.w3.org/2000/svg">
             {/* I gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-i">
-              <stop stopColor="#973BED"></stop>
-              <stop stopColor="#007CFF" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
             
             {/* H gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="0" x2="0" y1="64" x1="0" id="gradient-h">
-              <stop stopColor="#FFC800"></stop>
-              <stop stopColor="#F0F" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
               <animateTransform 
                 repeatCount="indefinite" 
                 keySplines=".42,0,.58,1;.42,0,.58,1;.42,0,.58,1;.42,0,.58,1;.42,0,.58,1;.42,0,.58,1;.42,0,.58,1;.42,0,.58,1" 
@@ -127,32 +127,32 @@ const AttractiveLoader: React.FC<AttractiveLoaderProps> = ({
             
             {/* U gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-u">
-              <stop stopColor="#00E0ED"></stop>
-              <stop stopColor="#00DA72" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
             
             {/* B gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-b">
-              <stop stopColor="#FF6B6B"></stop>
-              <stop stopColor="#4ECDC4" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
             
             {/* I2 gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-i2">
-              <stop stopColor="#A8E6CF"></stop>
-              <stop stopColor="#FFD93D" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
             
             {/* M gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-m">
-              <stop stopColor="#FF8A80"></stop>
-              <stop stopColor="#EA80FC" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
             
             {/* S gradient */}
             <linearGradient gradientUnits="userSpaceOnUse" y2="2" x2="0" y1="62" x1="0" id="gradient-s">
-              <stop stopColor="#81C784"></stop>
-              <stop stopColor="#64B5F6" offset="1"></stop>
+              <stop stopColor="#0d559e"></stop>
+              <stop stopColor="#1a6bb8" offset="1"></stop>
             </linearGradient>
           </defs>
         </svg>

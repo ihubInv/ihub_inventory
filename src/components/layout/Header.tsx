@@ -55,19 +55,19 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
       case 'admin':
         return {
           title: 'Administrator',
-          color: 'from-red-500 to-pink-600',
+          color: 'from-[#0d559e] to-[#1a6bb8]',
           bgColor: 'bg-red-100 text-red-800'
         };
       case 'stock-manager':
         return {
           title: 'Stock Manager',
-          color: 'from-blue-500 to-purple-600',
+          color: 'from-[#0d559e] to-[#1a6bb8]',
           bgColor: 'bg-blue-100 text-blue-800'
         };
       case 'employee':
         return {
           title: 'Employee',
-          color: 'from-green-500 to-teal-600',
+          color: 'from-[#0d559e] to-[#1a6bb8]',
           bgColor: 'bg-green-100 text-green-800'
         };
       default:
@@ -118,13 +118,13 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
           {/* Enhanced Logo & Title */}
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] shadow-lg">
                 <span className="text-lg font-bold text-white sm:text-xl">I</span>
               </div>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse sm:w-4 sm:h-4"></div>
             </div>
             <div className="hidden md:block">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent lg:text-2xl">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] bg-clip-text text-transparent lg:text-2xl">
                 iHub Inventory
               </h1>
               <p className="text-sm text-gray-500 font-medium">Management System</p>
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                       <Mail size={16} className="mr-3" />
                       Email Settings
                     </button>
-                    <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap ">
+                    <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap ">
                       Coming Soon
                     </span>
                   </div>
@@ -307,7 +307,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                 onClick={() => setIsProfileMenuOpen(false)}
                 className="p-1 text-gray-400 transition-colors rounded hover:text-gray-600"
               >
-                <X size={20} />
+                <X size={20} className="text-red-500" />
               </button>
             </div>
             
@@ -352,7 +352,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                     <Mail size={16} className="mr-3" />
                     Email Settings
                   </button>
-                  <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap shadow-lg">
+                  <span className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] text-white text-xs font-medium rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap shadow-lg">
                     Coming Soon
                   </span>
                 </div>

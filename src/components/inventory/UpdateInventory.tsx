@@ -164,7 +164,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
       <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden bg-white rounded-3xl shadow-2xl border border-gray-100">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-600 to-green-700 px-8 py-6 rounded-t-3xl">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] px-8 py-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-white bg-opacity-20 rounded-xl">
@@ -179,7 +179,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
               onClick={onClose} 
               className="p-3 text-white hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200"
             >
-              <X size={24} />
+              <X size={24} className="text-red-500" />
             </button>
           </div>
         </div>
@@ -660,7 +660,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                           className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
                           title="Remove attachment"
                         >
-                          <X size={12} />
+                          <X size={12} className="text-red-500" />
                         </button>
                       </div>
                     ))}
@@ -682,7 +682,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                   htmlFor="file-upload"
                   className="flex items-center justify-center w-full px-6 py-4 transition-colors border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:border-gray-400 hover:bg-gray-50"
                 >
-                  <Upload size={20} className="mr-2 text-gray-400" />
+                  <Upload size={20} className="mr-2 text-blue-500" />
                   <span className="text-gray-600 font-medium">Add new attachments</span>
                 </label>
               </div>
@@ -705,7 +705,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                           className="absolute p-1 text-white transition-opacity bg-red-500 rounded-full opacity-0 top-1 right-1 group-hover:opacity-100"
                           title="Remove attachment"
                         >
-                          <X size={12} />
+                          <X size={12} className="text-red-500" />
                         </button>
                       </div>
                     ))}
@@ -723,7 +723,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                   disabled={isSubmitting}
                   className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} className="text-red-500" />
                   <span>Delete Item</span>
                 </button>
 
@@ -739,9 +739,9 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl hover:from-emerald-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg"
+                    className="flex items-center px-6 py-3 space-x-2 text-white transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg"
                   >
-                    <Save size={16} />
+                    <Save size={16} className="text-green-500" />
                     <span>{isSubmitting ? 'Updating...' : 'Update Item'}</span>
                   </button>
                 </div>

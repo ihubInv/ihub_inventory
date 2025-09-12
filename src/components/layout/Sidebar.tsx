@@ -113,14 +113,14 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
       {/* Enhanced Logo + Title */}
       <div className="flex items-center space-x-3">
         <div className="relative">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 rounded-2xl shadow-lg transition-all duration-200 hover:scale-105">
+          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6] rounded-2xl shadow-lg transition-all duration-200 hover:scale-105">
             <span className="text-lg font-bold text-white">I</span>
           </div>
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
         </div>
         {!collapsed && (
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Inventory</h1>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] bg-clip-text text-transparent">Inventory</h1>
             <p className="-mt-1 text-sm text-gray-500 font-medium">Management</p>
           </div>
         )}
@@ -136,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         {!collapsed && (
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
+              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] overflow-hidden">
                 {user.profilepicture ? (
                   <img
                     src={user.profilepicture}
@@ -169,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                 onClick={() => handleNavigation(item.path)}
                 className={`w-full flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6] text-white shadow-md'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 title={collapsed ? item.label : ''}
@@ -180,7 +180,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                 </div>
                 {!collapsed && item.badge && item.badge > 0 && (
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    isActive ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700' : 'bg-red-500 text-white'
+                    isActive ? 'bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6]' : 'bg-red-500 text-white'
                   }`}>
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
@@ -210,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         {/* Logo */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 rounded-xl">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6] rounded-xl">
               <span className="text-lg font-bold text-white">IM</span>
             </div>
             <div>
@@ -223,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
         {/* User Info */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 overflow-hidden">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] overflow-hidden">
               {user.profilepicture ? (
                 <img
                   src={user.profilepicture}
@@ -255,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                 onClick={() => handleNavigation(item.path)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700  shadow-md'
+                    ? 'bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6]  shadow-md'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -265,7 +265,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                 </div>
                 {item.badge && item.badge > 0 && (
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    isActive ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700' : 'bg-red-500 text-white'
+                    isActive ? 'bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] hover:from-[#0a4a8a] hover:via-[#155a9e] hover:to-[#256bb6]' : 'bg-red-500 text-white'
                   }`}>
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>

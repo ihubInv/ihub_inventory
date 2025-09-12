@@ -312,7 +312,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
       <div className="w-full max-w-7xl max-h-[95vh] overflow-hidden bg-white rounded-3xl shadow-2xl border border-gray-100">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-6 rounded-t-3xl">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] px-8 py-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-white bg-opacity-20 rounded-xl">
@@ -327,7 +327,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
               onClick={onClose} 
               className="p-3 text-white hover:bg-white hover:bg-opacity-20 rounded-xl transition-all duration-200"
             >
-              <X size={24} />
+              <X size={24} className="text-red-500" />
             </button>
           </div>
         </div>
@@ -628,7 +628,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
                 onClose();
                 onEdit(viewingCategory);
               }}
-              className="px-6 py-3 text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium flex items-center space-x-2 shadow-lg"
+              className="px-6 py-3 text-white bg-gradient-to-r from-green-500 to-green-600 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium flex items-center space-x-2 shadow-lg"
             >
               <Edit className="w-4 h-4" />
               <span>Edit Asset</span>

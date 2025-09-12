@@ -126,9 +126,9 @@ const DepreciationReport: React.FC = () => {
         </div>
         <button
           onClick={exportReport}
-          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
         >
-          <Download size={16} />
+          <Download size={16} className="text-blue-500" />
           <span>Export Report</span>
         </button>
       </div>

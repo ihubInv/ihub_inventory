@@ -317,7 +317,7 @@ console.log("viewingCategory",viewingCategory)
               <p className="text-sm font-medium text-gray-600">Total Categories</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <FolderPlus className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -329,7 +329,7 @@ console.log("viewingCategory",viewingCategory)
               <p className="text-sm font-medium text-gray-600">Major</p>
               <p className="text-2xl font-bold text-gray-900">{stats.major}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Package className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -341,7 +341,7 @@ console.log("viewingCategory",viewingCategory)
               <p className="text-sm font-medium text-gray-600">Minor</p>
               <p className="text-2xl font-bold text-gray-900">{stats.minor}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Zap className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -353,7 +353,7 @@ console.log("viewingCategory",viewingCategory)
               <p className="text-sm font-medium text-gray-600">Active</p>
               <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <FolderPlus className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -365,7 +365,7 @@ console.log("viewingCategory",viewingCategory)
               <p className="text-sm font-medium text-gray-600">Inactive</p>
               <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <FolderPlus className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -377,7 +377,7 @@ console.log("viewingCategory",viewingCategory)
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Category Type Distribution</h3>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-500"></div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]"></div>
             <span className="text-sm text-gray-600">Current data</span>
           </div>
         </div>
@@ -392,9 +392,9 @@ console.log("viewingCategory",viewingCategory)
           <h3 className="text-lg font-semibold text-gray-900">Category Management</h3>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+            className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
           >
-            <Plus size={16} />
+            <Plus size={16} className="text-green-500" />
             <span className="hidden sm:inline">Add Category</span>
             <span className="sm:hidden">Add</span>
           </button>
@@ -491,8 +491,8 @@ console.log("viewingCategory",viewingCategory)
                           <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10">
                             <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-r ${
                               category.type === 'major' 
-                                ? 'from-blue-500 to-cyan-600' 
-                                : 'from-purple-500 to-pink-600'
+                                ? 'from-[#0d559e] to-[#1a6bb8]' 
+                                : 'from-[#0d559e] to-[#1a6bb8]'
                             } flex items-center justify-center`}>
                               <TypeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
@@ -534,14 +534,14 @@ console.log("viewingCategory",viewingCategory)
                             className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900"
                             title="View Details"
                           >
-                            <Eye size={14} className="sm:w-4 sm:h-4" />
+                            <Eye size={14} className="sm:w-4 sm:h-4 text-blue-500" />
                           </button>
                           <button
                             onClick={() => handleEditCategory(category)}
                             className="p-1 text-green-600 transition-colors rounded hover:text-green-900"
                             title="Edit Category"
                           >
-                            <Edit size={14} className="sm:w-4 sm:h-4" />
+                            <Edit size={14} className="sm:w-4 sm:h-4 text-blue-500" />
                           </button>
                           <button
                             onClick={() => toggleCategoryStatus(category.id, category.isactive)}
@@ -560,7 +560,7 @@ console.log("viewingCategory",viewingCategory)
                               className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
                               title="Delete Category"
                             >
-                              <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                              <Trash2 size={14} className="sm:w-4 sm:h-4 text-red-500" />
                             </button>
                           )}
                         </div>
@@ -650,7 +650,7 @@ console.log("viewingCategory",viewingCategory)
                               onClick={() => removeAssetName(assetName)}
                               className="ml-2 text-blue-600 hover:text-blue-800"
                             >
-                              <X size={14} />
+                              <X size={14} className="text-red-500" />
                             </button>
                           </span>
                         ))}
@@ -669,7 +669,7 @@ console.log("viewingCategory",viewingCategory)
                     onClick={() => setShowAddAssetModal(true)}
                     className="flex items-center justify-center px-3 py-2 space-x-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    <Plus size={16} />
+                    <Plus size={16} className="text-green-500" />
                     <span>Add Asset</span>
                   </button>
                 </div>
@@ -699,7 +699,7 @@ console.log("viewingCategory",viewingCategory)
                             className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                             title="Edit Asset"
                           >
-                            <Edit size={14} />
+                            <Edit size={14} className="text-blue-500" />
                           </button>
                           <button
                             type="button"
@@ -707,7 +707,7 @@ console.log("viewingCategory",viewingCategory)
                             className="p-1 text-red-600 hover:text-red-800 transition-colors"
                             title="Delete Asset"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={14} className="text-red-500" />
                           </button>
                         </div>
                       </div>
@@ -763,14 +763,14 @@ console.log("viewingCategory",viewingCategory)
                   }}
                   className="flex items-center justify-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <X size={16} />
+                  <X size={16} className="text-red-500" />
                   <span>Cancel</span>
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+                  className="flex items-center justify-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
                 >
-                  <Save size={16} />
+                  <Save size={16} className="text-green-500" />
                   <span>{editingCategory ? 'Update' : 'Add'} Category</span>
                 </button>
               </div>
@@ -789,7 +789,7 @@ console.log("viewingCategory",viewingCategory)
                 onClick={() => setViewingCategory(null)}
                 className="text-gray-400 transition-colors hover:text-gray-600"
               >
-                <X size={20} />
+                <X size={20} className="text-red-500" />
               </button>
             </div>
             
@@ -797,8 +797,8 @@ console.log("viewingCategory",viewingCategory)
               <div className="flex items-center space-x-4">
                 <div className={`p-3 rounded-xl bg-gradient-to-r ${
                   viewingCategory.type === 'major' 
-                    ? 'from-blue-500 to-cyan-600' 
-                    : 'from-purple-500 to-pink-600'
+                    ? 'from-[#0d559e] to-[#1a6bb8]' 
+                    : 'from-[#0d559e] to-[#1a6bb8]'
                 }`}>
                   {viewingCategory.type === 'major' ? (
                     <Package className="w-6 h-6 text-white" />
@@ -872,9 +872,9 @@ console.log("viewingCategory",viewingCategory)
                   setViewingCategory(null);
                   handleEditCategory(viewingCategory);
                 }}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-green-600 hover:to-teal-700"
               >
-                <Edit size={16} />
+                <Edit size={16} className="text-blue-500" />
                 <span>Edit Category</span>
               </button>
               <button
@@ -947,14 +947,14 @@ console.log("viewingCategory",viewingCategory)
                   }}
                   className="flex items-center justify-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <X size={16} />
+                  <X size={16} className="text-red-500" />
                   <span>Cancel</span>
                 </button>
                 <button
                   type="submit"
                   className="flex items-center justify-center px-4 py-2 space-x-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  <Save size={16} />
+                  <Save size={16} className="text-green-500" />
                   <span>{editingAsset ? 'Update' : 'Add'} Asset</span>
                 </button>
               </div>

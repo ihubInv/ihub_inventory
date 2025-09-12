@@ -125,9 +125,9 @@ const CreateRequest: React.FC = () => {
       </div>
 
       {/* Guidelines */}
-      <div className="p-6 border border-blue-100 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
+      <div className="p-6 border border-[#0d559e]/20 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-2xl">
         <div className="flex items-start space-x-3">
-          <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+          <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -147,7 +147,7 @@ const CreateRequest: React.FC = () => {
       <form onSubmit={handleSubmit} className="bg-white border border-gray-100 shadow-sm rounded-2xl">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Package className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">Request Details</h2>
@@ -277,13 +277,13 @@ const CreateRequest: React.FC = () => {
               })}
               className="flex items-center px-6 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              <X size={16} />
+              <X size={16} className="text-red-500" />
               <span>Clear</span>
             </button>
             <button
               type="submit"
               disabled={isSubmitting || formData.justification.length < 5}
-              className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-6 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={16} />
               <span>{isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
@@ -297,15 +297,15 @@ const CreateRequest: React.FC = () => {
         <h3 className="mb-4 text-lg font-semibold text-gray-900">What happens next?</h3>
         <div className="space-y-3">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-blue-500 to-cyan-600">1</div>
+            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">1</div>
             <p className="text-sm text-gray-700">Your request will be reviewed by the admin or stock manager</p>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-green-500 to-teal-600">2</div>
+            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">2</div>
             <p className="text-sm text-gray-700">You'll receive a notification with the approval decision</p>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-purple-500 to-pink-600">3</div>
+            <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-white rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">3</div>
             <p className="text-sm text-gray-700">If approved, the item will be allocated and ready for pickup</p>
           </div>
         </div>

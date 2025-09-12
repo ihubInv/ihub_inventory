@@ -115,7 +115,7 @@ const Login: React.FC = () => {
         {/* Form */}
         <div className="p-8 bg-white border border-gray-100 shadow-xl rounded-2xl">
            <div className="mb-8 text-center">
-          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl">
             <span className="text-2xl font-bold text-white">IM</span>
           </div>
           <h1 className="mb-2 text-3xl font-bold text-gray-900">iHub & HCi Foundation</h1>
@@ -176,7 +176,7 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition-all duration-200 transform border border-transparent shadow-lg rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition-all duration-200 transform border border-transparent shadow-lg rounded-xl bg-[#0d559e] hover:bg-[#0a4a8a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0d559e] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
 
             >
               {isLoading ? 'Signing In...' : 'Sign In'}

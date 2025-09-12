@@ -137,9 +137,9 @@ const IssuedItemManagement: React.FC = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowIssueModal(true)}
-            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+            className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
           >
-            <Plus size={16} />
+            <Plus size={16} className="text-green-500" />
             <span>Issue Item</span>
           </button>
           <button
@@ -159,8 +159,8 @@ const IssuedItemManagement: React.FC = () => {
             <RefreshCw size={16} />
             <span>Refresh</span>
           </button>
-          <button className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-            <Download size={16} />
+          <button className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+            <Download size={16} className="text-blue-500" />
             <span>Export</span>
           </button>
         </div>
@@ -174,7 +174,7 @@ const IssuedItemManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Total Issued</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <UserCheck className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -186,7 +186,7 @@ const IssuedItemManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Overdue Items</p>
               <p className="text-2xl font-bold text-gray-900">{stats.overdue}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <AlertCircle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -198,7 +198,7 @@ const IssuedItemManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Recent Issues</p>
               <p className="text-2xl font-bold text-gray-900">{stats.recent}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Clock className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -210,7 +210,7 @@ const IssuedItemManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
               <p className="text-2xl font-bold text-gray-900">{stats.lowStockCategories}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-red-500 to-orange-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <AlertCircle className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -337,7 +337,7 @@ const IssuedItemManagement: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-10 h-10">
-                          <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] flex items-center justify-center">
                             <Package className="w-5 h-5 text-white" />
                           </div>
                         </div>
@@ -392,14 +392,14 @@ const IssuedItemManagement: React.FC = () => {
                           className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900"
                           title="View Details"
                         >
-                          <Eye size={16} />
+                          <Eye size={16} className="text-blue-500" />
                         </button>
                         <button
                           onClick={() => handleReturnItem(item.id)}
                           className="p-1 text-green-600 transition-colors rounded hover:text-green-900"
                           title="Return Item"
                         >
-                          <CheckCircle size={16} />
+                          <CheckCircle size={16} className="text-green-500" />
                         </button>
                       </div>
                     </td>
@@ -427,7 +427,7 @@ const IssuedItemManagement: React.FC = () => {
                 onClick={() => setViewingItem(null)}
                 className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100"
               >
-                <XCircle size={20} />
+                <XCircle size={20} className="text-red-500" />
               </button>
             </div>
 
@@ -467,7 +467,7 @@ const IssuedItemManagement: React.FC = () => {
                 onClick={() => setViewingItem(null)}
                 className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <XCircle size={16} />
+                <XCircle size={16} className="text-red-500" />
                 <span>Close</span>
               </button>
               <button
@@ -475,9 +475,9 @@ const IssuedItemManagement: React.FC = () => {
                   setViewingItem(null);
                   handleReturnItem(viewingItem.id);
                 }}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
-                <CheckCircle size={16} />
+                <CheckCircle size={16} className="text-green-500" />
                 <span>Return Item</span>
               </button>
             </div>

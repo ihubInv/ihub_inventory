@@ -199,7 +199,7 @@ const DashboardHome: React.FC = () => {
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Enhanced Welcome Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-3xl shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7] rounded-3xl shadow-2xl">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-72 h-72 bg-white opacity-10 rounded-full -translate-x-36 -translate-y-36 animate-pulse"></div>
@@ -344,7 +344,7 @@ const DashboardHome: React.FC = () => {
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.5s' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
                 <LineChart className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -376,7 +376,7 @@ const DashboardHome: React.FC = () => {
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
                 <PieChart className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -401,7 +401,7 @@ const DashboardHome: React.FC = () => {
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.7s' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -409,7 +409,7 @@ const DashboardHome: React.FC = () => {
                 <p className="text-sm text-gray-500">By asset type</p>
               </div>
             </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 animate-pulse"></div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
           </div>
           <div className="h-64">
             {categoryData.categories.length > 0 ? (
@@ -430,7 +430,7 @@ const DashboardHome: React.FC = () => {
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.8s' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
                 <Activity className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -438,7 +438,7 @@ const DashboardHome: React.FC = () => {
                 <p className="text-sm text-gray-500">By asset status</p>
               </div>
             </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-blue-500 animate-pulse"></div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
           </div>
           <div className="h-64">
             {hasInventoryData ? (
@@ -459,7 +459,7 @@ const DashboardHome: React.FC = () => {
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.9s' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -467,7 +467,7 @@ const DashboardHome: React.FC = () => {
                 <p className="text-sm text-gray-500">Inventory & requests</p>
               </div>
             </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-400 to-red-500 animate-pulse"></div>
+            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
           </div>
           <div className="h-64">
             {(hasInventoryData || requests.length > 0) ? (
@@ -497,7 +497,7 @@ const DashboardHome: React.FC = () => {
               <>
                 <button
                 onClick={handleNavigateAddInventory}
-                 className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                 className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]">
                   <span className="font-medium">Add New Inventory Item</span>
                   <Package size={20} />
                 </button>
@@ -510,7 +510,7 @@ const DashboardHome: React.FC = () => {
                       navigate('/stock-manager/requests');
                     }
                   }}
-                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
                 >
                   <span className="font-medium">Review Pending Requests</span>
                   <ClipboardList size={20} />
@@ -521,7 +521,7 @@ const DashboardHome: React.FC = () => {
             {user?.role === 'employee' && (
               <button 
                 onClick={() => navigate('/employee/create-request')}
-                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
               >
                 <span className="font-medium">Create New Request</span>
                 <ClipboardList size={20} />
@@ -538,7 +538,7 @@ const DashboardHome: React.FC = () => {
                   navigate('/employee/reports');
                 }
               }}
-              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+              className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
             >
               <span className="font-medium">Generate Report</span>
               <TrendingUp size={20} />

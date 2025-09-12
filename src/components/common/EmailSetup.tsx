@@ -43,7 +43,7 @@ const EmailSetup: React.FC<EmailSetupProps> = ({ onClose }) => {
       <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+            <div className="p-2 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-lg">
               <Mail className="h-6 w-6 text-white" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Email Configuration</h3>
@@ -52,7 +52,7 @@ const EmailSetup: React.FC<EmailSetupProps> = ({ onClose }) => {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X size={20} />
+            <X size={20} className="text-red-500" />
           </button>
         </div>
 
@@ -118,7 +118,7 @@ const EmailSetup: React.FC<EmailSetupProps> = ({ onClose }) => {
                 ? 'bg-green-50 text-green-800 border border-green-200' 
                 : 'bg-red-50 text-red-800 border border-red-200'
             }`}>
-              {testResult === 'success' ? <Check size={16} /> : <X size={16} />}
+              {testResult === 'success' ? <Check size={16} className="text-green-500" /> : <X size={16} className="text-red-500" />}
               <span className="text-sm">
                 {testResult === 'success' 
                   ? 'Test email sent successfully!' 
@@ -148,9 +148,9 @@ const EmailSetup: React.FC<EmailSetupProps> = ({ onClose }) => {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
             >
-              <Check size={16} />
+              <Check size={16} className="text-green-500" />
               <span>Save Configuration</span>
             </button>
           </div>

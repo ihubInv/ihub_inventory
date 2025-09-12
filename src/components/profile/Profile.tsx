@@ -216,31 +216,31 @@ const Profile: React.FC = () => {
     switch (role) {
       case 'admin':
         return {
-          gradient: 'from-red-500 via-pink-500 to-purple-600',
-          badgeColor: 'bg-gradient-to-r from-red-500 to-pink-600',
+          gradient: 'from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7]',
+          badgeColor: 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]',
           icon: Crown,
           title: 'Administrator',
           description: 'Full system access and control'
         };
       case 'stock-manager':
         return {
-          gradient: 'from-blue-500 via-indigo-500 to-purple-600',
-          badgeColor: 'bg-gradient-to-r from-blue-500 to-indigo-600',
+          gradient: 'from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7]',
+          badgeColor: 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]',
           icon: Briefcase,
           title: 'Stock Manager',
           description: 'Inventory and stock management'
         };
       case 'employee':
         return {
-          gradient: 'from-green-500 via-emerald-500 to-teal-600',
-          badgeColor: 'bg-gradient-to-r from-green-500 to-emerald-600',
+          gradient: 'from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7]',
+          badgeColor: 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]',
           title: 'Employee',
           description: 'Request and track inventory items'
         };
       default:
         return {
-          gradient: 'from-gray-500 to-gray-600',
-          badgeColor: 'bg-gray-500',
+          gradient: 'from-[#0d559e] to-[#1a6bb8]',
+          badgeColor: 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]',
           icon: User,
           title: 'User',
           description: 'System user'
@@ -267,7 +267,7 @@ const Profile: React.FC = () => {
       <div className="px-4 py-8 mx-auto space-y-8 max-w-7xl">
         
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0d559e] via-[#1a6bb8] to-[#2c7bc7]">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-0 right-0 translate-x-48 -translate-y-48 rounded-full w-96 h-96 bg-white/10"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 -translate-x-32 translate-y-32 rounded-full bg-white/5"></div>
@@ -298,7 +298,7 @@ const Profile: React.FC = () => {
                     onClick={() => setIsEditing(true)}
                     className="flex items-center px-6 py-3 space-x-2 font-semibold text-indigo-600 transition-all duration-200 transform bg-white rounded-xl hover:bg-gray-50 hover:shadow-lg hover:scale-105"
                   >
-                    <Edit3 size={18} />
+                    <Edit3 size={18} className="text-blue-500" />
                     <span>Edit Profile</span>
                   </button>
                 ) : (
@@ -313,7 +313,7 @@ const Profile: React.FC = () => {
                       onClick={handleSave}
                       className="flex items-center px-6 py-3 space-x-2 font-semibold text-white transition-all duration-200 transform bg-green-500 rounded-xl hover:bg-green-600 hover:shadow-lg hover:scale-105"
                     >
-                      <Save size={18} />
+                      <Save size={18} className="text-green-500" />
                       <span>Save Changes</span>
                     </button>
                   </div>
@@ -356,7 +356,7 @@ const Profile: React.FC = () => {
                           className="absolute p-2 text-white transition-all duration-200 bg-red-500 rounded-full shadow-lg -top-2 -right-2 hover:bg-red-600"
                           title="Remove profile picture"
                         >
-                          <X size={16} />
+                          <X size={16} className="text-red-500" />
                         </button>
                       )}
                     </div>
@@ -373,9 +373,9 @@ const Profile: React.FC = () => {
                     <button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="flex items-center justify-center w-full px-4 py-2 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center w-full px-4 py-2 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Upload size={16} />
+                      <Upload size={16} className="text-blue-500" />
                       <span>{isUploading ? 'Uploading...' : 'Upload Picture'}</span>
                     </button>
                     <input
@@ -415,7 +415,7 @@ const Profile: React.FC = () => {
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       user.isactive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      <CheckCircle size={12} className="mr-1" />
+                      <CheckCircle size={12} className="mr-1 text-green-500" />
                       {user.isactive ? 'Active' : 'Inactive'}
                     </span>
                   </div>

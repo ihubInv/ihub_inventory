@@ -84,7 +84,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         }
         
         .react-datepicker__header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          background: linear-gradient(135deg, #0d559e 0%, #1a6bb8 100%) !important;
           border-bottom: none !important;
           border-radius: 16px 16px 0 0 !important;
           padding: 16px !important;
@@ -132,32 +132,32 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         }
         
         .react-datepicker__day:hover {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          background: linear-gradient(135deg, #0d559e 0%, #1a6bb8 100%) !important;
           color: white !important;
           transform: scale(1.1) !important;
         }
         
         .react-datepicker__day--selected {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          background: linear-gradient(135deg, #0d559e 0%, #1a6bb8 100%) !important;
           color: white !important;
           font-weight: 600 !important;
         }
         
         .react-datepicker__day--in-selecting-range,
         .react-datepicker__day--in-range {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%) !important;
+          background: linear-gradient(135deg, rgba(13, 85, 158, 0.3) 0%, rgba(26, 107, 184, 0.3) 100%) !important;
           color: #667eea !important;
         }
         
         .react-datepicker__day--range-start,
         .react-datepicker__day--range-end {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          background: linear-gradient(135deg, #0d559e 0%, #1a6bb8 100%) !important;
           color: white !important;
           font-weight: 600 !important;
         }
         
         .react-datepicker__day--today {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+          background: linear-gradient(135deg, #0d559e 0%, #1a6bb8 100%) !important;
           color: white !important;
           font-weight: 600 !important;
         }

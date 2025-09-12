@@ -170,9 +170,9 @@ const LocationManagement: React.FC = () => {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+          className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
         >
-          <Plus size={16} />
+          <Plus size={16} className="text-green-500" />
           <span>Add Location</span>
         </button>
       </div>
@@ -185,7 +185,7 @@ const LocationManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Total Locations</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <MapPin className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -197,7 +197,7 @@ const LocationManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Active Locations</p>
               <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Building className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -209,7 +209,7 @@ const LocationManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Total Items</p>
               <p className="text-2xl font-bold text-gray-900">{stats.totalItems}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Package className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -221,7 +221,7 @@ const LocationManagement: React.FC = () => {
               <p className="text-sm font-medium text-gray-600">Issued Items</p>
               <p className="text-2xl font-bold text-gray-900">{stats.issuedItems}</p>
             </div>
-            <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-600">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
               <Users className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -287,7 +287,7 @@ const LocationManagement: React.FC = () => {
           <div key={location.id} className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+                <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                   <MapPinIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -322,14 +322,14 @@ const LocationManagement: React.FC = () => {
                 className="p-2 text-blue-600 transition-colors rounded hover:text-blue-900 hover:bg-blue-50"
                 title="View Details"
               >
-                <Eye size={16} />
+                <Eye size={16} className="text-blue-500" />
               </button>
               <button
                 onClick={() => handleEditLocation(location)}
                 className="p-2 text-green-600 transition-colors rounded hover:text-green-900 hover:bg-green-50"
                 title="Edit Location"
               >
-                <Edit size={16} />
+                <Edit size={16} className="text-blue-500" />
               </button>
               {(user?.role === 'admin' || user?.role === 'stock-manager') && (
                 <button
@@ -337,7 +337,7 @@ const LocationManagement: React.FC = () => {
                   className="p-2 text-red-600 transition-colors rounded hover:text-red-900 hover:bg-red-50"
                   title="Delete Location"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} className="text-red-500" />
                 </button>
               )}
             </div>
@@ -461,14 +461,14 @@ const LocationManagement: React.FC = () => {
                   }}
                   className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <X size={16} />
+                  <X size={16} className="text-red-500" />
                   <span>Cancel</span>
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl"
+                  className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 hover:shadow-xl"
                 >
-                  <Save size={16} />
+                  <Save size={16} className="text-green-500" />
                   <span>{editingLocation ? 'Update' : 'Add'} Location</span>
                 </button>
               </div>
@@ -487,13 +487,13 @@ const LocationManagement: React.FC = () => {
                 onClick={() => setViewingLocation(null)}
                 className="text-gray-400 transition-colors hover:text-gray-600"
               >
-                <X size={20} />
+                <X size={20} className="text-red-500" />
               </button>
             </div>
             
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600">
+                <div className="p-3 rounded-xl bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                   <MapPinIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -541,9 +541,9 @@ const LocationManagement: React.FC = () => {
                   setViewingLocation(null);
                   handleEditLocation(viewingLocation);
                 }}
-                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                className="flex items-center px-4 py-2 space-x-2 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-green-600 hover:to-teal-700"
               >
-                <Edit size={16} />
+                <Edit size={16} className="text-blue-500" />
                 <span>Edit Location</span>
               </button>
               <button

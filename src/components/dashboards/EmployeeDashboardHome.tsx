@@ -152,7 +152,7 @@ const EmployeeDashboardHome: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-900">My Request Status</h3>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500"></div>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]"></div>
               <span className="text-sm text-gray-600">All time</span>
             </div>
           </div>
@@ -169,15 +169,15 @@ const EmployeeDashboardHome: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/employee/create-request')}
-                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
                 <span className="font-medium">Create New Request</span>
-                <Plus size={20} />
+                <Plus size={20} className="text-green-500" />
               </button>
               
               <button
                 onClick={() => navigate('/employee/requests')}
-                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
                 <span className="font-medium">View Request Status</span>
                 <ClipboardList size={20} />
@@ -185,7 +185,7 @@ const EmployeeDashboardHome: React.FC = () => {
               
               <button
                 onClick={() => navigate('/employee/profile')}
-                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
                 <span className="font-medium">Update Profile</span>
                 <FileText size={20} />

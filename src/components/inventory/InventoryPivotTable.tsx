@@ -664,7 +664,7 @@ const InventoryPivotTable: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg">
+          <div className="p-2 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-lg">
             <BarChart3 className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -686,9 +686,9 @@ const InventoryPivotTable: React.FC = () => {
             
             {showTemplates && (
               <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 animate-in slide-in-from-top-2 duration-200">
-                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-t-2xl">
                   <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                    <div className="p-2 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-lg">
                       <Bookmark className="w-4 h-4 text-white" />
                     </div>
                     <div>
@@ -771,10 +771,10 @@ const InventoryPivotTable: React.FC = () => {
             
             {showFilters && (
               <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 animate-in slide-in-from-top-2 duration-200">
-                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
+                <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-t-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg">
+                      <div className="p-2 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-lg">
                         <Sliders className="w-4 h-4 text-white" />
                       </div>
                       <div>
@@ -925,7 +925,7 @@ const InventoryPivotTable: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-b-2xl">
+                <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10 rounded-b-2xl">
                   <p className="text-xs text-gray-500 text-center">
                     🎯 Use filters to focus on specific data ranges and categories
                   </p>
@@ -953,7 +953,7 @@ const InventoryPivotTable: React.FC = () => {
                   : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
               }`}
             >
-              <Download size={16} />
+              <Download size={16} className="text-blue-500" />
               <span>{isExporting ? 'Exporting...' : 'Export'}</span>
               <svg className={`w-4 h-4 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1042,7 +1042,7 @@ const InventoryPivotTable: React.FC = () => {
               onClick={exportSelectedData}
               className="flex items-center px-3 py-2 space-x-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
             >
-              <Download size={16} />
+              <Download size={16} className="text-blue-500" />
               <span>Selected ({selectedCells.size})</span>
             </button>
           )}
@@ -1115,7 +1115,7 @@ const InventoryPivotTable: React.FC = () => {
                       onClick={() => setChartType('bar')}
                       className={`px-4 py-3 text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                         chartType === 'bar' 
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' 
+                          ? 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] text-white shadow-lg' 
                           : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700'
                       }`}
                     >
@@ -1137,7 +1137,7 @@ const InventoryPivotTable: React.FC = () => {
                       onClick={() => setChartType('line')}
                       className={`px-4 py-3 text-sm font-medium transition-all duration-200 flex items-center space-x-2 border-l border-gray-200 ${
                         chartType === 'line' 
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
+                          ? 'bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] text-white shadow-lg' 
                           : 'text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-700'
                       }`}
                     >
@@ -1351,7 +1351,7 @@ const InventoryPivotTable: React.FC = () => {
             <div className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl">
+                  <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-xl">
                     <Eye className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -1430,7 +1430,7 @@ const InventoryPivotTable: React.FC = () => {
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
-                      <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <thead className="bg-gradient-to-r from-[#0d559e]/10 to-[#1a6bb8]/10">
                         <tr>
                           <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Item Name

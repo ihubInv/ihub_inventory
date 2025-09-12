@@ -37,7 +37,11 @@ const AssetNameDropdown: React.FC<AssetNameDropdownProps> = ({
   });
 
   // Extract unique asset names from filtered categories
-  const assetNames = [...new Set(filteredCategories.map(category => category.assetname).filter(Boolean))];
+  const assetNames = [...new Set(
+    filteredCategories
+      .flatMap(category => category.assetnames || []) // Use assetnames array and flatten
+      .filter(Boolean)
+  )];
 
   const options = assetNames.map(assetName => ({
     value: assetName,
@@ -50,7 +54,7 @@ const AssetNameDropdown: React.FC<AssetNameDropdownProps> = ({
   const displayPlaceholder = !categoryType || !assetCategory 
     ? "Select category type and asset category first"
     : options.length === 0 
-      ? "No asset names available for this category"
+      ? "No asset names available for this category. Add asset names in Category Management."
       : placeholder;
 
   return (

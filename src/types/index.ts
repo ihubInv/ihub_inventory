@@ -84,6 +84,7 @@ export interface Category {
   name: string;
   type: 'major' | 'minor';
   description?: string;
+  assetnames?: string[]; // Array of asset names for this category
   isactive: boolean;
   createdat: Date;
   updatedat: Date;
@@ -94,6 +95,7 @@ export interface Asset {
   id: string;
   name: string;
   description?: string;
+  assetcategory?: string;
   isactive: boolean;
   createdat: Date;
   updatedat: Date;

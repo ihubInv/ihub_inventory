@@ -3,6 +3,7 @@ CREATE TABLE public.assets (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    assetcategory VARCHAR(255),
     isactive BOOLEAN DEFAULT true,
     createdat TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updatedat TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

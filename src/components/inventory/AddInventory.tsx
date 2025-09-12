@@ -300,7 +300,7 @@ const handleFile = (file?: File) => {
     
     const selectedName = e.target.value;
 
-    // Find the full category object by name
+    // Find the full category object by name from available categories
     const selectedCategory = availableCategories.find(cat => cat.name === selectedName);
 
     if (selectedCategory) {
@@ -838,7 +838,7 @@ const handleFile = (file?: File) => {
               <div>
                 <AssetNameDropdown
                   label={`Asset Name * (${formData.categorytype === 'major' ? 'Major' : 'Minor'})`}
-                  categories={availableCategories}
+                  categories={filteredCategories}
                   categoryType={formData.categorytype}
                   assetCategory={formData.assetcategory}
                   value={formData.assetnamefromcategory}
@@ -856,6 +856,11 @@ const handleFile = (file?: File) => {
                 <p className="mt-1 text-xs text-gray-500">
                   🔤 First 3 letters will be used as asset code: <span className="font-mono font-semibold text-blue-600">{generateAssetCode(formData.assetnamefromcategory || formData.assetname) || 'XXX'}</span>
                 </p>
+                {/* Debug info */}
+                <div className="mt-2 text-xs text-gray-400">
+                  Debug: Category Type: {formData.categorytype}, Asset Category: {formData.assetcategory}, 
+                  Filtered Categories: {filteredCategories.length}
+                </div>
               </div>
             )}
 
@@ -1226,7 +1231,7 @@ const handleFile = (file?: File) => {
             </div>
 
             {/* Depreciation Section */}
-            <div className="pt-6 border-t border-gray-200">
+            {/* <div className="pt-6 border-t border-gray-200">
               <div className="flex items-center mb-4 space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600">
                   <TrendingDown className="w-5 h-5 text-white" />
@@ -1280,7 +1285,7 @@ const handleFile = (file?: File) => {
                 </div>
               </div>
 
-              {/* Depreciation Calculator */}
+             
               {formData.depreciationmethod && formData.expectedlifespan && formData.rateinclusivetax > 0 && (
                 <div className="mt-6">
                   <DepreciationCalculator
@@ -1295,7 +1300,7 @@ const handleFile = (file?: File) => {
                   />
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* <div className="pt-6 border-t border-gray-200">

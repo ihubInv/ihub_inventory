@@ -43,6 +43,16 @@ const AssetNameDropdown: React.FC<AssetNameDropdownProps> = ({
       .filter(Boolean)
   )];
 
+  // Debug logging
+  console.log('AssetNameDropdown Debug:', {
+    categoryType,
+    assetCategory,
+    categoriesCount: categories.length,
+    filteredCategoriesCount: filteredCategories.length,
+    filteredCategories: filteredCategories.map(c => ({ name: c.name, type: c.type, assetnames: c.assetnames })),
+    assetNames
+  });
+
   const options = assetNames.map(assetName => ({
     value: assetName,
     label: assetName,

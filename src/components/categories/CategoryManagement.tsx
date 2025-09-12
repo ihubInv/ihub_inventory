@@ -469,16 +469,17 @@ console.log("viewingCategory",viewingCategory)
         {filteredCategories.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px]">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Category</th>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden sm:table-cell">Type</th>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden lg:table-cell">Created</th>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden xl:table-cell">Updated</th>
-                  <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
+                <thead className="border-b border-gray-200 bg-gray-50">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Category</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden sm:table-cell">Type</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden md:table-cell">Assets</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden lg:table-cell">Created</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase hidden xl:table-cell">Updated</th>
+                    <th className="px-3 sm:px-6 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 
                 {filteredCategories?.map((category) => {
@@ -511,11 +512,34 @@ console.log("viewingCategory",viewingCategory)
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(category?.type)}`}>
-                          {category?.type?.charAt(0)?.toUpperCase() + category?.type?.slice(1)}
-                        </span>
-                      </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(category?.type)}`}>
+                            {category?.type?.charAt(0)?.toUpperCase() + category?.type?.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                          <div className="max-w-xs">
+                            {category.assetnames && category.assetnames.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {category.assetnames.slice(0, 3).map((assetName: string, index: number) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                                  >
+                                    {assetName}
+                                  </span>
+                                ))}
+                                {category.assetnames.length > 3 && (
+                                  <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                                    +{category.assetnames.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-500">No assets</span>
+                            )}
+                          </div>
+                        </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(category?.isactive)}`}>
                           {category?.isactive ? 'Active' : 'Inactive'}
@@ -660,67 +684,6 @@ console.log("viewingCategory",viewingCategory)
                 </div>
               </div>
 
-              {/* Asset CRUD Section */}
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Manage Assets</h4>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddAssetModal(true)}
-                    className="flex items-center justify-center px-3 py-2 space-x-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Plus size={16} className="text-green-500" />
-                    <span>Add Asset</span>
-                  </button>
-                </div>
-
-                {/* Assets List */}
-                {assets.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {assets.map((asset) => (
-                      <div key={asset.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 p-2 rounded-lg bg-green-100">
-                              <Box className="w-4 h-4 text-green-600" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-gray-900 truncate">{asset.name}</p>
-                              <p className="text-xs text-gray-500 truncate">
-                                {asset.assetcategory || 'No Category'} • {asset.isactive ? 'Active' : 'Inactive'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleEditAsset(asset)}
-                            className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Edit Asset"
-                          >
-                            <Edit size={14} className="text-blue-500" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAsset(asset.id)}
-                            className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                            title="Delete Asset"
-                          >
-                            <Trash2 size={14} className="text-red-500" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-gray-500">
-                    <Box className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">No assets found</p>
-                    <p className="text-xs">Click "Add Asset" to create your first asset</p>
-                  </div>
-                )}
-              </div>
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Description</label>

@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: UserCheck, label: 'Issued Items', path: `${baseUrl}/issued-items` },
           { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
-          // { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
+           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: UserCheck, label: 'Issued Items', path: `${baseUrl}/issued-items` },
           { icon: MapPin, label: 'Location Management', path: `${baseUrl}/location` },
           { icon: Users, label: 'User Management', path: `${baseUrl}/users` },
-          // { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
+           { icon: TrendingDown, label: 'Depreciation Report', path: `${baseUrl}/depreciation-report` },
           // { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];

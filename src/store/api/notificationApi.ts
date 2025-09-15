@@ -155,6 +155,7 @@ export const notificationApi = createApi({
         
         // Convert requests to notifications
         const notifications: Notification[] = requests.map(req => ({
+          id: req.id, // Add the missing id field
           employeeid: req.employeeid,
           employeename: req.employeename,
           itemtype: req.itemtype,
@@ -204,6 +205,7 @@ export const notificationApi = createApi({
         // Convert requests to notifications and filter for pending
         const notifications: Notification[] = requests
           .map(req => ({
+            id: req.id, // Add the missing id field
             employeeid: req.employeeid,
             employeename: req.employeename,
             itemtype: req.itemtype,
@@ -254,6 +256,7 @@ export const notificationApi = createApi({
         // Convert requests to notifications and filter for approved
         const notifications: Notification[] = requests
           .map(req => ({
+            id: req.id, // Add the missing id field
             employeeid: req.employeeid,
             employeename: req.employeename,
             itemtype: req.itemtype,
@@ -304,6 +307,7 @@ export const notificationApi = createApi({
         // Convert requests to notifications and filter for rejected
         const notifications: Notification[] = requests
           .map(req => ({
+            id: req.id, // Add the missing id field
             employeeid: req.employeeid,
             employeename: req.employeename,
             itemtype: req.itemtype,

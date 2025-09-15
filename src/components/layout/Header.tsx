@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { logoutUser } from '../../store/slices/authSlice';
 import { useGetUnreadCountQuery } from '../../store/api';
+import SessionStatus from '../common/SessionStatus';
 
 interface HeaderProps {
   collapsed: boolean;
@@ -148,6 +149,11 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
 
         {/* Right Section - Actions & Profile */}
         <div className="flex items-center space-x-2 sm:space-x-4">
+          
+          {/* Session Status - Desktop Only */}
+          <div className="hidden lg:block">
+            <SessionStatus />
+          </div>
           
           {/* Notification Button */}
           <button 
@@ -322,6 +328,11 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   <p className="font-medium">{user.email}</p>
                   <p className="text-sm opacity-90">{user.department || 'No Department'}</p>
                 </div>
+              </div>
+              
+              {/* Session Status - Mobile */}
+              <div className="mb-4">
+                <SessionStatus className="justify-center" />
               </div>
               
               {/* Menu Items */}

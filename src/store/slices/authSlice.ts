@@ -2,6 +2,7 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { User } from '../types';
 import { supabase } from '../../lib/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import SessionManager from '../../utils/sessionManager';
 
 interface AuthState {
   user: User | null;
@@ -127,6 +128,21 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+export const logoutUserByTimeout = createAsyncThunk(
+  'auth/logoutUserByTimeout',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        return rejectWithValue(error.message);
+      }
+      return null;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Session timeout logout failed');
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -159,6 +175,11 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = !!action.payload.user;
         state.error = null;
+        
+        // Start session management if user is authenticated
+        if (action.payload.user) {
+          SessionManager.getInstance().startSession(action.payload.user.id);
+        }
       })
       .addCase(initializeAuth.rejected, (state, action) => {
         state.loading = false;
@@ -178,6 +199,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.error = null;
+        
+        // Start session management for logged-in user
+        SessionManager.getInstance().startSession(action.payload.user.id);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -196,6 +220,9 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.session = null;
         state.error = null;
+        
+        // End session management
+        SessionManager.getInstance().endSession();
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -204,6 +231,34 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.session = null;
+        
+        // End session management even if logout failed
+        SessionManager.getInstance().endSession();
+      })
+      // Logout User by Timeout
+      .addCase(logoutUserByTimeout.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUserByTimeout.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.session = null;
+        state.error = null;
+        
+        // End session management
+        SessionManager.getInstance().endSession();
+      })
+      .addCase(logoutUserByTimeout.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        // Still clear the user even if logout failed
+        state.user = null;
+        state.isAuthenticated = false;
+        state.session = null;
+        
+        // End session management even if logout failed
+        SessionManager.getInstance().endSession();
       });
   },
 });

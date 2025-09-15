@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from '../../store/hooks';
-import { useGetRequestsQuery } from '../../store/api';
+import { useGetRequestsQuery, useGetInventoryItemsQuery } from '../../store/api';
 import { RequestStatusChart } from '../charts/ChartComponents';
 import { 
   ClipboardList, 
@@ -8,7 +8,8 @@ import {
   Clock,
   XCircle,
   Plus,
-  FileText
+  FileText,
+  Package
 } from 'lucide-react';
 import StatsCard from '../common/StatsCard';
 import { useNavigate } from 'react-router-dom';
@@ -16,17 +17,28 @@ import AttractiveLoader from '../common/AttractiveLoader';
 
 const EmployeeDashboardHome: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
-  const { data: requests = [], isLoading: loading } = useGetRequestsQuery();
+  const { data: requests = [], isLoading: requestsLoading } = useGetRequestsQuery();
+  const { data: inventoryItems = [], isLoading: itemsLoading } = useGetInventoryItemsQuery();
   const navigate = useNavigate();
 
   // Filter requests for current user
   const userRequests = requests.filter(req => req.employeeid === user?.id);
+  
+  // Get issued items for current employee
+  const myIssuedItems = inventoryItems
+    .filter(item => item.status === 'issued')
+    .filter(item => {
+      // Use actual database column instead of parsing description
+      const issuedTo = item.issuedto || '';
+      return issuedTo.toLowerCase().includes(user?.name?.toLowerCase() || '');
+    });
   
   const stats = {
     totalRequests: userRequests.length,
     pendingRequests: userRequests.filter(req => req.status === 'pending').length,
     approvedRequests: userRequests.filter(req => req.status === 'approved').length,
     rejectedRequests: userRequests.filter(req => req.status === 'rejected').length,
+    issuedItems: myIssuedItems.length,
   };
 
   const getGreeting = () => {
@@ -37,6 +49,7 @@ const EmployeeDashboardHome: React.FC = () => {
   };
 
   const recentRequests = userRequests.slice(0, 5);
+  const recentIssuedItems = myIssuedItems.slice(0, 3);
 
   // Chart data for employee dashboard
   const requestStatusData = {
@@ -48,7 +61,7 @@ const EmployeeDashboardHome: React.FC = () => {
 
 
   // Show loading state while data is being fetched
-  if (loading) {
+  if (requestsLoading || itemsLoading) {
     return <AttractiveLoader message="Loading your dashboard..." variant="fullscreen" />;
   }
 
@@ -65,7 +78,7 @@ const EmployeeDashboardHome: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 sm:gap-6">
         <StatsCard
           title="Total Requests"
           value={stats.totalRequests}
@@ -95,6 +108,14 @@ const EmployeeDashboardHome: React.FC = () => {
           value={stats.rejectedRequests}
           icon={XCircle}
           color="red"
+          trend={{ value: 0, direction: 'neutral' }}
+        />
+        
+        <StatsCard
+          title="Issued Items"
+          value={stats.issuedItems}
+          icon={Package}
+          color="purple"
           trend={{ value: 0, direction: 'neutral' }}
         />
       </div>
@@ -147,7 +168,60 @@ const EmployeeDashboardHome: React.FC = () => {
           )}
         </div>
 
-        {/* Request Status Chart - Center Column */}
+        {/* Recent Issued Items - Center Column */}
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">Recent Issued Items</h3>
+            <button
+              onClick={() => navigate('/employee/issued-items')}
+              className="text-sm font-medium text-purple-600 hover:text-purple-800"
+            >
+              View All
+            </button>
+          </div>
+          
+          {recentIssuedItems.length > 0 ? (
+            <div className="space-y-4">
+              {recentIssuedItems.map((item) => {
+                // Use actual database columns instead of parsing description
+                const issuedBy = item.issuedby || 'Unknown';
+                const issueDate = item.issueddate?.toISOString() || 
+                                 item.dateofissue?.toISOString() || 
+                                 (item.lastmodifieddate ? new Date(item.lastmodifieddate).toISOString() : 'Unknown');
+                
+                // Parse purpose from description as fallback (for backward compatibility)
+                const description = item.description || '';
+                const purposeMatch = description.match(/PURPOSE: (.+)/);
+                const purpose = purposeMatch ? purposeMatch[1] : 'Direct Issue';
+                
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-4 rounded-lg bg-purple-50">
+                    <div>
+                      <p className="font-medium text-gray-900">{item.assetname}</p>
+                      <p className="text-sm text-gray-600">{purpose}</p>
+                      <p className="text-xs text-gray-500">
+                        Issued by: {issuedBy} • {new Date(issueDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        Issued
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">No items issued to you yet</p>
+              <p className="text-sm text-gray-500">Items will appear here when issued by managers</p>
+            </div>
+          )}
+        </div>
+
+        {/* Request Status Chart - Right Column */}
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-900">My Request Status</h3>
@@ -181,6 +255,14 @@ const EmployeeDashboardHome: React.FC = () => {
               >
                 <span className="font-medium">View Request Status</span>
                 <ClipboardList size={20} />
+              </button>
+              
+              <button
+                onClick={() => navigate('/employee/issued-items')}
+                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+              >
+                <span className="font-medium">View Issued Items</span>
+                <Package size={20} />
               </button>
               
               <button

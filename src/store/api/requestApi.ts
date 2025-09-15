@@ -75,13 +75,37 @@ export const requestApi = createApi({
     // Update request status
     updateRequestStatus: builder.mutation<Request, { id: string; status: 'approved' | 'rejected'; remarks?: string; reviewerid?: string }>({
       queryFn: async ({ id, status, remarks, reviewerid }) => {
+        console.log('🔄 updateRequestStatus called with:', { id, status, remarks, reviewerid });
+        console.log('🔍 ID type:', typeof id, 'ID value:', id);
+        console.log('🔍 Status:', status);
+        console.log('🔍 Remarks:', remarks);
+        console.log('🔍 Reviewer ID:', reviewerid);
+
         const { data, error } = await supabase.from('requests').update({
           status,
           remarks,
           reviewedby: reviewerid,
           reviewedat: new Date().toISOString()
         }).eq('id', id).select();
-        if (error) throw new Error(error.message);
+
+        console.log('📊 Supabase response:', { data, error });
+        console.log('📊 Data length:', data?.length);
+        console.log('📊 Error details:', error);
+        
+        if (error) {
+          console.error('Database error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Database error: ${error.message} (Code: ${error.code})`);
+        }
+        
+        if (!data || data.length === 0) {
+          throw new Error('No rows were updated. Request may not exist or you may not have permission to update it.');
+        }
+        
         return { data: data[0] as Request };
       },
       invalidatesTags: ['Request'],

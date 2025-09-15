@@ -13,6 +13,8 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store';
 import { useAppSelector, useAppDispatch } from './store/hooks';
 import { initializeAuth } from './store/slices/authSlice';
+import SessionManager from './utils/sessionManager';
+import './utils/sessionTestUtils'; // Import for development utilities
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
 import RegisterPage from './components/auth/RegisterPage';
@@ -30,6 +32,29 @@ const AppContent: React.FC = () => {
   React.useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
+
+  // Initialize session manager and check for existing session
+  React.useEffect(() => {
+    const sessionManager = SessionManager.getInstance();
+    
+    // Check if there's an existing session on app load
+    if (isAuthenticated && user) {
+      // Check if session is still valid
+      if (!sessionManager.isSessionValid()) {
+        console.log('Existing session expired, logging out...');
+        dispatch(initializeAuth()); // This will trigger logout if session is invalid
+      } else {
+        // Restart session management for existing user
+        sessionManager.startSession(user.id);
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      // Don't destroy session manager here as it should persist across route changes
+      // Only destroy when user explicitly logs out
+    };
+  }, [isAuthenticated, user, dispatch]);
 
   if (loading) return <AttractiveLoader message="Loading session..." variant="fullscreen" />;
 

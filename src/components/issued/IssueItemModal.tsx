@@ -135,10 +135,8 @@ const IssueItemModal: React.FC<IssueItemModalProps> = ({ isOpen, onClose, availa
         id: selectedItem.id,
         updates: {
           status: 'issued',
-          issuedto: selectedEmployee.name,
-          issuedby: user?.name || 'Admin',
-          issueddate: new Date(issueDate).toISOString(),
-          dateofissue: new Date(issueDate).toISOString()
+          lastmodifiedby: user?.name || 'Admin',
+          description: `${selectedItem.description || ''}\n\nISSUED TO: ${selectedEmployee.name}\nISSUED BY: ${user?.name || 'Admin'}\nISSUE DATE: ${new Date(issueDate).toISOString()}\nPURPOSE: Direct Issue`
         }
       }).unwrap();
 

@@ -77,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
           { icon: LayoutDashboard, label: 'Dashboard', path: `${baseUrl}` },
           { icon: FileText, label: 'Request Status', path: `${baseUrl}/requests` },
           { icon: ClipboardList, label: 'Create Request', path: `${baseUrl}/create-request` },
+          { icon: UserCheck, label: 'My Issued Items', path: `${baseUrl}/issued-items` },
           { icon: Bell, label: 'Notifications', path: `${baseUrl}/notifications`, badge: unreadCount },
           { icon: User, label: 'Profile', path: `${baseUrl}/profile` },
         ];

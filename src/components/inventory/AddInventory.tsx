@@ -176,6 +176,41 @@ const AddInventory: React.FC = () => {
     return uniqueId;
   };
 
+  // Enhanced unique ID validation
+  const validateUniqueId = async (uniqueId: string): Promise<{ isValid: boolean; error?: string }> => {
+    try {
+      // Check if unique ID follows the correct format
+      const parts = uniqueId.split('/');
+      if (parts.length !== 5 || parts[0] !== 'ihub') {
+        return { isValid: false, error: 'Invalid unique ID format. Must be: ihub/year/category/location/serial' };
+      }
+
+      // Check for placeholders
+      if (parts.some(part => part === '--')) {
+        return { isValid: false, error: 'Unique ID contains placeholders. Please fill all required fields.' };
+      }
+
+      // Check if unique ID already exists in database
+      const { data: existingItem, error } = await supabase
+        .from('inventory_items')
+        .select('uniqueid')
+        .eq('uniqueid', uniqueId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is what we want
+        return { isValid: false, error: `Database error checking unique ID: ${error.message}` };
+      }
+
+      if (existingItem) {
+        return { isValid: false, error: `Unique ID "${uniqueId}" already exists in database` };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      return { isValid: false, error: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    }
+  };
+
   // Generate initial unique ID when component mounts
   React.useEffect(() => {
     const generateInitialId = async () => {
@@ -389,6 +424,13 @@ const handleFile = (file?: File) => {
     // Validate that unique ID is complete (no placeholders)
     if (formData.uniqueid.includes('--')) {
       toast.error('Please fill in all required fields (Financial Year, Asset Name, and Location) to generate a complete unique ID.');
+      return;
+    }
+    
+    // Validate unique ID format and uniqueness
+    const validation = await validateUniqueId(formData.uniqueid);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Invalid unique ID');
       return;
     }
     

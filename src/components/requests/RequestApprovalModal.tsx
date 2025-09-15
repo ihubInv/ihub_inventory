@@ -5,6 +5,7 @@ import {
   useUpdateRequestStatusMutation
 } from '../../store/api';
 import { useAppSelector } from '../../store/hooks';
+import { supabase } from '../../lib/supabaseClient';
 import { 
   CheckCircle, 
   XCircle, 
@@ -58,9 +59,61 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
     }
   }, [isOpen, request]);
 
+  // Debug function to check database state
+  const debugDatabaseState = async () => {
+    try {
+      console.log('🔍 Debugging database state...');
+      
+      // Check if requests table exists and has data
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('requests')
+        .select('*')
+        .limit(5);
+      
+      console.log('📋 Requests table check:', { requestsData, requestsError });
+      
+      // If requests table doesn't exist, try to create it
+      if (requestsError && requestsError.code === 'PGRST116') {
+        console.log('🔧 Requests table not found, attempting to create...');
+        try {
+          const { error: createError } = await supabase.rpc('create_requests_table');
+          if (createError) {
+            console.log('❌ Failed to create requests table via RPC, trying direct SQL...');
+            // We'll handle this in the fallback update method
+          } else {
+            console.log('✅ Requests table created successfully');
+          }
+        } catch (createError) {
+          console.log('❌ RPC creation failed:', createError);
+        }
+      }
+      
+      // Check if inventory_items table has data
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory_items')
+        .select('id, assetname, status, issuedto, issuedby')
+        .limit(5);
+      
+      console.log('📦 Inventory table check:', { inventoryData, inventoryError });
+      
+      // Check current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      console.log('👤 Current user check:', { userData, userError });
+      
+    } catch (error) {
+      console.error('❌ Database debug error:', error);
+    }
+  };
+
   const handleApproval = async () => {
     if (!reason.trim()) {
       toast.error('Please provide a reason for approval');
+      return;
+    }
+
+    if (!request || !request.id) {
+      toast.error('Invalid request data. Please refresh and try again.');
+      console.error('Request data is missing:', request);
       return;
     }
 
@@ -69,55 +122,222 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
       return;
     }
 
+    // Debug database state before proceeding
+    await debugDatabaseState();
+
     setIsProcessing(true);
     const loadingToast = CRUDToasts.updating('request');
 
     try {
-      console.log('Starting approval process:', { action, request, selectedAsset, reason });
+      console.log('🚀 Starting approval process:', { action, request, selectedAsset, reason });
+      console.log('👤 Current user:', { id: user?.id, name: user?.name, role: user?.role });
+      console.log('📋 Request details:', { id: request.id, status: request.status, employeeid: request.employeeid });
+      console.log('🔍 Request object keys:', Object.keys(request));
+      console.log('🔍 Request object values:', request);
       
-      // Update request status
-      await updateRequestStatus({
-        id: request.id,
-        status: action === 'approve' ? 'approved' : 'rejected',
-        remarks: reason,
-        reviewerid: user?.id
-      }).unwrap();
-      console.log('Request status updated successfully');
+      // Step 1: Update request status first
+      console.log('Step 1: Updating request status...');
+      
+      // Try multiple approaches to update the request
+      let requestUpdateResult;
+      try {
+        requestUpdateResult = await updateRequestStatus({
+          id: request.id,
+          status: action === 'approve' ? 'approved' : 'rejected',
+          remarks: reason,
+          reviewerid: user?.id
+        }).unwrap();
+        console.log('✅ Request status updated successfully:', requestUpdateResult);
+      } catch (updateError) {
+        console.error('❌ Request update failed, trying direct database update:', updateError);
+        
+        // Fallback: Try direct database update
+        try {
+          const { data: directUpdateData, error: directUpdateError } = await supabase
+            .from('requests')
+            .update({
+              status: action === 'approve' ? 'approved' : 'rejected',
+              remarks: reason,
+              reviewedby: user?.id,
+              reviewedat: new Date().toISOString()
+            })
+            .eq('id', request.id)
+            .select();
+          
+          if (directUpdateError) {
+            console.error('❌ Direct database update also failed:', directUpdateError);
+            throw new Error(`Direct database update failed: ${directUpdateError.message}`);
+          }
+          
+          if (!directUpdateData || directUpdateData.length === 0) {
+            throw new Error('No rows were updated. Request may not exist or you may not have permission.');
+          }
+          
+          requestUpdateResult = directUpdateData[0];
+          console.log('✅ Direct database update successful:', requestUpdateResult);
+        } catch (directError) {
+          console.error('❌ All update methods failed:', directError);
+          throw new Error(`Failed to update request: ${directError instanceof Error ? directError.message : String(directError)}`);
+        }
+      }
 
-      // If approving, issue the selected asset
+      // Step 2: If approving, issue the selected asset
       if (action === 'approve' && selectedAsset) {
-        console.log('Updating inventory item:', selectedAsset.id, {
-          status: 'issued',
-          issuedto: request.employeename,
-          issuedby: user?.name || 'Admin',
-          issueddate: new Date().toISOString(),
-          dateofissue: new Date().toISOString()
+        console.log('Step 2: Issuing inventory item...');
+        
+        // Validate that the asset is still available
+        if (selectedAsset.status !== 'available') {
+          throw new Error(`Asset "${selectedAsset.assetname}" is no longer available. Current status: ${selectedAsset.status}`);
+        }
+
+        // Validate that the asset has a unique ID
+        if (!selectedAsset.uniqueid || selectedAsset.uniqueid.trim() === '') {
+          throw new Error(`Asset "${selectedAsset.assetname}" does not have a valid unique ID`);
+        }
+
+        // Create comprehensive audit trail entry
+        const auditEntry = {
+          action: 'issue',
+          itemId: selectedAsset.id,
+          itemName: selectedAsset.assetname,
+          issuedTo: request.employeename,
+          issuedBy: user?.name || 'Admin',
+          issuedById: user?.id || 'unknown',
+          issuedDate: new Date().toISOString(),
+          requestId: request.id,
+          purpose: request.purpose || 'Direct Issue',
+          expectedReturnDate: request.expectedreturndate ? new Date(request.expectedreturndate).toISOString() : undefined,
+          notes: reason,
+          previousStatus: 'available',
+          newStatus: 'issued',
+          department: request.department || 'Unknown',
+          location: selectedAsset.locationofitem,
+          itemValue: selectedAsset.totalcost || 0,
+          itemCategory: selectedAsset.assetcategory,
+          uniqueId: selectedAsset.uniqueid
+        };
+
+        // Store audit trail in localStorage (in production, this should be stored in database)
+        try {
+          const existingAudit = JSON.parse(localStorage.getItem('issuanceAuditTrail') || '[]');
+          existingAudit.push(auditEntry);
+          localStorage.setItem('issuanceAuditTrail', JSON.stringify(existingAudit));
+          console.log('✅ Audit trail entry created');
+        } catch (auditError) {
+          console.warn('Failed to create audit trail entry:', auditError);
+          // Don't fail the entire process for audit trail issues
+        }
+
+        // Update inventory item with comprehensive data
+        // Use description field for issuance tracking until database columns are added
+        const inventoryUpdateData = {
+          status: 'issued' as const,
+          lastmodifiedby: user?.name || 'Admin',
+          lastmodifieddate: new Date(),
+          description: `${selectedAsset.description || ''}\n\nISSUED TO: ${request.employeename}\nISSUED BY: ${user?.name || 'Admin'}\nISSUE DATE: ${new Date().toISOString()}\nPURPOSE: ${request.purpose || 'Direct Issue'}\nEXPECTED RETURN: ${request.expectedreturndate ? new Date(request.expectedreturndate).toISOString() : 'Not specified'}\nUNIQUE ID: ${selectedAsset.uniqueid}`
+        };
+
+        console.log('Updating inventory item with data:', inventoryUpdateData);
+        
+        // Try multiple approaches to update inventory
+        let inventoryUpdateResult;
+        try {
+          inventoryUpdateResult = await updateInventoryItem({
+            id: selectedAsset.id,
+            updates: inventoryUpdateData
+          }).unwrap();
+          console.log('✅ Inventory item updated successfully:', inventoryUpdateResult);
+        } catch (inventoryError) {
+          console.error('❌ Inventory update failed, trying direct database update:', inventoryError);
+          
+          // Fallback: Try direct database update
+          try {
+            const { data: directInventoryData, error: directInventoryError } = await supabase
+              .from('inventory_items')
+              .update(inventoryUpdateData)
+              .eq('id', selectedAsset.id)
+              .select();
+            
+            if (directInventoryError) {
+              console.error('❌ Direct inventory update also failed:', directInventoryError);
+              throw new Error(`Direct inventory update failed: ${directInventoryError.message}`);
+            }
+            
+            if (!directInventoryData || directInventoryData.length === 0) {
+              throw new Error('No inventory rows were updated. Item may not exist or you may not have permission.');
+            }
+            
+            inventoryUpdateResult = directInventoryData[0];
+            console.log('✅ Direct inventory update successful:', inventoryUpdateResult);
+          } catch (directInventoryError) {
+            console.error('❌ All inventory update methods failed:', directInventoryError);
+            throw new Error(`Failed to update inventory: ${directInventoryError instanceof Error ? directInventoryError.message : String(directInventoryError)}`);
+          }
+        }
+        
+        // Send success notification with detailed information
+        toast.success(`✅ Request approved and "${selectedAsset.assetname}" (${selectedAsset.uniqueid}) issued to ${request.employeename}`, {
+          duration: 5000,
+          style: {
+            background: '#10B981',
+            color: 'white',
+          },
         });
         
-        await updateInventoryItem({
-          id: selectedAsset.id,
-          updates: {
-            status: 'issued',
-            issuedto: request.employeename,
-            issuedby: user?.name || 'Admin',
-            issueddate: new Date().toISOString(),
-            dateofissue: new Date().toISOString()
-          }
-        }).unwrap();
-        
-        console.log('Inventory item updated successfully');
-        // Send success notification
-        toast.success(`Request approved and ${selectedAsset.assetname} issued to ${request.employeename}`);
+        // Log the issuance for tracking
+        console.log('Item issuance completed:', {
+          item: selectedAsset.assetname,
+          uniqueId: selectedAsset.uniqueid,
+          issuedTo: request.employeename,
+          issuedBy: user?.name,
+          purpose: request.purpose,
+          value: selectedAsset.totalcost
+        });
       } else if (action === 'reject') {
-        toast.success(`Request rejected`);
+        toast.success(`✅ Request rejected: ${reason}`, {
+          duration: 4000,
+          style: {
+            background: '#EF4444',
+            color: 'white',
+          },
+        });
       }
 
       toast.dismiss(loadingToast);
       onClose();
     } catch (error) {
-      console.error(`Error ${action}ing request:`, error);
+      console.error(`❌ Error ${action}ing request:`, error);
+      console.error('Error details:', {
+        action,
+        request: request.id,
+        selectedAsset: selectedAsset?.id,
+        reason,
+        error: error instanceof Error ? error.message : String(error)
+      });
       toast.dismiss(loadingToast);
-      CRUDToasts.updateError('request', 'Please try again');
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('no longer available')) {
+          CRUDToasts.updateError('request', error.message);
+        } else if (error.message.includes('does not have a valid unique ID')) {
+          CRUDToasts.updateError('request', error.message);
+        } else if (error.message.includes('duplicate')) {
+          CRUDToasts.updateError('request', 'This asset is already issued to another employee');
+        } else if (error.message.includes('permission') || error.message.includes('No rows were updated')) {
+          CRUDToasts.updateError('request', 'You do not have permission to approve/reject requests. Please contact your administrator.');
+        } else if (error.message.includes('constraint')) {
+          CRUDToasts.updateError('request', 'Database constraint violation. Please check the data and try again.');
+        } else if (error.message.includes('Database error')) {
+          CRUDToasts.updateError('request', `Database error: ${error.message}`);
+        } else if (error.message.includes('PGRST301') || error.message.includes('RLS')) {
+          CRUDToasts.updateError('request', 'Row Level Security policy violation. You may not have permission to update this request.');
+        } else {
+          CRUDToasts.updateError('request', `Failed to ${action} request: ${error.message}`);
+        }
+      } else {
+        CRUDToasts.updateError('request', `Failed to ${action} request. Please try again.`);
+      }
     }
 
     setIsProcessing(false);

@@ -301,7 +301,7 @@ export const createAttractiveExcelFile = async (
           worksheet.addImage(primaryImageId, {
             tl: { col: 0, row: currentRow - 1 },
             br: { col: 6, row: currentRow + 19 }
-          });
+          } as any);
 
           worksheet.getCell(`A${currentRow + 21}`).value = `Primary Chart: ${chartType.toUpperCase()}`;
           worksheet.getCell(`A${currentRow + 21}`).font = { bold: true, color: { argb: 'FF4B5563' } };
@@ -316,7 +316,7 @@ export const createAttractiveExcelFile = async (
           worksheet.addImage(secondaryImageId, {
             tl: { col: 7, row: currentRow - 1 },
             br: { col: 13, row: currentRow + 19 }
-          });
+          } as any);
 
           worksheet.getCell(`H${currentRow + 21}`).value = `Alternative View: ${chartType !== 'pie' ? 'PIE' : 'BAR'}`;
           worksheet.getCell(`H${currentRow + 21}`).font = { bold: true, color: { argb: 'FF4B5563' } };

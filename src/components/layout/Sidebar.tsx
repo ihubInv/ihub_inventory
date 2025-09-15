@@ -98,8 +98,14 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
   };
 
   const handleLogout = async () => {
-    await dispatch(logoutUser()).unwrap();
-    navigate('/login');
+    try {
+      await dispatch(logoutUser()).unwrap();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Force logout even if API call fails
+      navigate('/login');
+    }
   };
 
   return (

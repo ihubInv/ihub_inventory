@@ -3,13 +3,14 @@ import { useGetInventoryItemsQuery } from '../../store/api';
 import { TrendingDown, Download, Filter } from 'lucide-react';
 import YearDropdown from '../common/YearDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
+import { COMPANY_INFO, getValidYear, getYearRange } from '../../constants/companyInfo';
 
 const DepreciationReport: React.FC = () => {
   const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number>(COMPANY_INFO.CURRENT_YEAR);
 
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+  const currentYear = COMPANY_INFO.CURRENT_YEAR;
+  const years = getYearRange();
 
   const itemsWithDepreciation = useMemo(() => {
     return inventoryItems.filter(item => 

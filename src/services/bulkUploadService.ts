@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { COMPANY_INFO, validateInventoryDate, getValidInventoryDate } from '../constants/companyInfo';
 
 export interface BulkUploadResult {
   success: boolean;
@@ -92,6 +93,8 @@ const validateInventoryData = (data: any, rowIndex: number): { isValid: boolean;
       const date = new Date(data[field]);
       if (isNaN(date.getTime())) {
         errors.push(`${field} must be a valid date (YYYY-MM-DD format)`);
+      } else if (!validateInventoryDate(date)) {
+        errors.push(`${field} must be on or after ${COMPANY_INFO.MIN_INVENTORY_DATE.toLocaleDateString()} (company incorporation date)`);
       }
     }
   }
@@ -127,8 +130,8 @@ const transformDataForDatabase = (data: any): InventoryItemData => {
   return {
     uniqueid: data.uniqueid?.toString().trim() || '',
     financialyear: data.financialyear?.toString().trim() || '',
-    dateofinvoice: data.dateofinvoice ? new Date(data.dateofinvoice).toISOString().split('T')[0] : '',
-    dateofentry: data.dateofentry ? new Date(data.dateofentry).toISOString() : new Date().toISOString(),
+    dateofinvoice: data.dateofinvoice ? getValidInventoryDate(new Date(data.dateofinvoice)).toISOString().split('T')[0] : COMPANY_INFO.MIN_INVENTORY_DATE.toISOString().split('T')[0],
+    dateofentry: data.dateofentry ? getValidInventoryDate(new Date(data.dateofentry)).toISOString() : new Date().toISOString(),
     invoicenumber: data.invoicenumber?.toString().trim() || '',
     assetcategory: data.assetcategory?.toString().trim() || '',
     assetcategoryid: data.assetcategoryid?.toString().trim() || '',
@@ -142,8 +145,8 @@ const transformDataForDatabase = (data: any): InventoryItemData => {
     totalcost: Number(data.totalcost) || Number(data.rateinclusivetax) || 0,
     locationofitem: data.locationofitem?.toString().trim() || '',
     issuedto: data.issuedto?.toString().trim() || '',
-    dateofissue: data.dateofissue ? new Date(data.dateofissue).toISOString().split('T')[0] : null,
-    expectedreturndate: data.expectedreturndate ? new Date(data.expectedreturndate).toISOString().split('T')[0] : null,
+    dateofissue: data.dateofissue ? getValidInventoryDate(new Date(data.dateofissue)).toISOString().split('T')[0] : null,
+    expectedreturndate: data.expectedreturndate ? getValidInventoryDate(new Date(data.expectedreturndate)).toISOString().split('T')[0] : null,
     balancequantityinstock: Number(data.balancequantityinstock) || Number(data.quantityperitem) || 0,
     description: data.description?.toString().trim() || '',
     unitofmeasurement: data.unitofmeasurement?.toString().trim() || 'Pieces',

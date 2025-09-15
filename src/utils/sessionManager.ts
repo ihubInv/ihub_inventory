@@ -31,40 +31,48 @@ class SessionManager {
    * Start session management for a logged-in user
    */
   public startSession(userId: string): void {
-    const sessionData: SessionData = {
-      loginTime: Date.now(),
-      lastActivity: Date.now(),
-      userId,
-    };
+    try {
+      const sessionData: SessionData = {
+        loginTime: Date.now(),
+        lastActivity: Date.now(),
+        userId,
+      };
 
-    // Store session data in sessionStorage
-    sessionStorage.setItem('sessionData', JSON.stringify(sessionData));
-    
-    // Clear any existing timers
-    this.clearTimers();
-    
-    // Reset warning flag
-    this.warningShown = false;
-    
-    // Set up logout timer
-    this.setupLogoutTimer();
-    
-    console.log('Session started for user:', userId);
+      // Store session data in sessionStorage
+      sessionStorage.setItem('sessionData', JSON.stringify(sessionData));
+      
+      // Clear any existing timers
+      this.clearTimers();
+      
+      // Reset warning flag
+      this.warningShown = false;
+      
+      // Set up logout timer
+      this.setupLogoutTimer();
+      
+      console.log('Session started for user:', userId);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+    }
   }
 
   /**
    * Update last activity time and reset timers
    */
   public updateActivity(): void {
-    const sessionData = this.getSessionData();
-    if (sessionData) {
-      sessionData.lastActivity = Date.now();
-      sessionStorage.setItem('sessionData', JSON.stringify(sessionData));
-      
-      // Clear existing timers and set new ones
-      this.clearTimers();
-      this.warningShown = false;
-      this.setupLogoutTimer();
+    try {
+      const sessionData = this.getSessionData();
+      if (sessionData) {
+        sessionData.lastActivity = Date.now();
+        sessionStorage.setItem('sessionData', JSON.stringify(sessionData));
+        
+        // Clear existing timers and set new ones
+        this.clearTimers();
+        this.warningShown = false;
+        this.setupLogoutTimer();
+      }
+    } catch (error) {
+      console.error('Failed to update activity:', error);
     }
   }
 

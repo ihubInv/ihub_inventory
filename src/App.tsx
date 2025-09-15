@@ -12,7 +12,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { store, persistor } from './store';
 import { useAppSelector, useAppDispatch } from './store/hooks';
-import { initializeAuth } from './store/slices/authSlice';
+import { initializeAuth, logoutUserByTimeout } from './store/slices/authSlice';
 import SessionManager from './utils/sessionManager';
 import './utils/sessionTestUtils'; // Import for development utilities
 import Layout from './components/layout/Layout';
@@ -42,11 +42,14 @@ const AppContent: React.FC = () => {
       // Check if session is still valid
       if (!sessionManager.isSessionValid()) {
         console.log('Existing session expired, logging out...');
-        dispatch(initializeAuth()); // This will trigger logout if session is invalid
+        dispatch(logoutUserByTimeout()); // Use timeout logout for expired sessions
       } else {
         // Restart session management for existing user
         sessionManager.startSession(user.id);
       }
+    } else if (isAuthenticated && user) {
+      // Start session for newly authenticated user
+      sessionManager.startSession(user.id);
     }
     
     // Cleanup on unmount

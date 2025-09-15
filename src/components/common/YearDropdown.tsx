@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
 import AttractiveDropdown from './AttractiveDropdown';
+import { COMPANY_INFO } from '../../constants/companyInfo';
 
 interface YearDropdownProps {
   value: number;
@@ -28,15 +29,19 @@ const YearDropdown: React.FC<YearDropdownProps> = ({
   yearsForward = 2,
   ...props
 }) => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = COMPANY_INFO.CURRENT_YEAR;
   
-  // Generate year options
+  // Generate year options - always start from 2020
   const generateYears = () => {
-    const start = startYear || (currentYear - yearsBack);
-    const end = endYear || (currentYear + yearsForward);
+    const start = startYear || COMPANY_INFO.MIN_YEAR;
+    const end = endYear || currentYear;
+    
+    // Ensure we don't go below 2020
+    const validStart = Math.max(start, COMPANY_INFO.MIN_YEAR);
+    const validEnd = Math.min(end, currentYear);
     
     const years = [];
-    for (let year = end; year >= start; year--) {
+    for (let year = validEnd; year >= validStart; year--) {
       years.push({
         value: year.toString(),
         label: year.toString(),

@@ -11,8 +11,10 @@ import { InventoryItem } from '../../types';
 import { usePersistedFormState } from '../../hooks/usePersistedState';
 
 import UploadDropzone from '../common/UploadDropzone';
+import { COMPANY_INFO, getValidInventoryDate } from '../../constants/companyInfo';
 import { supabase } from '../../lib/supabaseClient';
 import DepreciationCalculator from '../common/DepreciationCalculator';
+import toast from 'react-hot-toast';
 import CategoryDropdown from '../common/CategoryDropdown';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
 import AssetNameDropdown from '../common/AssetNameDropdown';
@@ -25,7 +27,6 @@ import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
 import BulkUpload from './BulkUpload';
 import { bulkUploadInventory } from '../../services/bulkUploadService';
 import { CRUDToasts } from '../../services/toastService';
-import toast from 'react-hot-toast';
 
 const AddInventory: React.FC = () => {
   const [createInventoryItem] = useCreateInventoryItemMutation();
@@ -56,7 +57,7 @@ const AddInventory: React.FC = () => {
   const defaultFormData = {
     uniqueid: '',
     financialyear: '2024-25',
-    dateofinvoice: null as Date | null,
+    dateofinvoice: COMPANY_INFO.MIN_INVENTORY_DATE,
     dateofentry: new Date(),
     invoicenumber: '',
     categorytype: '',
@@ -78,7 +79,7 @@ const AddInventory: React.FC = () => {
     balancequantityinstock: 0,
     description: '',
     unitofmeasurement: 'Pieces',
-    depreciationmethod: '',
+    depreciationmethod: 'written-down-value',
     warrantyinformation: '',
     maintenanceschedule: '',
     conditionofasset: 'excellent' as const,
@@ -397,7 +398,7 @@ const handleFile = (file?: File) => {
   //       balancequantityinstock: 0,
   //       description: '',
   //       unitofmeasurement: 'Pieces',
-  //       depreciationmethod: '',
+  //       depreciationmethod: 'written-down-value',
   //       warrantyinformation: '',
   //       maintenanceschedule: '',
   //       conditionofasset: 'excellent',
@@ -541,7 +542,7 @@ const handleFile = (file?: File) => {
     setFormData({
       uniqueid: '',
       financialyear: '2024-25',
-      dateofinvoice: null as Date | null,
+      dateofinvoice: COMPANY_INFO.MIN_INVENTORY_DATE,
       dateofentry: new Date(),
       invoicenumber: '',
       categorytype: '',
@@ -563,7 +564,7 @@ const handleFile = (file?: File) => {
       balancequantityinstock: 0,
       description: '',
       unitofmeasurement: 'Pieces',
-      depreciationmethod: '',
+      depreciationmethod: 'written-down-value',
       warrantyinformation: '',
       maintenanceschedule: '',
       conditionofasset: 'excellent' as const,
@@ -969,8 +970,9 @@ const handleFile = (file?: File) => {
                 </label>
                 <CustomDatePicker
                   selected={formData.dateofinvoice}
-                  onChange={(date) => setFormData(prev => ({ ...prev, dateofinvoice: date }))}
+                  onChange={(date) => setFormData(prev => ({ ...prev, dateofinvoice: getValidInventoryDate(date) }))}
                   placeholder="Select invoice date"
+                  minDate={COMPANY_INFO.MIN_INVENTORY_DATE}
                   maxDate={new Date()}
                 />
               </div>
@@ -981,8 +983,9 @@ const handleFile = (file?: File) => {
                 </label>
                 <CustomDatePicker
                   selected={formData.dateofentry}
-                  onChange={(date) => setFormData(prev => ({ ...prev, dateofentry: date || new Date() }))}
+                  onChange={(date) => setFormData(prev => ({ ...prev, dateofentry: getValidInventoryDate(date) || new Date() }))}
                   placeholder="Select entry date"
+                  minDate={COMPANY_INFO.MIN_INVENTORY_DATE}
                   maxDate={new Date()}
                 />
               </div>
@@ -1306,7 +1309,11 @@ const handleFile = (file?: File) => {
                       depreciationmethod: value
                     }))}
                     placeholder="Select depreciation method"
+                    disabled
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    📊 Default: Written-Down Value (WDV) method
+                  </p>
                 </div>
 
                 <div>
@@ -1351,7 +1358,7 @@ const handleFile = (file?: File) => {
                     usefulLife={Number(formData.expectedlifespan)}
                     purchaseDate={formData.dateofinvoice || new Date()}
                     method={formData.depreciationmethod as 'written-down-value'}
-                    onCalculate={(depreciation) => {
+                    onCalculate={(depreciation: any) => {
                       console.log('Depreciation calculated:', depreciation);
                     }}
                   />
@@ -1393,7 +1400,7 @@ const handleFile = (file?: File) => {
                     setFormData({
                       uniqueid: '',
                       financialyear: '2024-25',
-                      dateofinvoice: null,
+                      dateofinvoice: COMPANY_INFO.MIN_INVENTORY_DATE,
                       dateofentry: new Date(),
                       invoicenumber: '',
                       categorytype: '',
@@ -1415,7 +1422,7 @@ const handleFile = (file?: File) => {
                       balancequantityinstock: 0,
                       description: '',
                       unitofmeasurement: 'Pieces',
-                      depreciationmethod: '',
+                      depreciationmethod: 'written-down-value',
                       warrantyinformation: '',
                       maintenanceschedule: '',
                       conditionofasset: 'excellent',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, TrendingDown, Calendar, DollarSign } from 'lucide-react';
+import { COMPANY_INFO, getValidYear } from '../../constants/companyInfo';
 
 interface DepreciationCalculatorProps {
   assetValue: number;
@@ -32,7 +33,7 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
   onCalculate
 }) => {
   const [depreciation, setDepreciation] = useState<DepreciationResult | null>(null);
-  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+  const [currentYear, setCurrentYear] = useState<number>(COMPANY_INFO.CURRENT_YEAR);
 
   // Ensure purchaseDate is a valid Date object
   const safePurchaseDate = React.useMemo(() => {
@@ -70,7 +71,7 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
       throw new Error('Invalid input parameters for depreciation calculation');
     }
 
-    const purchaseYear = safePurchaseDate.getFullYear();
+    const purchaseYear = getValidYear(safePurchaseDate.getFullYear());
     const yearsElapsed = currentYear - purchaseYear;
     
     let yearlyDepreciation = 0;
@@ -191,10 +192,13 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
         <label className="text-sm font-medium text-gray-700">Calculate for year:</label>
         <select
           value={currentYear}
-          onChange={(e) => setCurrentYear(Number(e.target.value))}
+          onChange={(e) => setCurrentYear(getValidYear(Number(e.target.value)))}
           className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {Array.from({ length: usefulLife + 1 }, (_, i) => safePurchaseDate.getFullYear() + i).map(year => (
+          {Array.from({ length: usefulLife + 1 }, (_, i) => {
+            const year = getValidYear(purchaseYear + i);
+            return year;
+          }).map(year => (
             <option key={year} value={year}>{year}</option>
           ))}
         </select>

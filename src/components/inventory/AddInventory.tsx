@@ -71,7 +71,7 @@ const AddInventory: React.FC = () => {
     quantityperitem: 1,
     rateinclusivetax: 0,
     totalcost: 0,
-    locationofitem: '',
+    locationofitem: 'Storage Room A',
     issuedto: '',
     dateofissue: null as Date | null,
     expectedreturndate: null as Date | null,
@@ -390,7 +390,7 @@ const handleFile = (file?: File) => {
   //       quantityperitem: 1,
   //       rateinclusivetax: 0,
   //       totalcost: 0,
-  //       locationofitem: '',
+  //       locationofitem: 'Storage Room A',
   //       issuedto: '',
   //       dateofissue: null,
   //       expectedreturndate: null,
@@ -556,7 +556,7 @@ const handleFile = (file?: File) => {
       quantityperitem: 1,
       rateinclusivetax: 0,
       totalcost: 0,
-      locationofitem: '',
+      locationofitem: 'Storage Room A',
       issuedto: '',
       dateofissue: null as Date | null,
       expectedreturndate: null as Date | null,
@@ -1106,11 +1106,12 @@ const handleFile = (file?: File) => {
                     locationofitem: value
                   }))}
                   required
-                  placeholder="Select location"
+                  placeholder="Storage Room A"
                   searchable
+                  disabled
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  📍 Used as-is in unique ID
+                  📍 Used as-is in unique ID (Default: Storage Room A)
                 </p>
               </div>
 
@@ -1123,7 +1124,11 @@ const handleFile = (file?: File) => {
                     conditionofasset: value as any
                   }))}
                   placeholder="Select condition"
+                  disabled
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  ✅ Default: Excellent condition
+                </p>
               </div>
 
               {/* Status Dropdown */}
@@ -1137,7 +1142,11 @@ const handleFile = (file?: File) => {
                   }))}
                   type="inventory"
                   placeholder="Select status"
+                  disabled
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  ✅ Default: Available for use
+                </p>
               </div>
               {/* <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -1399,7 +1408,7 @@ const handleFile = (file?: File) => {
                       quantityperitem: 1,
                       rateinclusivetax: 0,
                       totalcost: 0,
-                      locationofitem: '',
+                      locationofitem: 'Storage Room A',
                       issuedto: '',
                       dateofissue: null,
                       expectedreturndate: null,

@@ -31,8 +31,23 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
   // Get all active locations from database
   const activeLocations = locations.filter(location => location.isactive);
   
+  // Always include "Storage Room A" as a protected default location
+  const protectedLocation = {
+    id: 'protected-storage-room-a',
+    name: 'Storage Room A',
+    isactive: true,
+    createdat: new Date().toISOString(),
+    updatedat: new Date().toISOString()
+  };
+  
+  // Combine protected location with database locations, ensuring no duplicates
+  const allLocations = [
+    protectedLocation,
+    ...activeLocations.filter(location => location.name !== 'Storage Room A')
+  ];
+  
   // Create location options with inventory data
-  const options = activeLocations.map(location => {
+  const options = allLocations.map(location => {
     const itemsInLocation = inventoryItems.filter(item => item.locationofitem === location.name);
     const availableItems = itemsInLocation.filter(item => item.status === 'available').length;
     const issuedItems = itemsInLocation.filter(item => item.status === 'issued').length;
@@ -41,14 +56,15 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
       value: location.name,
       label: location.name,
       icon: <MapPin className="w-4 h-4 text-blue-500" />,
-      description: `${itemsInLocation.length} items (${availableItems} available, ${issuedItems} issued)`
+      description: `${itemsInLocation.length} items (${availableItems} available, ${issuedItems} issued)`,
+      disabled: false // All locations are selectable
     };
   });
 
-  // Show placeholder message if no options available
+  // Show placeholder message if no options available (should never happen now)
   const displayPlaceholder = options.length === 0 
     ? "No locations available - Add locations in Location Management"
-    : placeholder;
+    : placeholder || "Select location";
 
   return (
     <AttractiveDropdown
@@ -58,7 +74,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
       placeholder={displayPlaceholder}
       icon={<Building className="w-4 h-4" />}
       searchable={searchable}
-      disabled={options.length === 0}
+      disabled={props.disabled} // Only disable if explicitly passed as prop
       {...props}
     />
   );

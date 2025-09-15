@@ -118,13 +118,13 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
           className={`
-            w-full text-left rounded-xl shadow-sm transition-all duration-200 cursor-pointer
+            w-full text-left rounded-xl shadow-sm transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             ${getSizeClasses()}
             ${getVariantClasses()}
             ${disabled 
               ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200' 
-              : 'hover:border-gray-400 hover:shadow-md'
+              : 'hover:border-gray-400 hover:shadow-md cursor-pointer'
             }
             ${error ? 'border-red-300 bg-red-50' : ''}
             ${isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''}

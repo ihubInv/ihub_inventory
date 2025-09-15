@@ -3,58 +3,59 @@ import { useGetInventoryItemsQuery } from '../../store/api';
 import { TrendingDown, Download, Filter } from 'lucide-react';
 import YearDropdown from '../common/YearDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
-import FilterDropdown from '../common/FilterDropdown';
 
 const DepreciationReport: React.FC = () => {
   const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [filterMethod, setFilterMethod] = useState<string>('all');
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   const itemsWithDepreciation = useMemo(() => {
     return inventoryItems.filter(item => 
-      item.depreciationmethod && 
+      item.depreciationmethod === 'written-down-value' && 
       item.expectedlifespan && 
       item.rateinclusivetax > 0 &&
-      (filterMethod === 'all' || item.depreciationmethod === filterMethod)
+      item.salvagevalue !== null &&
+      item.salvagevalue !== undefined &&
+      item.salvagevalue >= 0 &&
+      Number(item.expectedlifespan) > 0
     );
-  }, [inventoryItems, filterMethod]);
+  }, [inventoryItems]);
 
   const totalDepreciation = useMemo(() => {
     return itemsWithDepreciation.reduce((total, item) => {
-      const purchaseYear = item.dateofinvoice ? new Date(item.dateofinvoice).getFullYear() : currentYear;
-      const yearsElapsed = selectedYear - purchaseYear;
-      
-      if (yearsElapsed <= 0) return total;
-      
-      let depreciation = 0;
-      const usefulLife = Number(item.expectedlifespan);
-      const salvageValue = item.salvagevalue || 0;
-      
-      switch (item.depreciationmethod) {
-        case 'straight-line':
-          depreciation = (item.rateinclusivetax - salvageValue) / usefulLife;
-          break;
-        case 'declining-balance':
-          const rate = 2 / usefulLife;
-          let currentValue = item.rateinclusivetax;
-          for (let year = 1; year <= Math.min(yearsElapsed, usefulLife); year++) {
-            const yearDepreciation = Math.min(currentValue * rate, currentValue - salvageValue);
-            currentValue -= yearDepreciation;
-            if (year === yearsElapsed) depreciation = yearDepreciation;
-          }
-          break;
-        case 'sum-of-years':
-          const sumOfYears = (usefulLife * (usefulLife + 1)) / 2;
-          if (yearsElapsed <= usefulLife) {
-            depreciation = ((usefulLife - yearsElapsed + 1) / sumOfYears) * (item.rateinclusivetax - salvageValue);
-          }
-          break;
+      try {
+        const purchaseYear = item.dateofinvoice ? new Date(item.dateofinvoice).getFullYear() : currentYear;
+        const yearsElapsed = selectedYear - purchaseYear;
+        
+        if (yearsElapsed <= 0) return total;
+        
+        let depreciation = 0;
+        const usefulLife = Number(item.expectedlifespan);
+        const salvageValue = item.salvagevalue || 0;
+        
+        // Validate inputs
+        if (usefulLife <= 0 || item.rateinclusivetax <= 0 || salvageValue < 0 || salvageValue >= item.rateinclusivetax) {
+          return total;
+        }
+        
+        // Written-Down Value (WDV) Method
+        // Formula: R = 1 - (Salvage Value / Original Cost)^(1/Useful Life)
+        const depreciationRate = 1 - Math.pow(salvageValue / item.rateinclusivetax, 1 / usefulLife);
+        let currentValue = item.rateinclusivetax;
+        
+        for (let year = 1; year <= Math.min(yearsElapsed, usefulLife); year++) {
+          const yearDepreciation = currentValue * depreciationRate;
+          currentValue -= yearDepreciation;
+          if (year === yearsElapsed) depreciation = yearDepreciation;
+        }
+        
+        return total + depreciation;
+      } catch (error) {
+        console.warn('Error calculating depreciation for item:', item.id, error);
+        return total;
       }
-      
-      return total + depreciation;
     }, 0);
   }, [itemsWithDepreciation, selectedYear, currentYear]);
 
@@ -148,18 +149,13 @@ const DepreciationReport: React.FC = () => {
           </div>
 
           <div>
-            <FilterDropdown
-              label="Depreciation Method"
-              value={filterMethod}
-              onChange={setFilterMethod}
-              options={[
-                { value: 'all', label: 'All Methods', description: 'Show all depreciation methods' },
-                { value: 'straight-line', label: 'Straight Line', description: 'Equal depreciation each year' },
-                { value: 'declining-balance', label: 'Declining Balance', description: 'Higher depreciation in early years' },
-                { value: 'sum-of-years', label: 'Sum of Years Digits', description: 'Accelerated depreciation method' }
-              ]}
-              placeholder="Select method"
-            />
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <TrendingDown className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">Method</span>
+              </div>
+              <p className="text-lg font-bold text-blue-900">Written-Down Value (WDV)</p>
+            </div>
           </div>
 
           <div className="flex items-end">
@@ -201,29 +197,24 @@ const DepreciationReport: React.FC = () => {
                   let depreciation = 0;
                   
                   if (yearsElapsed > 0) {
-                    const usefulLife = Number(item.expectedlifespan);
-                    const salvageValue = item.salvagevalue || 0;
-                    
-                    switch (item.depreciationmethod) {
-                      case 'straight-line':
-                        depreciation = (item.rateinclusivetax - salvageValue) / usefulLife;
-                        currentValue = item.rateinclusivetax - (depreciation * yearsElapsed);
-                        break;
-                      case 'declining-balance':
-                        const rate = 2 / usefulLife;
-                        for (let year = 1; year <= Math.min(yearsElapsed, usefulLife); year++) {
-                          const yearDepreciation = Math.min(currentValue * rate, currentValue - salvageValue);
-                          currentValue -= yearDepreciation;
-                          if (year === yearsElapsed) depreciation = yearDepreciation;
-                        }
-                        break;
-                      case 'sum-of-years':
-                        const sumOfYears = (usefulLife * (usefulLife + 1)) / 2;
-                        if (yearsElapsed <= usefulLife) {
-                          depreciation = ((usefulLife - yearsElapsed + 1) / sumOfYears) * (item.rateinclusivetax - salvageValue);
-                          currentValue = item.rateinclusivetax - (depreciation * yearsElapsed);
-                        }
-                        break;
+                    try {
+                      const usefulLife = Number(item.expectedlifespan);
+                      const salvageValue = item.salvagevalue || 0;
+                      
+                      // Written-Down Value (WDV) Method
+                      const depreciationRate = 1 - Math.pow(salvageValue / item.rateinclusivetax, 1 / usefulLife);
+                      let currentValueWDV = item.rateinclusivetax;
+                      
+                      for (let year = 1; year <= Math.min(yearsElapsed, usefulLife); year++) {
+                        const yearDepreciation = currentValueWDV * depreciationRate;
+                        currentValueWDV -= yearDepreciation;
+                        if (year === yearsElapsed) depreciation = yearDepreciation;
+                      }
+                      currentValue = currentValueWDV;
+                    } catch (error) {
+                      console.warn('Error calculating depreciation for item:', item.id, error);
+                      depreciation = 0;
+                      currentValue = item.rateinclusivetax;
                     }
                   }
                   

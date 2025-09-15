@@ -22,22 +22,10 @@ const DepreciationMethodDropdown: React.FC<DepreciationMethodDropdownProps> = ({
 }) => {
   const options = [
     { 
-      value: 'straight-line', 
-      label: 'Straight Line', 
-      icon: <TrendingDown className="w-4 h-4 text-blue-500" />,
-      description: 'Equal depreciation each year'
-    },
-    { 
-      value: 'declining-balance', 
-      label: 'Declining Balance', 
-      icon: <BarChart3 className="w-4 h-4 text-orange-500" />,
-      description: 'Higher depreciation in early years'
-    },
-    { 
-      value: 'sum-of-years', 
-      label: 'Sum of Years Digits', 
-      icon: <Calculator className="w-4 h-4 text-green-500" />,
-      description: 'Accelerated depreciation method'
+      value: 'written-down-value', 
+      label: 'Written-Down Value (WDV)', 
+      icon: <Calculator className="w-4 h-4 text-blue-500" />,
+      description: 'Depreciation based on reducing balance method'
     }
   ];
 

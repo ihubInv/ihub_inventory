@@ -1279,7 +1279,7 @@ const handleFile = (file?: File) => {
             </div>
 
             {/* Depreciation Section */}
-            {/* <div className="pt-6 border-t border-gray-200">
+            <div className="pt-6 border-t border-gray-200">
               <div className="flex items-center mb-4 space-x-3">
                 <div className="p-2 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8]">
                   <TrendingDown className="w-5 h-5 text-white" />
@@ -1341,14 +1341,14 @@ const handleFile = (file?: File) => {
                     salvageValue={formData.salvagevalue || 0}
                     usefulLife={Number(formData.expectedlifespan)}
                     purchaseDate={formData.dateofinvoice || new Date()}
-                    method={formData.depreciationmethod as 'straight-line' | 'declining-balance' | 'sum-of-years'}
+                    method={formData.depreciationmethod as 'written-down-value'}
                     onCalculate={(depreciation) => {
                       console.log('Depreciation calculated:', depreciation);
                     }}
                   />
                 </div>
               )}
-            </div> */}
+            </div>
           </div>
 
           {/* <div className="pt-6 border-t border-gray-200">

@@ -6,7 +6,7 @@ interface DepreciationCalculatorProps {
   salvageValue: number;
   usefulLife: number;
   purchaseDate: Date;
-  method: 'straight-line' | 'declining-balance' | 'sum-of-years';
+  method: 'written-down-value';
   onCalculate?: (depreciation: any) => void;
 }
 
@@ -77,63 +77,26 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
     let currentValue = assetValue;
     const depreciationSchedule = [];
 
-    switch (method) {
-      case 'straight-line':
-        yearlyDepreciation = (assetValue - salvageValue) / usefulLife;
-        for (let year = 1; year <= usefulLife; year++) {
-          const beginningValue = year === 1 ? assetValue : currentValue;
-          const depreciation = yearlyDepreciation;
-          currentValue = beginningValue - depreciation;
-          const accumulatedDepreciation = assetValue - currentValue;
-          
-          depreciationSchedule.push({
-            year: purchaseYear + year - 1,
-            beginningValue,
-            depreciation,
-            endingValue: currentValue,
-            accumulatedDepreciation
-          });
-        }
-        break;
-
-      case 'declining-balance':
-        const rate = 2 / usefulLife; // Double declining balance
-        for (let year = 1; year <= usefulLife; year++) {
-          const beginningValue = year === 1 ? assetValue : currentValue;
-          const depreciation = Math.min(beginningValue * rate, beginningValue - salvageValue);
-          currentValue = beginningValue - depreciation;
-          const accumulatedDepreciation = assetValue - currentValue;
-          
-          depreciationSchedule.push({
-            year: purchaseYear + year - 1,
-            beginningValue,
-            depreciation,
-            endingValue: currentValue,
-            accumulatedDepreciation
-          });
-        }
-        yearlyDepreciation = depreciationSchedule[0]?.depreciation || 0;
-        break;
-
-      case 'sum-of-years':
-        const sumOfYears = (usefulLife * (usefulLife + 1)) / 2;
-        for (let year = 1; year <= usefulLife; year++) {
-          const beginningValue = year === 1 ? assetValue : currentValue;
-          const depreciation = ((usefulLife - year + 1) / sumOfYears) * (assetValue - salvageValue);
-          currentValue = beginningValue - depreciation;
-          const accumulatedDepreciation = assetValue - currentValue;
-          
-          depreciationSchedule.push({
-            year: purchaseYear + year - 1,
-            beginningValue,
-            depreciation,
-            endingValue: currentValue,
-            accumulatedDepreciation
-          });
-        }
-        yearlyDepreciation = depreciationSchedule[0]?.depreciation || 0;
-        break;
+    // Written-Down Value (WDV) Method
+    // Formula: R = 1 - (Salvage Value / Original Cost)^(1/Useful Life)
+    const depreciationRate = 1 - Math.pow(salvageValue / assetValue, 1 / usefulLife);
+    
+    for (let year = 1; year <= usefulLife; year++) {
+      const beginningValue = year === 1 ? assetValue : currentValue;
+      const depreciation = beginningValue * depreciationRate;
+      currentValue = beginningValue - depreciation;
+      const accumulatedDepreciation = assetValue - currentValue;
+      
+      depreciationSchedule.push({
+        year: purchaseYear + year - 1,
+        beginningValue,
+        depreciation,
+        endingValue: currentValue,
+        accumulatedDepreciation
+      });
     }
+    
+    yearlyDepreciation = depreciationSchedule[0]?.depreciation || 0;
 
     return {
       yearlyDepreciation,
@@ -144,16 +107,7 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
   };
 
   const getMethodDescription = () => {
-    switch (method) {
-      case 'straight-line':
-        return 'Equal depreciation each year over the useful life';
-      case 'declining-balance':
-        return 'Higher depreciation in early years, decreasing over time';
-      case 'sum-of-years':
-        return 'Depreciation based on sum of years digits';
-      default:
-        return '';
-    }
+    return 'Depreciation based on reducing balance method - higher depreciation in early years';
   };
 
   if (!depreciation) return null;

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useAppSelector } from '../../store/hooks';
+import { useGetRequestsQuery } from '../../store/api';
 import { RequestStatusChart } from '../charts/ChartComponents';
 import { 
   ClipboardList, 
@@ -15,8 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import AttractiveLoader from '../common/AttractiveLoader';
 
 const EmployeeDashboardHome: React.FC = () => {
-  const { user } = useAuth();
-  const { requests, loading } = useInventory();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: requests = [], isLoading: loading } = useGetRequestsQuery();
   const navigate = useNavigate();
 
   // Filter requests for current user

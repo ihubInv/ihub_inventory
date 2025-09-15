@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { 
+  useCreateRequestMutation,
+  useGetInventoryItemsQuery,
+  useGetUsersQuery
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { sendNotificationEmail } from '../../services/emailService';
 import { Send, X, FileText, Package } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
@@ -10,10 +13,10 @@ import RequestItemDropdown from '../common/RequestItemDropdown';
 import PurposeDropdown from '../common/PurposeDropdown';
 
 const CreateRequest: React.FC = () => {
-  const { submitRequest, inventoryItems } = useInventory();
-  const { users } = useInventory();
-  const { user } = useAuth();
-  const { addNotification } = useNotifications();
+  const [createRequest] = useCreateRequestMutation();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const { data: users = [] } = useGetUsersQuery();
+  const { user } = useAppSelector((state) => state.auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -32,36 +35,28 @@ const CreateRequest: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    ;
     e.preventDefault();
+    if (!user) return;
+    
     setIsSubmitting(true);
-    const data =user
-    console.log(data)
+    const loadingToast = CRUDToasts.creating('request');
+    
     try {
-      const loadingToast = CRUDToasts.creating('request');
-      await submitRequest({
+      await createRequest({
         employeeid: user?.id || '',
         employeename: user?.name || '',
         ...formData
-      });
+      }).unwrap();
 
-      // Add notification for admins and stock managers
-      addNotification({
-        userid: 'admin', // This would be sent to all admins/stock managers in a real system
-        type: 'request',
-        title: 'New Inventory Request',
-        message: `${user?.name} has requested ${formData.quantity} ${formData.itemtype} for ${formData.purpose}`
-      });
+      const adminUsers = users.filter((u: any) => u.role === 'admin' || u.role === 'stock-manager');
 
-      const adminUsers = users.filter(u => u.role === 'admin' || u.role === 'stock-manager');
-
-      adminUsers.forEach(admin => {
+      adminUsers.forEach((admin: any) => {
         sendNotificationEmail('newRequest', admin.email, admin.name, {
           employeename: user?.name || '',
           itemtype: formData.itemtype,
           quantity: formData.quantity,
           purpose: formData.purpose,
-          from_name: user?.name || 'Employee',   // ✅ who is sending this request
+          justification: formData.justification
         });
       });
 

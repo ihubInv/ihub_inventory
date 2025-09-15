@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetUsersQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, Eye, EyeOff, Shield, UserCog, User as UserIcon, Building2, CheckCircle, XCircle } from 'lucide-react';
 import AttractiveDropdown from '../common/AttractiveDropdown';
 import { supabase } from '../../lib/supabaseClient';
@@ -81,8 +86,11 @@ interface FormData {
   department:string
 }
 const UserManagement: React.FC = () => {
-  const { users, addUser, updateUser, deleteUser } = useInventory();
-  const { user: currentUser } = useAuth();
+  const { data: users = [] } = useGetUsersQuery();
+  const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+  const { user: currentUser } = useAppSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -221,12 +229,15 @@ const [formData, setFormData] = useState<FormData>({
   };
 
   const handleToggleStatus = (userId: string, currentStatus: boolean) => {
-    updateUser(userId, { isactive: !currentStatus });
+    updateUser({
+      id: userId,
+      updates: { isactive: !currentStatus }
+    });
   };
 
   const handleDeleteUser = (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteUser(userId);
+      deleteUser(userId).unwrap();
     }
   };
 
@@ -308,7 +319,7 @@ const [formData, setFormData] = useState<FormData>({
       };
       
       // Add user to context (this will trigger a re-render)
-      await addUser(newUser);
+      await createUser(newUser).unwrap();
   
       toast.dismiss(loadingToast);
       CRUDToasts.created('employee account');

@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { logoutUser } from '../../store/slices/authSlice';
+import { useGetUnreadCountQuery } from '../../store/api';
 
 interface HeaderProps {
   collapsed: boolean;
@@ -24,8 +25,11 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle, onOpenEmailSetup }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const { unreadCount } = useNotifications();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: unreadCount = 0 } = useGetUnreadCountQuery(user?.id || '', {
+    skip: !user?.id
+  });
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
   };
 
   const handleLogout = async () => {
-    await logout();
+    await dispatch(logoutUser()).unwrap();
     navigate('/login');
     setIsProfileMenuOpen(false);
   };
@@ -173,7 +177,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                   />
                 ) : (
                   <span className="text-sm font-medium text-white">
-                    {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    {user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                   </span>
                 )}
               </div>
@@ -200,7 +204,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                         />
                       ) : (
                         <span className="text-lg font-medium text-white">
-                          {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          {user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                         </span>
                       )}
                     </div>
@@ -292,7 +296,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                     />
                   ) : (
                     <span className="text-sm font-medium text-white">
-                      {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      {user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                     </span>
                   )}
                 </div>

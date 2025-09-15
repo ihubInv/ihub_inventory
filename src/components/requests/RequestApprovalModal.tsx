@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetInventoryItemsQuery,
+  useUpdateInventoryItemMutation,
+  useUpdateRequestStatusMutation
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { 
   CheckCircle, 
   XCircle, 
@@ -27,8 +31,10 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
   request, 
   action 
 }) => {
-  const { inventoryItems, updateInventoryItem, updateRequestStatus } = useInventory();
-  const { user } = useAuth();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const [updateInventoryItem] = useUpdateInventoryItemMutation();
+  const [updateRequestStatus] = useUpdateRequestStatusMutation();
+  const { user } = useAppSelector((state) => state.auth);
   const [reason, setReason] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -70,7 +76,12 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
       console.log('Starting approval process:', { action, request, selectedAsset, reason });
       
       // Update request status
-      await updateRequestStatus(request.id, action === 'approve' ? 'approved' : 'rejected', reason, user?.id);
+      await updateRequestStatus({
+        id: request.id,
+        status: action === 'approve' ? 'approved' : 'rejected',
+        remarks: reason,
+        reviewerid: user?.id
+      }).unwrap();
       console.log('Request status updated successfully');
 
       // If approving, issue the selected asset
@@ -83,13 +94,16 @@ const RequestApprovalModal: React.FC<RequestApprovalModalProps> = ({
           dateofissue: new Date().toISOString()
         });
         
-        await updateInventoryItem(selectedAsset.id, {
-          status: 'issued',
-          issuedto: request.employeename,
-          issuedby: user?.name || 'Admin',
-          issueddate: new Date().toISOString(),
-          dateofissue: new Date().toISOString()
-        });
+        await updateInventoryItem({
+          id: selectedAsset.id,
+          updates: {
+            status: 'issued',
+            issuedto: request.employeename,
+            issuedby: user?.name || 'Admin',
+            issueddate: new Date().toISOString(),
+            dateofissue: new Date().toISOString()
+          }
+        }).unwrap();
         
         console.log('Inventory item updated successfully');
         // Send success notification

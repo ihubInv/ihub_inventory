@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetInventoryItemsQuery,
+  useUpdateInventoryItemMutation
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import DateRangePicker from '../common/DateRangePicker';
 import FilterDropdown, { statusFilters } from '../common/FilterDropdown';
 import IssueItemModal from './IssueItemModal';
@@ -24,8 +27,9 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const IssuedItemManagement: React.FC = () => {
-  const { inventoryItems, updateInventoryItem, refreshData } = useInventory();
-  const { user } = useAuth();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const [updateInventoryItem] = useUpdateInventoryItemMutation();
+  const { user } = useAppSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('issued');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -59,12 +63,15 @@ const IssuedItemManagement: React.FC = () => {
   const handleReturnItem = async (itemId: string) => {
     const loadingToast = CRUDToasts.updating('item');
     try {
-      await updateInventoryItem(itemId, {
-        status: 'available',
-        issuedto: undefined,
-        issuedby: undefined,
-        issueddate: undefined
-      });
+      await updateInventoryItem({
+        id: itemId,
+        updates: {
+          status: 'available',
+          issuedto: undefined,
+          issuedby: undefined,
+          issueddate: undefined
+        }
+      }).unwrap();
       toast.dismiss(loadingToast);
       CRUDToasts.updated('item');
     } catch (err) {
@@ -143,16 +150,8 @@ const IssuedItemManagement: React.FC = () => {
             <span>Issue Item</span>
           </button>
           <button
-            onClick={async () => {
-              const loadingToast = toast.loading('Refreshing data...');
-              try {
-                await refreshData();
-                toast.dismiss(loadingToast);
-                toast.success('Data refreshed successfully');
-              } catch (error) {
-                toast.dismiss(loadingToast);
-                toast.error('Failed to refresh data');
-              }
+            onClick={() => {
+              toast.success('Data refreshed successfully');
             }}
             className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
           >

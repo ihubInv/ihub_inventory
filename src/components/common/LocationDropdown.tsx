@@ -2,7 +2,7 @@ import React from 'react';
 import { MapPin, Building } from 'lucide-react';
 import AttractiveDropdown from './AttractiveDropdown';
 import { InventoryItem } from '../../types';
-import { useLocation } from '../../contexts/LocationContext';
+import { useGetLocationsQuery } from '../../store/api';
 
 interface LocationDropdownProps {
   inventoryItems: InventoryItem[];
@@ -26,7 +26,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({
   searchable = true,
   ...props
 }) => {
-  const { locations } = useLocation();
+  const { data: locations = [] } = useGetLocationsQuery();
   
   // Get all active locations from database
   const activeLocations = locations.filter(location => location.isactive);

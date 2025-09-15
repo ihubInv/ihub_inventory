@@ -7,25 +7,31 @@ import {
   Outlet
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { InventoryProvider } from './contexts/InventoryContext';
-import { LocationProvider } from './contexts/LocationContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { AppStateProvider } from './contexts/AppStateContext';
+import { store, persistor } from './store';
+import { useAppSelector, useAppDispatch } from './store/hooks';
+import { initializeAuth } from './store/slices/authSlice';
 import Layout from './components/layout/Layout';
 import Login from './components/auth/Login';
 import RegisterPage from './components/auth/RegisterPage';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import StockManagerDashboard from './components/dashboards/StockManagerDashboard';
 import EmployeeDashboard from './components/dashboards/EmployeeDashboard';
+import AttractiveLoader from './components/common/AttractiveLoader';
 
-// ✅ Main content after context + router
+// ✅ Main content after Redux store
 const AppContent: React.FC = () => {
-  const { isAuthenticated, user ,loading} = useAuth();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user, loading } = useAppSelector((state) => state.auth);
 
+  // Initialize auth on component mount
+  React.useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
 
-  if (loading) return <div className="p-10 text-xl text-center">Loading session...</div>;
+  if (loading) return <AttractiveLoader message="Loading session..." variant="fullscreen" />;
 
   const ProtectedRoute: React.FC<{
     children: React.ReactNode;
@@ -97,20 +103,14 @@ const AppContent: React.FC = () => {
 // ✅ Application Entry
 const App: React.FC = () => {
   return (
-    <Router>
-      <AppStateProvider>
-        <AuthProvider>
-          <InventoryProvider>
-            <LocationProvider>
-              <NotificationProvider>
-                <AppContent />
-                <Toaster />
-              </NotificationProvider>
-            </LocationProvider>
-          </InventoryProvider>
-        </AuthProvider>
-      </AppStateProvider>
-    </Router>
+    <Provider store={store}>
+      <PersistGate loading={<AttractiveLoader message="Loading..." variant="fullscreen" />} persistor={persistor}>
+        <Router>
+          <AppContent />
+          <Toaster />
+        </Router>
+      </PersistGate>
+    </Provider>
   );
 };
 

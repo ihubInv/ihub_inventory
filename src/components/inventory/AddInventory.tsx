@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useCreateInventoryItemMutation,
+  useGetCategoriesQuery,
+  useGetInventoryItemsQuery
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import CustomDatePicker from '../common/DatePicker';
 import { Save, X, Package, Calendar, DollarSign, MapPin, Image, TrendingDown, CalendarIcon, Upload, Plus, List } from 'lucide-react';
 import { InventoryItem } from '../../types';
@@ -24,8 +28,10 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const AddInventory: React.FC = () => {
-  const { addInventoryItem, categories, inventoryItems } = useInventory();
-  const { user } = useAuth();
+  const [createInventoryItem] = useCreateInventoryItemMutation();
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const { user } = useAppSelector((state) => state.auth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFinancialYearPicker, setShowFinancialYearPicker] = useState(false);
@@ -486,7 +492,7 @@ const handleFile = (file?: File) => {
   let loadingToast: string | undefined;
   try {
     loadingToast = CRUDToasts.creating('inventory item');
-    await addInventoryItem(payload);
+    await createInventoryItem(payload).unwrap();
     toast.dismiss(loadingToast);
 
     // 3. Reset form

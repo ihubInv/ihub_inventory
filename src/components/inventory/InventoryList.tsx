@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetInventoryItemsQuery,
+  useCreateInventoryItemMutation,
+  useUpdateInventoryItemMutation,
+  useDeleteInventoryItemMutation
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { AssetConditionChart, CategoryDistributionChart } from '../charts/ChartComponents';
 import { Search, Filter, Download, Edit, Trash2, Eye, Package, Save, X, Zap, Calculator, BarChart3, List, AlertTriangle, CheckSquare, Square, FileSpreadsheet, FileText, Image, Sliders, RotateCcw, ChevronDown } from 'lucide-react';
 import { CRUDToasts } from '../../services/toastService';
@@ -23,6 +28,7 @@ import UpdateInventory from './UpdateInventory';
 import StatusDropdown from '../common/StatusDropdown';
 import CategoryDropdown from '../common/CategoryDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
+import DateRangePicker from '../common/DateRangePicker';
 import InventoryPivotTable from './InventoryPivotTable';
 import { InventoryItem, Attachment } from '../../types'; // Import Attachment type
 import AttractiveLoader from '../common/AttractiveLoader'; // Import AttractiveLoader
@@ -69,8 +75,11 @@ interface AddInventoryFormData {
 // import UpdateInventory from './updateInventory';
 
 const InventoryList: React.FC = () => {
-  const { inventoryItems, addInventoryItem, deleteInventoryItem, updateInventoryItem, loading } = useInventory();
-  const { user } = useAuth();
+  const { data: inventoryItems = [], isLoading: loading } = useGetInventoryItemsQuery();
+  const [createInventoryItem] = useCreateInventoryItemMutation();
+  const [updateInventoryItem] = useUpdateInventoryItemMutation();
+  const [deleteInventoryItem] = useDeleteInventoryItemMutation();
+  const { user } = useAppSelector((state) => state.auth);
   // Initialize states with localStorage persistence
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem('inventoryListSearchTerm') || '';
@@ -82,6 +91,14 @@ const InventoryList: React.FC = () => {
   });
   const [filterCategory, setFilterCategory] = useState(() => {
     return localStorage.getItem('inventoryListFilterCategory') || 'all';
+  });
+  const [startDate, setStartDate] = useState<Date | null>(() => {
+    const saved = localStorage.getItem('inventoryListStartDate');
+    return saved ? new Date(saved) : null;
+  });
+  const [endDate, setEndDate] = useState<Date | null>(() => {
+    const saved = localStorage.getItem('inventoryListEndDate');
+    return saved ? new Date(saved) : null;
   });
   const [activeTab, setActiveTab] = useState<'list' | 'pivot'>(() => {
     return (localStorage.getItem('inventoryListActiveTab') as 'list' | 'pivot') || 'list';
@@ -170,7 +187,7 @@ const InventoryList: React.FC = () => {
     uniqueid: '',
     financialyear: '2024-25',
     dateofinvoice: null,
-    dateofentry: null,
+    dateofentry: new Date(), // Set to today by default
     invoicenumber: '',
     assetcategory: '',
     assetcategoryid: "",
@@ -219,6 +236,22 @@ const InventoryList: React.FC = () => {
   }, [filterCategory]);
 
   useEffect(() => {
+    if (startDate) {
+      localStorage.setItem('inventoryListStartDate', startDate.toISOString());
+    } else {
+      localStorage.removeItem('inventoryListStartDate');
+    }
+  }, [startDate]);
+
+  useEffect(() => {
+    if (endDate) {
+      localStorage.setItem('inventoryListEndDate', endDate.toISOString());
+    } else {
+      localStorage.removeItem('inventoryListEndDate');
+    }
+  }, [endDate]);
+
+  useEffect(() => {
     localStorage.setItem('inventoryListActiveTab', activeTab);
   }, [activeTab]);
 
@@ -232,8 +265,50 @@ const InventoryList: React.FC = () => {
 
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     const matchesCategory = filterCategory === 'all' || item.assetcategory === filterCategory;
+    
+    // Date range filtering - check if item's dateofentry falls within the selected range
+    const matchesDateRange = (() => {
+      if (!startDate && !endDate) return true; // No date filter applied
+      
+      // Handle different date formats that might come from the API
+      let itemDate: Date | null = null;
+      if (item.dateofentry) {
+        if (typeof item.dateofentry === 'string') {
+          itemDate = new Date(item.dateofentry);
+        } else if (item.dateofentry instanceof Date) {
+          itemDate = item.dateofentry;
+        }
+      } else if (item.createdat) {
+        // Fallback to createdat if dateofentry is null
+        if (typeof item.createdat === 'string') {
+          itemDate = new Date(item.createdat);
+        } else if (item.createdat instanceof Date) {
+          itemDate = item.createdat;
+        }
+      }
+      
+      // If item has no valid date, exclude it when date filter is applied
+      if (!itemDate || isNaN(itemDate.getTime())) {
+        return false;
+      }
+      
+      // Normalize dates to start of day for comparison
+      const start = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) : null;
+      const end = endDate ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999) : null;
+      const itemDateOnly = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+      
+      if (start && end) {
+        return itemDateOnly >= start && itemDateOnly <= end;
+      } else if (start) {
+        return itemDateOnly >= start;
+      } else if (end) {
+        return itemDateOnly <= end;
+      }
+      
+      return true;
+    })();
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesDateRange;
   });
 
   // Create categories array for the dropdown
@@ -342,13 +417,16 @@ const InventoryList: React.FC = () => {
         id: editingCategory.id,
         createdat: editingCategory.createdat,
       };
-      updateInventoryItem(editingCategory.id, updatedItem);
+      updateInventoryItem({
+        id: editingCategory.id,
+        updates: updatedItem
+      });
       setEditingCategory(null);
       setFormData({
         uniqueid: '',
         financialyear: '2024-25',
         dateofinvoice: null,
-        dateofentry: null,
+        dateofentry: new Date(), // Set to today by default
         invoicenumber: '',
         assetcategory: '',
         assetcategoryid: "",
@@ -395,6 +473,7 @@ const InventoryList: React.FC = () => {
     try {
       const newItem: Omit<InventoryItem, 'id' | 'createdat' | 'updatedat'> = {
         ...formData,
+        dateofentry: formData.dateofentry || new Date(), // Set to today if not provided
         lastmodifiedby: user?.id || 'unknown', // Explicitly add lastmodifiedby
         lastmodifieddate: new Date(), // Explicitly add lastmodifieddate
         attachments: formData.attachments?.map(att => ({
@@ -402,12 +481,12 @@ const InventoryList: React.FC = () => {
           url: (att as File).name ? URL.createObjectURL(att as File) : (att as Attachment).url
         })) || [],
       };
-      await addInventoryItem(newItem);
+      await createInventoryItem(newItem).unwrap();
       setFormData({
         uniqueid: '',
         financialyear: '2024-25',
         dateofinvoice: null,
-        dateofentry: null,
+        dateofentry: new Date(), // Set to today by default
         invoicenumber: '',
         assetcategory: '',
         assetcategoryid: "",
@@ -461,7 +540,7 @@ const InventoryList: React.FC = () => {
     setIsDeleting(true);
     try {
       const loadingToast = CRUDToasts.deleting('inventory item');
-      await deleteInventoryItem(itemToDelete.id);
+      await deleteInventoryItem(itemToDelete.id).unwrap();
       toast.dismiss(loadingToast);
       setShowDeleteModal(false);
       setItemToDelete(null);
@@ -481,7 +560,10 @@ const InventoryList: React.FC = () => {
 
   const handleUpdateSuccess = (updatedItem: any) => {
     // Update the item in the local state
-    updateInventoryItem(updatedItem.id, updatedItem);
+    updateInventoryItem({
+      id: updatedItem.id,
+      updates: updatedItem
+    });
     setShowUpdateModal(false);
     setItemToUpdate(null);
   };
@@ -513,7 +595,7 @@ const InventoryList: React.FC = () => {
     try {
       const loadingToast = CRUDToasts.bulkDeleting(selectedItems.length);
       for (const itemId of selectedItems) {
-        await deleteInventoryItem(itemId);
+        await deleteInventoryItem(itemId).unwrap();
       }
       toast.dismiss(loadingToast);
       setShowBulkDeleteModal(false);
@@ -1268,6 +1350,8 @@ const InventoryList: React.FC = () => {
     setSearchTerm('');
     setFilterStatus('all');
     setFilterCategory('all');
+    setStartDate(null);
+    setEndDate(null);
     toast.success('All filters have been reset!');
   };
 
@@ -1531,7 +1615,7 @@ const InventoryList: React.FC = () => {
                       placeholder="Search inventory..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
@@ -1545,14 +1629,42 @@ const InventoryList: React.FC = () => {
                     />
                   </div>
 
-                  <CategoryDropdown
-                    value={filterCategory === 'all' ? '' : filterCategory}
-                    onChange={(value) => setFilterCategory(value || 'all')}
-                    categories={categories}
-                    placeholder="Filter by category"
-                    size="sm"
-                    searchable
-                  />
+                  <div className="min-w-48">
+                    <CategoryDropdown
+                      value={filterCategory === 'all' ? '' : filterCategory}
+                      onChange={(value) => setFilterCategory(value || 'all')}
+                      categories={categories}
+                      placeholder="Filter by category"
+                      size="sm"
+                      searchable
+                    />
+                  </div>
+
+                  <div className="min-w-48">
+                    <div className="flex items-center space-x-2">
+                      <DateRangePicker
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartDateChange={setStartDate}
+                        onEndDateChange={setEndDate}
+                        startPlaceholder="Start date"
+                        endPlaceholder="End date"
+                        size="sm"
+                      />
+                      {(startDate || endDate) && (
+                        <button
+                          onClick={() => {
+                            setStartDate(null);
+                            setEndDate(null);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 transition-colors duration-200"
+                          title="Clear date filter"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="flex items-center space-x-2">
                     <Filter size={16} className="text-gray-400" />

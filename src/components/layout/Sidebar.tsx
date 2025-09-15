@@ -1,6 +1,7 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { logoutUser } from '../../store/slices/authSlice';
+import { useGetUnreadCountQuery } from '../../store/api';
 import { 
   LayoutDashboard, 
   Package, 
@@ -28,8 +29,11 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
-  const { user, logout } = useAuth();
-  const { unreadCount } = useNotifications();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: unreadCount = 0 } = useGetUnreadCountQuery(user?.id || '', {
+    skip: !user?.id
+  });
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -92,8 +96,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await dispatch(logoutUser()).unwrap();
     navigate('/login');
   };
 
@@ -145,7 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                   />
                 ) : (
                   <span className="text-sm font-medium text-white">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {user.name.split(' ').map((n: string) => n[0]).join('')}
                   </span>
                 )}
               </div>
@@ -232,7 +236,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
                 />
               ) : (
                 <span className="text-sm font-medium text-white">
-                  {user.name.split(' ').map(n => n[0]).join('')}
+                  {user.name.split(' ').map((n: string) => n[0]).join('')}
                 </span>
               )}
             </div>

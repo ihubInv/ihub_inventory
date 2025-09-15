@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetInventoryItemsQuery,
+  useUpdateInventoryItemMutation,
+  useGetUsersQuery
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { 
   Package, 
   User, 
@@ -33,8 +37,9 @@ interface IssueItemModalProps {
 }
 
 const IssueItemModal: React.FC<IssueItemModalProps> = ({ isOpen, onClose, availableItems }) => {
-  const { updateInventoryItem, users } = useInventory();
-  const { user } = useAuth();
+  const [updateInventoryItem] = useUpdateInventoryItemMutation();
+  const { data: users = [] } = useGetUsersQuery();
+  const { user } = useAppSelector((state) => state.auth);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -126,13 +131,16 @@ const IssueItemModal: React.FC<IssueItemModalProps> = ({ isOpen, onClose, availa
     const loadingToast = CRUDToasts.updating('item');
 
     try {
-      await updateInventoryItem(selectedItem.id, {
-        status: 'issued',
-        issuedto: selectedEmployee.name,
-        issuedby: user?.name || 'Admin',
-        issueddate: new Date(issueDate).toISOString(),
-        dateofissue: new Date(issueDate).toISOString()
-      });
+      await updateInventoryItem({
+        id: selectedItem.id,
+        updates: {
+          status: 'issued',
+          issuedto: selectedEmployee.name,
+          issuedby: user?.name || 'Admin',
+          issueddate: new Date(issueDate).toISOString(),
+          dateofissue: new Date(issueDate).toISOString()
+        }
+      }).unwrap();
 
       toast.dismiss(loadingToast);
       CRUDToasts.updated('item');

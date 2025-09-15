@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { useUpdateUserMutation } from '../../store/api';
 import { 
   User, 
   Save, 
@@ -27,7 +28,9 @@ import { uploadProfilePicture, deleteProfilePicture } from '../../utils/storageU
 import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const [updateUser] = useUpdateUserMutation();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,8 +97,11 @@ const Profile: React.FC = () => {
       try {
         // Update user profile
         await updateUser({
-          profilepicture: imageUrl
-        });
+          id: user!.id,
+          updates: {
+            profilepicture: imageUrl
+          }
+        }).unwrap();
 
         toast.dismiss(loadingToast);
         CRUDToasts.updated('profile picture');
@@ -165,8 +171,11 @@ const Profile: React.FC = () => {
 
       // Update user profile to remove the profile picture URL
       await updateUser({
-        profilepicture: undefined
-      });
+        id: user.id,
+        updates: {
+          profilepicture: undefined
+        }
+      }).unwrap();
 
       toast.dismiss(loadingToast);
       CRUDToasts.updated('profile picture');
@@ -183,12 +192,15 @@ const Profile: React.FC = () => {
       
       try {
         await updateUser({
-          name: formData.name,
-          department: formData.department,
-          phone: formData.phone,
-          address: formData.address,
-          bio: formData.bio
-        });
+          id: user.id,
+          updates: {
+            name: formData.name,
+            department: formData.department,
+            phone: formData.phone,
+            address: formData.address,
+            bio: formData.bio
+          }
+        }).unwrap();
         
         toast.dismiss(loadingToast);
         CRUDToasts.updated('profile');

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useGetInventoryItemsQuery } from '../../store/api';
 import { Download, Filter, RotateCcw, Table, BarChart3, PieChart, TrendingUp, FileSpreadsheet, FileText, Image, Eye, Calendar, Sliders, Bookmark, Thermometer } from 'lucide-react';
 import AttractiveDropdown from '../common/AttractiveDropdown';
 import DateRangePicker from '../common/DateRangePicker';
@@ -36,7 +36,7 @@ interface PivotTemplate {
 }
 
 const InventoryPivotTable: React.FC = () => {
-  const { inventoryItems } = useInventory();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
   const [pivotConfig, setPivotConfig] = useState<PivotConfig>({
     rows: ['assetcategory'],
     columns: ['status'],

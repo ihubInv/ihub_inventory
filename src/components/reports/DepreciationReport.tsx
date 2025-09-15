@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
+import { useGetInventoryItemsQuery } from '../../store/api';
 import { TrendingDown, Download, Filter } from 'lucide-react';
 import YearDropdown from '../common/YearDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
 import FilterDropdown from '../common/FilterDropdown';
 
 const DepreciationReport: React.FC = () => {
-  const { inventoryItems } = useInventory();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [filterMethod, setFilterMethod] = useState<string>('all');
 

@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetCategoriesQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+  useCanDeleteCategoryQuery,
+  useCanRemoveAssetNamesFromCategoryQuery,
+  useGetAssetsQuery,
+  useCreateAssetMutation,
+  useUpdateAssetMutation,
+  useDeleteAssetMutation,
+  useCanDeleteAssetQuery,
+  inventoryApi
+} from '../../store/api';
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import DateRangePicker from '../common/DateRangePicker';
 import { CategoryDistributionChart } from '../charts/ChartComponents';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
@@ -26,8 +39,16 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const CategoryManagement: React.FC = () => {
-  const { categories, addCategory, updateCategory, deleteCategory, assets, addAsset, updateAsset, deleteAsset } = useInventory();
-  const { user } = useAuth();
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const [createCategory] = useCreateCategoryMutation();
+  const [updateCategory] = useUpdateCategoryMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
+  const { data: assets = [] } = useGetAssetsQuery();
+  const [createAsset] = useCreateAssetMutation();
+  const [updateAsset] = useUpdateAssetMutation();
+  const [deleteAsset] = useDeleteAssetMutation();
+  const { user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -48,6 +69,25 @@ const CategoryManagement: React.FC = () => {
     isactive: true
   });
 
+  // Get validation data for the category being edited
+  const { data: canRemoveData, error: canRemoveError } = useCanRemoveAssetNamesFromCategoryQuery(
+    {
+      categoryId: editingCategory?.id || '',
+      assetNames: newCategory.assetnames || []
+    },
+    { 
+      skip: !editingCategory?.id || !newCategory.assetnames?.length 
+    }
+  );
+  
+  const canRemoveAssetNames = canRemoveData?.canRemove ?? true;
+  const inventoryItems = canRemoveData?.inventoryItems ?? [];
+  
+  // Log error for debugging
+  if (canRemoveError) {
+    console.warn('Error checking if asset names can be removed:', canRemoveError);
+  }
+
   const [newAsset, setNewAsset] = useState({
     name: '',
     description: '',
@@ -55,6 +95,7 @@ const CategoryManagement: React.FC = () => {
   });
 
   const [currentAssetName, setCurrentAssetName] = useState('');
+  const [assetNameChanges, setAssetNameChanges] = useState<{ oldName: string; newName: string }[]>([]);
 
   // Function to add asset name to the list
   const addAssetName = () => {
@@ -69,10 +110,33 @@ const CategoryManagement: React.FC = () => {
 
   // Function to remove asset name from the list
   const removeAssetName = (assetName: string) => {
+    // If we're editing a category, check if we can remove asset names
+    if (editingCategory) {
+      // For now, we'll allow removal but the API will validate
+      // In a more advanced implementation, we could check here first
+    }
+    
     setNewCategory(prev => ({
       ...prev,
       assetnames: prev.assetnames.filter(name => name !== assetName)
     }));
+  };
+
+  // Function to edit asset name in the list
+  const editAssetName = (oldName: string, newName: string) => {
+    // Update the local state
+    setNewCategory(prev => ({
+      ...prev,
+      assetnames: prev.assetnames.map(name => name === oldName ? newName : name)
+    }));
+    
+    // Track the change for API call
+    setAssetNameChanges(prev => {
+      // Remove any existing change for this old name
+      const filtered = prev.filter(change => change.oldName !== oldName);
+      // Add the new change
+      return [...filtered, { oldName, newName }];
+    });
   };
 
   // Function to handle Enter key press
@@ -108,13 +172,13 @@ const CategoryManagement: React.FC = () => {
     if (newAsset.name.trim()) {
       const loadingToast = CRUDToasts.creating('asset');
       try {
-        await addAsset({
+        await createAsset({
           name: newAsset.name.trim(),
           description: newAsset.description.trim(),
           assetcategory: newAsset.assetcategory.trim(),
           isactive: true,
           createdby: user?.id || 'unknown'
-        });
+        }).unwrap();
         toast.dismiss(loadingToast);
         setNewAsset({
           name: '',
@@ -146,11 +210,14 @@ const CategoryManagement: React.FC = () => {
     if (editingAsset && newAsset.name.trim()) {
       const loadingToast = CRUDToasts.updating('asset');
       try {
-        await updateAsset(editingAsset.id, {
-          name: newAsset.name.trim(),
-          description: newAsset.description.trim(),
-          assetcategory: newAsset.assetcategory.trim()
-        });
+        await updateAsset({
+          id: editingAsset.id,
+          updates: {
+            name: newAsset.name.trim(),
+            description: newAsset.description.trim(),
+            assetcategory: newAsset.assetcategory.trim()
+          }
+        }).unwrap();
         toast.dismiss(loadingToast);
         setEditingAsset(null);
         setNewAsset({
@@ -171,13 +238,19 @@ const CategoryManagement: React.FC = () => {
   const handleDeleteAsset = async (assetId: string) => {
     const loadingToast = CRUDToasts.deleting('asset');
     try {
-      await deleteAsset(assetId);
+      await deleteAsset(assetId).unwrap();
       toast.dismiss(loadingToast);
       CRUDToasts.deleted('asset');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete asset:', err);
       toast.dismiss(loadingToast);
-      CRUDToasts.deleteError('asset', 'Please try again');
+      
+      // Show detailed error message if it contains inventory item information
+      if (err?.message && err.message.includes('inventory item')) {
+        toast.error(err.message, { duration: 8000 });
+      } else {
+        CRUDToasts.deleteError('asset', err?.message || 'Please try again');
+      }
     }
   };
 
@@ -190,10 +263,10 @@ const CategoryManagement: React.FC = () => {
     e.preventDefault();
     const loadingToast = CRUDToasts.creating('category');
     try {
-      await addCategory({
+      await createCategory({
         ...newCategory,
         createdby: user?.id || 'unknown'
-      });
+      }).unwrap();
       toast.dismiss(loadingToast);
       setNewCategory({
         name: '',
@@ -221,6 +294,7 @@ const CategoryManagement: React.FC = () => {
       description: category.description || '',
       isactive: category.isactive
     });
+    setAssetNameChanges([]); // Clear any previous changes
     setShowAddModal(true);
   };
 
@@ -229,7 +303,17 @@ const CategoryManagement: React.FC = () => {
     if (editingCategory) {
       const loadingToast = CRUDToasts.updating('category');
       try {
-        await updateCategory(editingCategory.id, newCategory);
+        await updateCategory({
+          id: editingCategory.id,
+          updates: newCategory,
+          assetNameChanges: assetNameChanges
+        }).unwrap();
+        
+        // If asset names were changed, manually invalidate inventory cache
+        if (assetNameChanges.length > 0) {
+          dispatch(inventoryApi.util.invalidateTags(['InventoryItem']));
+        }
+        
         toast.dismiss(loadingToast);
         setEditingCategory(null);
         setNewCategory({
@@ -240,33 +324,47 @@ const CategoryManagement: React.FC = () => {
           isactive: true
         });
         setCurrentAssetName('');
+        setAssetNameChanges([]);
         setShowAddModal(false);
         CRUDToasts.updated('category');
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to update category:', err);
         toast.dismiss(loadingToast);
-        CRUDToasts.updateError('category', 'Please try again');
+        
+        // Show detailed error message if it contains inventory item information
+        if (err?.message && err.message.includes('inventory item')) {
+          toast.error(err.message, { duration: 8000 });
+        } else {
+          CRUDToasts.updateError('category', err?.message || 'Please try again');
+        }
       }
     }
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    // if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-      const loadingToast = CRUDToasts.deleting('category');
-      try {
-        await deleteCategory(categoryId);
-        toast.dismiss(loadingToast);
-        CRUDToasts.deleted('category');
-      } catch (err) {
-        console.error('Failed to delete category:', err);
-        toast.dismiss(loadingToast);
-        CRUDToasts.deleteError('category', 'Please try again');
+    const loadingToast = CRUDToasts.deleting('category');
+    try {
+      await deleteCategory(categoryId).unwrap();
+      toast.dismiss(loadingToast);
+      CRUDToasts.deleted('category');
+    } catch (err: any) {
+      console.error('Failed to delete category:', err);
+      toast.dismiss(loadingToast);
+      
+      // Show detailed error message if it contains inventory item information
+      if (err?.message && err.message.includes('inventory item')) {
+        toast.error(err.message, { duration: 8000 });
+      } else {
+        CRUDToasts.deleteError('category', err?.message || 'Please try again');
       }
-    // }
+    }
   };
 
   const toggleCategoryStatus = (categoryId: string, currentStatus: boolean) => {
-    updateCategory(categoryId, { isactive: !currentStatus });
+    updateCategory({
+      id: categoryId,
+      updates: { isactive: !currentStatus }
+    });
   };
 
   const getTypeIcon = (type: string) => {
@@ -579,13 +677,13 @@ console.log("viewingCategory",viewingCategory)
                             {category.isactive ? '⏸' : '▶'}
                           </button>
                           {(user?.role === 'admin' || user?.role === 'stock-manager') && (
-                            <button
-                              onClick={() => handleDeleteCategory(category.id)}
-                              className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
-                              title="Delete Category"
+                            <DeleteButtonWithWarning
+                              id={category.id}
+                              type="category"
+                              onDelete={handleDeleteCategory}
                             >
                               <Trash2 size={14} className="sm:w-4 sm:h-4 text-red-500" />
-                            </button>
+                            </DeleteButtonWithWarning>
                           )}
                         </div>
                       </td>
@@ -664,19 +762,14 @@ console.log("viewingCategory",viewingCategory)
                       <p className="text-sm font-medium text-gray-700">Added Assets:</p>
                       <div className="flex flex-wrap gap-2">
                         {newCategory.assetnames.map((assetName, index) => (
-                          <span
+                          <AssetNameWithWarning
                             key={index}
-                            className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
-                          >
-                            {assetName}
-                            <button
-                              type="button"
-                              onClick={() => removeAssetName(assetName)}
-                              className="ml-2 text-blue-600 hover:text-blue-800"
-                            >
-                              <X size={14} className="text-red-500" />
-                            </button>
-                          </span>
+                            assetName={assetName}
+                            categoryId={editingCategory?.id || ''}
+                            onRemove={removeAssetName}
+                            onEdit={editAssetName}
+                            usedAssetNames={inventoryItems}
+                          />
                         ))}
                       </div>
                     </div>
@@ -926,6 +1019,229 @@ console.log("viewingCategory",viewingCategory)
         </div>
       )}
     </div>
+  );
+};
+
+// Smart tooltip component that adjusts position based on screen boundaries
+const SmartTooltip: React.FC<{
+  content: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ content, children, className = "" }) => {
+  const [tooltipPosition, setTooltipPosition] = React.useState<'top' | 'bottom'>('top');
+  const [isVisible, setIsVisible] = React.useState(false);
+  const tooltipRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isVisible && tooltipRef.current && triggerRef.current) {
+      const tooltip = tooltipRef.current;
+      const trigger = triggerRef.current;
+      const rect = trigger.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      
+      // Check if tooltip would go off screen
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      if (spaceAbove < tooltipRect.height + 10 && spaceBelow > tooltipRect.height + 10) {
+        setTooltipPosition('bottom');
+      } else {
+        setTooltipPosition('top');
+      }
+    }
+  }, [isVisible]);
+
+  return (
+    <div 
+      ref={triggerRef}
+      className={`relative group ${className}`}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && (
+        <div
+          ref={tooltipRef}
+          className={`absolute left-1/2 transform -translate-x-1/2 px-3 py-2 text-sm text-white bg-gray-800 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 max-w-xs break-words shadow-lg ${
+            tooltipPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
+        >
+          <div className="relative">
+            {content}
+            {/* Arrow */}
+            <div className={`absolute left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 ${
+              tooltipPosition === 'top' 
+                ? 'top-full border-t-4 border-transparent border-t-gray-800' 
+                : 'bottom-full border-b-4 border-transparent border-b-gray-800'
+            }`}></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Helper component to show delete warning for categories/assets with dependencies
+const DeleteButtonWithWarning: React.FC<{
+  id: string;
+  type: 'category' | 'asset';
+  onDelete: (id: string) => void;
+  children: React.ReactNode;
+}> = ({ id, type, onDelete, children }) => {
+  const { data: canDeleteData, isLoading } = type === 'category' 
+    ? useCanDeleteCategoryQuery(id)
+    : useCanDeleteAssetQuery(id);
+
+  const canDelete = canDeleteData?.canDelete ?? true;
+  const inventoryItems = canDeleteData?.inventoryItems ?? [];
+
+  if (isLoading) {
+    return (
+      <button
+        disabled
+        className="p-1 text-gray-400 transition-colors rounded cursor-not-allowed"
+        title="Checking dependencies..."
+      >
+        {children}
+      </button>
+    );
+  }
+
+  if (!canDelete) {
+    const tooltipContent = `Cannot delete ${type}. Used by: ${inventoryItems.slice(0, 2).join(', ')}${inventoryItems.length > 2 ? ` and ${inventoryItems.length - 2} more` : ''}`;
+    
+    return (
+      <SmartTooltip content={tooltipContent}>
+        <button
+          disabled
+          className="p-1 text-gray-400 transition-colors rounded cursor-not-allowed"
+        >
+          {children}
+        </button>
+      </SmartTooltip>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => onDelete(id)}
+      className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
+      title={`Delete ${type}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+// Helper component to show asset name with removal warning and edit functionality
+const AssetNameWithWarning: React.FC<{
+  assetName: string;
+  categoryId: string;
+  onRemove: (name: string) => void;
+  onEdit: (oldName: string, newName: string) => void;
+  usedAssetNames: string[];
+}> = ({ assetName, categoryId, onRemove, onEdit, usedAssetNames }) => {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(assetName);
+  
+  // Check if this specific asset name is used
+  const isAssetNameUsed = usedAssetNames.includes(assetName);
+  
+  const handleSave = () => {
+    if (editValue.trim() && editValue.trim() !== assetName) {
+      onEdit(assetName, editValue.trim());
+    }
+    setIsEditing(false);
+    setEditValue(assetName);
+  };
+  
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValue(assetName);
+  };
+  
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+  
+  if (isEditing) {
+    return (
+      <span className="inline-flex items-center px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyPress}
+          onBlur={handleSave}
+          className="bg-transparent border-none outline-none text-green-800 min-w-0 flex-1"
+          autoFocus
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          className="ml-1 text-green-600 hover:text-green-800"
+          title="Save"
+        >
+          ✓
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="ml-1 text-green-600 hover:text-green-800"
+          title="Cancel"
+        >
+          ✕
+        </button>
+      </span>
+    );
+  }
+  
+  if (isAssetNameUsed) {
+    return (
+      <SmartTooltip content="Cannot remove. This asset name is used in inventory items.">
+        <span className="inline-flex items-center px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full">
+          {assetName}
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="ml-2 text-orange-600 hover:text-orange-800"
+            title="Edit asset name"
+          >
+            ✏️
+          </button>
+          <span className="ml-1 text-orange-600">
+            ⚠️
+          </span>
+        </span>
+      </SmartTooltip>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
+      {assetName}
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="ml-2 text-blue-600 hover:text-blue-800"
+        title="Edit asset name"
+      >
+        ✏️
+      </button>
+      <button
+        type="button"
+        onClick={() => onRemove(assetName)}
+        className="ml-1 text-blue-600 hover:text-blue-800"
+        title="Remove asset name"
+      >
+        <X size={14} className="text-red-500" />
+      </button>
+    </span>
   );
 };
 

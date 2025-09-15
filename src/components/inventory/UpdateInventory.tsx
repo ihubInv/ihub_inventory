@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetInventoryItemsQuery,
+  useGetCategoriesQuery,
+  useUpdateInventoryItemMutation,
+  useDeleteInventoryItemMutation
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { Save, X, Package, Calendar, DollarSign, MapPin, Image, Upload, Trash2, FileText } from 'lucide-react';
 import { InventoryItem } from '../../types';
 import { CRUDToasts } from '../../services/toastService';
@@ -27,8 +32,11 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   onClose,
   onUpdate
 }) => {
-  const { user } = useAuth();
-  const { categories, inventoryItems, updateInventoryItem, deleteInventoryItem } = useInventory();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const [updateInventoryItem] = useUpdateInventoryItemMutation();
+  const [deleteInventoryItem] = useDeleteInventoryItemMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<InventoryItem>>({});
   const [newAttachments, setNewAttachments] = useState<File[]>([]);

@@ -12,6 +12,7 @@ interface DateRangePickerProps {
   endPlaceholder?: string;
   className?: string;
   disabled?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -22,8 +23,22 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   startPlaceholder = "Start date",
   endPlaceholder = "End date",
   className = "",
-  disabled = false
+  disabled = false,
+  size = 'md'
 }) => {
+  // Get size-specific classes
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'px-3 py-2 text-sm';
+      case 'lg':
+        return 'px-5 py-4 text-lg';
+      default:
+        return 'px-4 py-3 text-base';
+    }
+  };
+
+  const sizeClasses = getSizeClasses();
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${className}`}>
       {/* Start Date */}
@@ -41,7 +56,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           disabled={disabled}
           maxDate={endDate || undefined}
           isClearable
-          className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
+          className={`w-full pl-10 pr-4 ${sizeClasses} border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
           calendarClassName="custom-datepicker"
           popperClassName="custom-datepicker-popper"
           wrapperClassName="w-full"
@@ -63,7 +78,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           disabled={disabled}
           minDate={startDate || undefined}
           isClearable
-          className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
+          className={`w-full pl-10 pr-4 ${sizeClasses} border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
           calendarClassName="custom-datepicker"
           popperClassName="custom-datepicker-popper"
           wrapperClassName="w-full"

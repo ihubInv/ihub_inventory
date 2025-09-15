@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
-import { useNotifications } from '../../contexts/NotificationContext';
 import { sendNotificationEmail } from '../../services/emailService';
 import { Bell, Check, Trash2, AlertTriangle, CheckCircle, XCircle, Package, User, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetRequestsQuery,
+  useUpdateRequestStatusMutation,
+  useDeleteRequestMutation,
+  useGetUsersQuery,
+  useGetNotificationsQuery,
+  useGetPendingNotificationsQuery,
+  useGetApprovedNotificationsQuery,
+  useGetRejectedNotificationsQuery
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import RequestApprovalModal from '../requests/RequestApprovalModal';
 import toast from 'react-hot-toast';
 
 const NotificationCenter: React.FC = () => {
-  const { 
-    notifications, 
-    deleteNotification, 
-    deleteNotificationById,
-    deleteApprovedNotifications,
-    deleteRejectedNotifications,
-    deleteAllNotifications
-  } = useNotifications();
-  const { requests, updateRequestStatus, deleteRequest, users } = useInventory();
-  const { user } = useAuth();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: notifications = [] } = useGetNotificationsQuery(user?.id || '', {
+    skip: !user?.id
+  });
+  const { data: pendingNotifications = [] } = useGetPendingNotificationsQuery(user?.id || '', {
+    skip: !user?.id
+  });
+  const { data: approvedNotifications = [] } = useGetApprovedNotificationsQuery(user?.id || '', {
+    skip: !user?.id
+  });
+  const { data: rejectedNotifications = [] } = useGetRejectedNotificationsQuery(user?.id || '', {
+    skip: !user?.id
+  });
+  const { data: requests = [] } = useGetRequestsQuery();
+  const [updateRequestStatus] = useUpdateRequestStatusMutation();
+  const [deleteRequest] = useDeleteRequestMutation();
+  const { data: users = [] } = useGetUsersQuery();
   
   // State for managing approval/rejection
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -75,10 +90,6 @@ const NotificationCenter: React.FC = () => {
     if (hours > 0) return `${hours}h ago`;
     return 'Just now';
   };
-
-  const pendingNotifications = filteredNotifications.filter(n => n.status === 'pending');
-  const approvedNotifications = filteredNotifications.filter(n => n.status === 'approved');
-  const rejectedNotifications = filteredNotifications.filter(n => n.status === 'rejected');
 
   const handleDeleteNotification = async (notificationId: string) => {
     try {

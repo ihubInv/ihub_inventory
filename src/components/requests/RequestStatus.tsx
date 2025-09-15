@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useGetRequestsQuery } from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { Clock, CheckCircle, XCircle, FileText, Search, Filter } from 'lucide-react';
 import FilterDropdown from '../common/FilterDropdown';
 
 const RequestStatus: React.FC = () => {
   
-  const { requests } = useInventory();
-  const { user } = useAuth();
+  const { data: requests = [], isLoading, error } = useGetRequestsQuery();
+  const { user } = useAppSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -72,7 +72,28 @@ const RequestStatus: React.FC = () => {
     rejected: filteredRequests.filter(req => req.status === 'rejected').length,
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0d559e] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading requests...</p>
+        </div>
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <p className="text-red-600">Failed to load requests</p>
+          <p className="text-gray-500 text-sm mt-2">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

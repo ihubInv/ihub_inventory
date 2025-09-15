@@ -1,7 +1,13 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useNotifications } from '../../contexts/NotificationContext';
+import { useAppSelector } from '../../store/hooks';
+import { 
+  useGetInventoryItemsQuery,
+  useGetRequestsQuery,
+  useGetUsersQuery,
+  useGetCategoriesQuery,
+  useGetAssetsQuery
+} from '../../store/api';
+import { useGetNotificationsQuery } from '../../store/api';
 import { 
   InventoryTrendChart, 
   RequestStatusChart, 
@@ -29,9 +35,17 @@ import AttractiveLoader from '../common/AttractiveLoader'; // Add back Attractiv
 import { useNavigate } from 'react-router-dom';
 
 const DashboardHome: React.FC = () => {
-  const { user } = useAuth();
-  const { inventoryItems, requests, users, loading } = useInventory();
-  const { notifications } = useNotifications();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: inventoryItems = [], isLoading: inventoryLoading } = useGetInventoryItemsQuery();
+  const { data: requests = [], isLoading: requestsLoading } = useGetRequestsQuery();
+  const { data: users = [], isLoading: usersLoading } = useGetUsersQuery();
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: assets = [] } = useGetAssetsQuery();
+  
+  const loading = inventoryLoading || requestsLoading || usersLoading;
+  const { data: notifications = [] } = useGetNotificationsQuery(user?.id || '', {
+    skip: !user?.id
+  });
   const navigate = useNavigate();
   const stats = {
     totalitems: inventoryItems.length,
@@ -43,7 +57,7 @@ const DashboardHome: React.FC = () => {
     lowstockitems: inventoryItems.filter(item => item.balancequantityinstock <= item.minimumstocklevel).length,
     maintenanceitems: inventoryItems.filter(item => item.status === 'maintenance').length,
     totalusers: users.length,
-    activeusers: users.filter(user => user.isactive).length
+    activeusers: users.filter((user: any) => user.isactive).length
   };
 
   const getGreeting = () => {
@@ -291,7 +305,7 @@ const DashboardHome: React.FC = () => {
           ) : (
             <StatsCard
               title="Stock Status"
-              value="All Good"
+              value={0}
               icon={CheckCircle}
               color="green"
               trend={{ value: 0, direction: 'down' }}

@@ -1,11 +1,15 @@
 import React from 'react';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetRequestsQuery,
+  useGetInventoryItemsQuery
+} from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import { Clock, Package, User, CheckCircle, XCircle } from 'lucide-react';
 
 const RecentActivity: React.FC = () => {
-  const { requests, inventoryItems } = useInventory();
-  const { user } = useAuth();
+  const { data: requests = [] } = useGetRequestsQuery();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const { user } = useAppSelector((state) => state.auth);
 
   // Generate recent activities from requests and inventory
   const activities = [

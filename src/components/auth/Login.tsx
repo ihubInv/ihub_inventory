@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { loginUser, clearError } from '../../store/slices/authSlice';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
-  
-  const { login } = useAuth();
+  const dispatch = useAppDispatch();
+  const { user, loading, error: authError } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,6 +16,19 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (user?.role && !loading) {
+      const from = location.state?.from?.pathname || `/${user.role}`;
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, location]);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const demoAccounts = [
     { email: 'avnish@ihubiitmandi.in', role: 'admin', password: 'avnish@456~^*&' },
@@ -61,41 +75,24 @@ const Login: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    dispatch(clearError());
   
     try {
       const loadingToast = AuthToasts.loggingIn();
-      const { success, error: loginError } = await login(formData.email, formData.password);
+      const result = await dispatch(loginUser({ 
+        email: formData.email, 
+        password: formData.password 
+      })).unwrap();
   
-            if (!success) {
-        toast.dismiss(loadingToast);
-        setError(loginError || 'Invalid email or password');
-        AuthToasts.loginError(loginError || 'Invalid email or password');
-        return;
-      }
-
-      // User data should now be properly loaded in localStorage
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const role = storedUser?.role;
-  
-      if (!role) {
-        console.error('User role not found in localStorage:', storedUser);
-        toast.dismiss(loadingToast);
-        setError('User role not found. Please try logging in again.');
-        AuthToasts.loginError('User role not found - please try again');
-        return;
-      }
-  
-      // Show success toast and redirect
+      // Show success toast
       toast.dismiss(loadingToast);
-      AuthToasts.loginSuccess(storedUser?.name || storedUser?.email);
+      AuthToasts.loginSuccess(result.user?.name || result.user?.email);
       
-      // Redirect to role-based dashboard
-      const from = location.state?.from?.pathname || `/${role}`;
-      navigate(from, { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('An unexpected error occurred. Please try again later.');
-      AuthToasts.loginError('An unexpected error occurred');
+      const errorMessage = err || 'An unexpected error occurred. Please try again later.';
+      setError(errorMessage);
+      AuthToasts.loginError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -166,20 +163,19 @@ const Login: React.FC = () => {
             </div>
 
             {/* Error */}
-            {error && (
+            {(error || authError) && (
               <div className="p-3 border border-red-200 rounded-lg bg-red-50">
-                <p className="text-sm text-red-800">{error}</p>
+                <p className="text-sm text-red-800">{error || authError}</p>
               </div>
             )}
 
             {/* Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || loading}
               className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition-all duration-200 transform border border-transparent shadow-lg rounded-xl bg-[#0d559e] hover:bg-[#0a4a8a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0d559e] hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {(isLoading || loading) ? 'Signing In...' : 'Sign In'}
             </button>
 
           </form>

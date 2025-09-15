@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from '../../contexts/LocationContext';
-import { useInventory } from '../../contexts/InventoryContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  useGetLocationsQuery,
+  useCreateLocationMutation,
+  useUpdateLocationMutation,
+  useDeleteLocationMutation,
+  useToggleLocationStatusMutation,
+  useGetLocationStatsQuery,
+  useSearchLocationsQuery
+} from '../../store/api';
+import { useGetInventoryItemsQuery } from '../../store/api';
+import { useAppSelector } from '../../store/hooks';
 import DateRangePicker from '../common/DateRangePicker';
 import FilterDropdown, { statusFilters } from '../common/FilterDropdown';
 import { 
@@ -24,9 +32,14 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const LocationManagement: React.FC = () => {
-  const { locations, loading, error, addLocation, updateLocation, deleteLocation, toggleLocationStatus, refreshLocations, getLocationStats } = useLocation();
-  const { inventoryItems } = useInventory();
-  const { user } = useAuth();
+  const { data: locations = [], isLoading: loading, error } = useGetLocationsQuery();
+  const [createLocation] = useCreateLocationMutation();
+  const [updateLocation] = useUpdateLocationMutation();
+  const [deleteLocation] = useDeleteLocationMutation();
+  const [toggleLocationStatus] = useToggleLocationStatusMutation();
+  const { data: locationStats } = useGetLocationStatsQuery();
+  const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const { user } = useAppSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -45,7 +58,7 @@ const LocationManagement: React.FC = () => {
     isactive: true
   });
 
-  // Use locations directly from database without item counts
+  // Use locations directly from RTK Query
   const locationData = locations;
 
   const filteredLocations = locationData.filter(location => {
@@ -69,10 +82,10 @@ const LocationManagement: React.FC = () => {
     e.preventDefault();
     const loadingToast = CRUDToasts.creating('location');
     try {
-      await addLocation({
+      await createLocation({
         ...newLocation,
         createdby: user?.id || 'unknown'
-      });
+      }).unwrap();
       toast.dismiss(loadingToast);
       setNewLocation({
         name: '',
@@ -111,7 +124,10 @@ const LocationManagement: React.FC = () => {
     if (editingLocation) {
       const loadingToast = CRUDToasts.updating('location');
       try {
-        await updateLocation(editingLocation.id, newLocation);
+        await updateLocation({
+          id: editingLocation.id,
+          updates: newLocation
+        }).unwrap();
         toast.dismiss(loadingToast);
         setEditingLocation(null);
         setNewLocation({
@@ -136,7 +152,7 @@ const LocationManagement: React.FC = () => {
   const handleDeleteLocation = async (locationId: string) => {
     const loadingToast = CRUDToasts.deleting('location');
     try {
-      await deleteLocation(locationId);
+      await deleteLocation(locationId).unwrap();
       toast.dismiss(loadingToast);
       CRUDToasts.deleted('location');
     } catch (err) {
@@ -153,9 +169,9 @@ const LocationManagement: React.FC = () => {
   };
 
   const stats = {
-    total: locations.length,
-    active: locations.filter(loc => loc.isactive).length,
-    inactive: locations.filter(loc => !loc.isactive).length,
+    total: locationStats?.total || locations.length,
+    active: locationStats?.active || locations.filter(loc => loc.isactive).length,
+    inactive: locationStats?.inactive || locations.filter(loc => !loc.isactive).length,
     totalItems: inventoryItems.length,
     issuedItems: inventoryItems.filter(item => item.status === 'issued').length
   };

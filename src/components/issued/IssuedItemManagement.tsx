@@ -500,13 +500,28 @@ const IssuedItemManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{item.issuedto || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{issuanceRecord?.department || 'Unknown Dept'}</div>
+                        <div className="text-sm text-gray-900">
+                          {(() => {
+                            const issuedToUser = users.find(u => u.id === item.issuedto);
+                            return issuedToUser ? issuedToUser.name : item.issuedto || 'N/A';
+                          })()}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {(() => {
+                            const issuedToUser = users.find(u => u.id === item.issuedto);
+                            return issuedToUser?.department || 'Unknown Dept';
+                          })()}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Shield size={14} className="mr-1 text-gray-400" />
-                          <div className="text-sm text-gray-900">{item.issuedby || 'N/A'}</div>
+                          <div className="text-sm text-gray-900">
+                            {(() => {
+                              const issuedByUser = users.find(u => u.id === item.issuedby);
+                              return issuedByUser ? issuedByUser.name : item.issuedby || 'N/A';
+                            })()}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">

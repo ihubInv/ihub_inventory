@@ -3,7 +3,6 @@ import {
   History, 
   Search, 
   Filter, 
-  Calendar, 
   User, 
   Package, 
   ArrowRight, 
@@ -187,32 +186,34 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50">
+      <div className="w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] bg-white rounded-lg sm:rounded-2xl shadow-xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+          <div className="mb-4 sm:mb-0">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
               {selectedItem ? `${selectedItem.assetname} - Audit Trail` : 'Complete Audit Trail'}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               Track all item issuance and return activities
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
             <button
               onClick={exportAuditTrail}
-              className="flex items-center px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-center px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <Download size={16} className="mr-1" />
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
             </button>
             <button
               onClick={loadAuditTrail}
-              className="flex items-center px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center justify-center px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <RefreshCw size={16} className="mr-1" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
+              <span className="sm:hidden">Refresh</span>
             </button>
             <button
               onClick={onClose}
@@ -224,7 +225,7 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
         </div>
 
         {/* Filters */}
-        <div className="p-6 border-b border-gray-200 bg-gray-50">
+        <div className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative">
               <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={16} />
@@ -233,7 +234,7 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
                 placeholder="Search audit entries..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -262,7 +263,7 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-2">
               <Filter size={16} className="text-gray-400" />
               <span className="text-sm text-gray-600">{filteredEntries.length} entries found</span>
@@ -282,61 +283,61 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
         </div>
 
         {/* Audit Trail Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {filteredEntries.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4 max-h-full">
               {filteredEntries.map((entry, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                  className="p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer"
                   onClick={() => setSelectedEntry(entry)}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg border ${getActionColor(entry.action)}`}>
+                    <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+                      <div className={`p-2 rounded-lg border ${getActionColor(entry.action)} flex-shrink-0`}>
                         {getActionIcon(entry.action)}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-sm font-medium text-gray-900 capitalize">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                          <h4 className="text-sm font-medium text-gray-900 capitalize break-words">
                             {entry.action} - {entry.itemName}
                           </h4>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getActionColor(entry.action)}`}>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getActionColor(entry.action)} self-start flex-shrink-0`}>
                             {entry.action}
                           </span>
                         </div>
-                        <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <User size={12} className="text-gray-400" />
-                            <span>
+                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-gray-600">
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <User size={12} className="text-gray-400 flex-shrink-0" />
+                            <span className="truncate">
                               {entry.action === 'return' ? 'Returned by' : 'Issued to'}: {entry.action === 'return' ? entry.returnedBy : entry.issuedTo}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock size={12} className="text-gray-400" />
-                            <span>
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <Clock size={12} className="text-gray-400 flex-shrink-0" />
+                            <span className="truncate">
                               {formatDate(entry.issuedDate || entry.returnDate || '')}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <MapPin size={12} className="text-gray-400" />
-                            <span>{entry.location}</span>
+                          <div className="flex items-center space-x-1 min-w-0">
+                            <MapPin size={12} className="text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{entry.location}</span>
                           </div>
                           {entry.department && (
-                            <div className="flex items-center space-x-1">
-                              <Tag size={12} className="text-gray-400" />
-                              <span>{entry.department}</span>
+                            <div className="flex items-center space-x-1 min-w-0">
+                              <Tag size={12} className="text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{entry.department}</span>
                             </div>
                           )}
                           {entry.itemValue && (
-                            <div className="flex items-center space-x-1">
-                              <DollarSign size={12} className="text-gray-400" />
-                              <span>₹{entry.itemValue.toLocaleString()}</span>
+                            <div className="flex items-center space-x-1 min-w-0">
+                              <DollarSign size={12} className="text-gray-400 flex-shrink-0" />
+                              <span className="truncate">₹{entry.itemValue.toLocaleString()}</span>
                             </div>
                           )}
                         </div>
                         {entry.notes && (
-                          <p className="mt-2 text-sm text-gray-600 italic">"{entry.notes}"</p>
+                          <p className="mt-2 text-sm text-gray-600 italic break-words">"{entry.notes}"</p>
                         )}
                       </div>
                     </div>
@@ -345,7 +346,7 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
                         e.stopPropagation();
                         setSelectedEntry(entry);
                       }}
-                      className="p-1 text-gray-400 hover:text-gray-600"
+                      className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
                     >
                       <Eye size={16} />
                     </button>
@@ -354,10 +355,10 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center">
-              <History className="mx-auto w-12 h-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">No audit entries found</h3>
-              <p className="mt-2 text-gray-500">
+            <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[200px]">
+              <History className="mx-auto w-12 h-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No audit entries found</h3>
+              <p className="text-gray-500 text-sm max-w-md">
                 {selectedItem ? 'No audit trail available for this item.' : 'No audit entries match your current filters.'}
               </p>
             </div>
@@ -366,74 +367,78 @@ const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({
 
         {/* Entry Detail Modal */}
         {selectedEntry && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Audit Entry Details</h3>
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50">
+            <div className="w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] bg-white rounded-lg sm:rounded-2xl shadow-xl overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-4">
+                  Audit Entry Details
+                </h3>
                 <button
                   onClick={() => setSelectedEntry(null)}
-                  className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100"
+                  className="p-2 text-gray-400 transition-colors rounded-lg hover:text-gray-600 hover:bg-gray-100 flex-shrink-0"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Action</label>
-                    <p className="text-sm text-gray-900 capitalize">{selectedEntry.action}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Item Name</label>
-                    <p className="text-sm text-gray-900">{selectedEntry.itemName}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      {selectedEntry.action === 'return' ? 'Returned By' : 'Issued To'}
-                    </label>
-                    <p className="text-sm text-gray-900">
-                      {selectedEntry.action === 'return' ? selectedEntry.returnedBy : selectedEntry.issuedTo}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      {selectedEntry.action === 'return' ? 'Return Date' : 'Issue Date'}
-                    </label>
-                    <p className="text-sm text-gray-900">
-                      {formatDate(selectedEntry.issuedDate || selectedEntry.returnDate || '')}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Department</label>
-                    <p className="text-sm text-gray-900">{selectedEntry.department || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Location</label>
-                    <p className="text-sm text-gray-900">{selectedEntry.location || 'N/A'}</p>
-                  </div>
-                  {selectedEntry.itemValue && (
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Item Value</label>
-                      <p className="text-sm text-gray-900">₹{selectedEntry.itemValue.toLocaleString()}</p>
+                      <label className="block text-sm font-medium text-gray-700">Action</label>
+                      <p className="text-sm text-gray-900 capitalize break-words">{selectedEntry.action}</p>
                     </div>
-                  )}
-                  {selectedEntry.purpose && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Purpose</label>
-                      <p className="text-sm text-gray-900">{selectedEntry.purpose}</p>
+                      <label className="block text-sm font-medium text-gray-700">Item Name</label>
+                      <p className="text-sm text-gray-900 break-words">{selectedEntry.itemName}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        {selectedEntry.action === 'return' ? 'Returned By' : 'Issued To'}
+                      </label>
+                      <p className="text-sm text-gray-900 break-words">
+                        {selectedEntry.action === 'return' ? selectedEntry.returnedBy : selectedEntry.issuedTo}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        {selectedEntry.action === 'return' ? 'Return Date' : 'Issue Date'}
+                      </label>
+                      <p className="text-sm text-gray-900 break-words">
+                        {formatDate(selectedEntry.issuedDate || selectedEntry.returnDate || '')}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Department</label>
+                      <p className="text-sm text-gray-900 break-words">{selectedEntry.department || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Location</label>
+                      <p className="text-sm text-gray-900 break-words">{selectedEntry.location || 'N/A'}</p>
+                    </div>
+                    {selectedEntry.itemValue && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Item Value</label>
+                        <p className="text-sm text-gray-900 break-words">₹{selectedEntry.itemValue.toLocaleString()}</p>
+                      </div>
+                    )}
+                    {selectedEntry.purpose && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Purpose</label>
+                        <p className="text-sm text-gray-900 break-words">{selectedEntry.purpose}</p>
+                      </div>
+                    )}
+                  </div>
+                  {selectedEntry.notes && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Notes</label>
+                      <p className="text-sm text-gray-900 break-words">{selectedEntry.notes}</p>
                     </div>
                   )}
                 </div>
-                {selectedEntry.notes && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Notes</label>
-                    <p className="text-sm text-gray-900">{selectedEntry.notes}</p>
-                  </div>
-                )}
               </div>
 
-              <div className="flex items-center justify-end pt-6 mt-6 space-x-3 border-t border-gray-200">
+              <div className="flex items-center justify-end p-4 sm:p-6 pt-4 sm:pt-6 border-t border-gray-200 flex-shrink-0">
                 <button
                   onClick={() => setSelectedEntry(null)}
                   className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"

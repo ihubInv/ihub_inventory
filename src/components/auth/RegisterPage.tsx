@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Facebook, ArrowRight, Check, X } from 'lucide-react';
 import RoleDropdown from '../common/RoleDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
+import SimpleLocationDropdown from '../common/SimpleLocationDropdown';
 import { AuthToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +19,8 @@ interface FormData {
   email: string;
   password: string;
   role: string;
-  department:string
+  department: string;
+  location: string;
 }
 
 const RegisterPage: React.FC = () => {
@@ -28,8 +30,8 @@ const RegisterPage: React.FC = () => {
         email: '',
         password: '',
         role: 'employee',
-        department:""
-       
+        department: '',
+        location: ''
       });
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -67,6 +69,10 @@ const RegisterPage: React.FC = () => {
         newErrors.department = 'Department is required';
       }
       
+      if (!formData.location.trim()) {
+        newErrors.location = 'Location is required';
+      }
+      
       setErrors(newErrors);
       return Object.keys(newErrors);
     };
@@ -89,7 +95,7 @@ const RegisterPage: React.FC = () => {
     if (!formData.email.endsWith(allowedDomain)) {
       toast.error(`Only emails ending with ${allowedDomain} are allowed to register.`, {
         position: 'top-right',
-        autoClose: 5000,
+        duration: 5000,
       });
       return;
     }
@@ -118,7 +124,8 @@ const RegisterPage: React.FC = () => {
           data: {
             name: formData.name,
             role: formData.role,
-            department: formData.department
+            department: formData.department,
+            location: formData.location
           }
         }
       });
@@ -136,6 +143,7 @@ const RegisterPage: React.FC = () => {
             name: formData.name,
             role: formData.role,
             department: formData.department,
+            location: formData.location,
             isactive: true,
             createdat: new Date().toISOString(),
             lastlogin: null
@@ -157,7 +165,8 @@ const RegisterPage: React.FC = () => {
         email: '',
         password: '',
         role: 'employee',
-        department: ''
+        department: '',
+        location: ''
       });
 
       setTimeout(() => {
@@ -340,6 +349,19 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
                 onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
                 placeholder="Select your department"
                 error={errors.department}
+                required
+                searchable
+              />
+            </div>
+
+            {/* Location Field */}
+            <div className="relative">
+              <SimpleLocationDropdown
+                label="Location"
+                value={formData.location}
+                onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+                placeholder="Select your location"
+                error={errors.location}
                 required
                 searchable
               />

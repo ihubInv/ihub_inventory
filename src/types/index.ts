@@ -50,9 +50,7 @@ export interface InventoryItem {
   minimumstocklevel: number;
   purchaseordernumber?: string;
   expectedlifespan?: string;
-  assettag?: string;
-  salvagevalue?: number;
-  annualmanagementcharge?: number; // Added for AMS field
+  annualmanagementcharge?: number;
   attachments?: { name: string; url: string }[] | File[]; // Can be URLs from DB or Files during upload
   lastmodifiedby: string;
   lastmodifieddate: Date;

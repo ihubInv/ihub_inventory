@@ -86,7 +86,7 @@
 //     { label: 'Quantity Per Item', value: processedCategory.quantityperitem },
 //     { label: 'Rate (Inclusive Tax)', value: processedCategory.rateinclusivetax },
 //     { label: 'Total Cost', value: processedCategory.totalcost },
-//     { label: 'Asset Tag', value: processedCategory.assettag },
+//     { label: 'Asset Tag', value: processedCategory.annualmanagementcharge },
 //     { label: 'Modified By (User ID)', value: processedCategory.lastmodifiedby },
 //   ].map((field, index) => (
 //     <div key={index} className="break-words">
@@ -386,7 +386,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
                     { label: 'Invoice Number', value: processedCategory.invoicenumber, icon: FileText },
                     { label: 'Purchase Order #', value: processedCategory.purchaseordernumber, icon: FileText },
                     { label: 'Financial Year', value: processedCategory.financialyear, icon: Calendar },
-                    { label: 'Asset Tag', value: processedCategory.assettag, icon: Tag },
+                    { label: 'Annual Management Charge (AMS)', value: processedCategory.annualmanagementcharge ? `₹${processedCategory.annualmanagementcharge}` : 'Not set', icon: DollarSign },
                   ].map((field, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="p-2 bg-gray-100 rounded-lg">
@@ -495,7 +495,7 @@ const ViewInventory: React.FC<ViewInventoryProps> = ({ viewingCategory, onClose,
                 </div>
                 <div className="space-y-4">
                   {[
-                    { label: 'Expected Lifespan', value: processedCategory.expectedlifespan },
+                     { label: 'Expected Lifespan', value: processedCategory.expectedlifespan },
                     { label: 'Warranty Information', value: processedCategory.warrantyinformation },
                     { label: 'Depreciation Method', value: processedCategory.depreciationmethod },
                     { label: 'Maintenance Schedule', value: processedCategory.maintenanceschedule },

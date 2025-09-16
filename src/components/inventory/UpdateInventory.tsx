@@ -3,7 +3,8 @@ import {
   useGetInventoryItemsQuery,
   useGetCategoriesQuery,
   useUpdateInventoryItemMutation,
-  useDeleteInventoryItemMutation
+  useDeleteInventoryItemMutation,
+  useGetUsersQuery
 } from '../../store/api';
 import { useAppSelector } from '../../store/hooks';
 import { Save, X, Package, Calendar, DollarSign, MapPin, Image, Upload, Trash2, FileText } from 'lucide-react';
@@ -14,6 +15,7 @@ import CustomDatePicker from '../common/DatePicker';
 import CategoryDropdown from '../common/CategoryDropdown';
 import StatusDropdown from '../common/StatusDropdown';
 import ConditionDropdown from '../common/ConditionDropdown';
+import UserDropdown from '../common/UserDropdown';
 import UnitDropdown from '../common/UnitDropdown';
 import DepartmentDropdown from '../common/DepartmentDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
@@ -35,6 +37,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
   const { user } = useAppSelector((state) => state.auth);
   const { data: categories = [] } = useGetCategoriesQuery();
   const { data: inventoryItems = [] } = useGetInventoryItemsQuery();
+  const { data: users = [] } = useGetUsersQuery();
   const [updateInventoryItem] = useUpdateInventoryItemMutation();
   const [deleteInventoryItem] = useDeleteInventoryItemMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +119,22 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
         lastmodifieddate: new Date(),
       };
 
+      // Convert user ID to user name for issuedto field (database expects names, not IDs)
+      if (updateData.issuedto && updateData.issuedto !== '') {
+        const issuedToUser = users.find(u => u.id === updateData.issuedto);
+        if (issuedToUser) {
+          updateData.issuedto = issuedToUser.name;
+        }
+      }
+
+      // Convert user ID to user name for issuedby field (database expects names, not IDs)
+      if (updateData.issuedby && updateData.issuedby !== '') {
+        const issuedByUser = users.find(u => u.id === updateData.issuedby);
+        if (issuedByUser) {
+          updateData.issuedby = issuedByUser.name;
+        }
+      }
+
       // Remove undefined values
       Object.keys(updateData).forEach(key => {
         if (updateData[key as keyof typeof updateData] === undefined) {
@@ -124,7 +143,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
       });
 
       // Update using context method
-      await updateInventoryItem(item.id, updateData);
+      await updateInventoryItem({ id: item.id, updates: updateData });
 
       // Call the onUpdate callback with updated data
       const updatedItem: InventoryItem = {
@@ -477,15 +496,21 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
 
             <div>
               <label className="block mb-2 text-sm font-medium text-gray-700">
-                Asset Tag
+                Annual Management Charge (AMS) (₹)
               </label>
               <input
-                type="text"
-                name="assettag"
-                value={formData.assettag || ''}
+                type="number"
+                name="annualmanagementcharge"
+                value={formData.annualmanagementcharge || ''}
                 onChange={handleInputChange}
+                min="0"
+                step="0.01"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., 5000.00"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                💰 Annual management and maintenance charges
+              </p>
             </div>
 
             <div>
@@ -495,7 +520,7 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
               <input
                 type="number"
                 name="salvagevalue"
-                value={formData.salvagevalue || 0}
+                value={(formData as any).salvagevalue || 0}
                 onChange={handleNumberChange}
                 step="0.01"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -557,67 +582,74 @@ const UpdateInventory: React.FC<UpdateInventoryProps> = ({
                 <Calendar className="w-5 h-5 text-orange-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Issuance & Dates</h3>
               </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Issued To
-              </label>
-              <input
-                type="text"
-                name="issuedto"
-                value={formData.issuedto || ''}
-                onChange={handleInputChange}
-                placeholder="Enter employee name or department"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+              
+              {/* Conditional fields for issued status */}
+              {formData.status === 'issued' && (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mb-6">
+                  <div>
+                    <UserDropdown
+                      label="Issued To"
+                      value={formData.issuedto || ''}
+                      onChange={(value) => handleDropdownChange('issuedto', value)}
+                      placeholder="Select employee, manager, or admin"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      👤 Select the person this item is issued to
+                    </p>
+                  </div>
 
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Expected Return Date
-              </label>
-              <CustomDatePicker
-                selected={formData.expectedreturndate || null}
-                onChange={(date) => handleDateChange('expectedreturndate', date || undefined)}
-                placeholder="Select expected return date"
-              />
-            </div>
-              </div>
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Expected Return Date
+                    </label>
+                    <CustomDatePicker
+                      selected={formData.expectedreturndate || null}
+                      onChange={(date) => handleDateChange('expectedreturndate', date || undefined)}
+                      placeholder="Select expected return date"
+                      minDate={new Date()}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      📅 When is this item expected to be returned?
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {/* Dates Grid */}
-              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Date of Invoice
-              </label>
-              <CustomDatePicker
-                selected={formData.dateofinvoice || null}
-                onChange={(date) => handleDateChange('dateofinvoice', date || undefined)}
-                placeholder="Select date"
-              />
-            </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Date of Invoice
+                  </label>
+                  <CustomDatePicker
+                    selected={formData.dateofinvoice || null}
+                    onChange={(date) => handleDateChange('dateofinvoice', date || undefined)}
+                    placeholder="Select date"
+                  />
+                </div>
 
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Date of Entry
-              </label>
-              <CustomDatePicker
-                selected={formData.dateofentry || null}
-                onChange={(date) => handleDateChange('dateofentry', date || undefined)}
-                placeholder="Select date"
-              />
-            </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Date of Entry
+                  </label>
+                  <CustomDatePicker
+                    selected={formData.dateofentry || null}
+                    onChange={(date) => handleDateChange('dateofentry', date || undefined)}
+                    placeholder="Select date"
+                  />
+                </div>
 
-            <div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Date of Issue
-              </label>
-              <CustomDatePicker
-                selected={formData.dateofissue || null}
-                onChange={(date) => handleDateChange('dateofissue', date || undefined)}
-                placeholder="Select date"
-              />
-            </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Date of Issue
+                  </label>
+                  <CustomDatePicker
+                    selected={formData.dateofissue || null}
+                    onChange={(date) => handleDateChange('dateofissue', date || undefined)}
+                    placeholder="Select date"
+                  />
+                </div>
               </div>
             </div>
 

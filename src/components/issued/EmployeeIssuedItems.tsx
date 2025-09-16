@@ -108,15 +108,16 @@ const EmployeeIssuedItems: React.FC = () => {
     const inventoryItem = inventoryItems.find(i => i.id === item.id);
     const issuedTo = inventoryItem?.issuedto || '';
     
-    // Check if this item was issued to the current employee
-    const matches = issuedTo.toLowerCase().includes(user?.name?.toLowerCase() || '');
+    // Check if this item was issued to the current employee by NAME (not ID)
+    const matches = issuedTo === user?.name;
     
     // Debug logging for each item
     console.log('🔍 Employee Filter Debug:', {
       itemId: item.id,
       itemName: item.itemName,
       issuedTo: issuedTo,
-      currentUser: user?.name,
+      currentUserId: user?.id,
+      currentUserName: user?.name,
       matches: matches
     });
     

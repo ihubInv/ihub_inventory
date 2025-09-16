@@ -405,7 +405,7 @@ const handleFile = (file?: File) => {
   //       minimumstocklevel: 5,
   //       purchaseordernumber: '',
   //       expectedlifespan: '',
-  //       assettag: ''
+  //       annualmanagementcharge: 0
   //     });
 
   //     alert('Inventory item added successfully!');
@@ -1260,7 +1260,7 @@ const handleFile = (file?: File) => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
                   Expected Lifespan
                 </label>
@@ -1272,7 +1272,7 @@ const handleFile = (file?: File) => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., 5 years"
                 />
-              </div>
+              </div> */}
 
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">

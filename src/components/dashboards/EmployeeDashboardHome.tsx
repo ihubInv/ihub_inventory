@@ -28,10 +28,38 @@ const EmployeeDashboardHome: React.FC = () => {
   const myIssuedItems = inventoryItems
     .filter(item => item.status === 'issued')
     .filter(item => {
-      // Use actual database column instead of parsing description
+      // Use actual database column and match by user NAME (not ID)
       const issuedTo = item.issuedto || '';
-      return issuedTo.toLowerCase().includes(user?.name?.toLowerCase() || '');
+      const matches = issuedTo === user?.name;
+      
+      // Debug logging
+      console.log('🔍 EmployeeDashboardHome Debug:', {
+        itemId: item.id,
+        itemName: item.assetname,
+        status: item.status,
+        issuedTo: issuedTo,
+        currentUserName: user?.name,
+        currentUserId: user?.id,
+        matches: matches
+      });
+      
+      return matches;
     });
+  
+  // Additional debug logging
+  console.log('🔍 EmployeeDashboardHome Summary:', {
+    totalInventoryItems: inventoryItems.length,
+    issuedItems: inventoryItems.filter(item => item.status === 'issued').length,
+    myIssuedItemsCount: myIssuedItems.length,
+    currentUser: user?.name,
+    currentUserId: user?.id,
+    allIssuedItems: inventoryItems.filter(item => item.status === 'issued').map(item => ({
+      id: item.id,
+      name: item.assetname,
+      issuedTo: item.issuedto,
+      issuedBy: item.issuedby
+    }))
+  });
   
   const stats = {
     totalRequests: userRequests.length,

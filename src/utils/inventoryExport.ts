@@ -49,9 +49,8 @@ export interface InventoryExportData {
   status: string;
   minimumstocklevel: number;
   purchaseordernumber: string;
-  expectedlifespan: string;
-  assettag: string;
-  salvagevalue: number;
+   expectedlifespan: string;
+  annualmanagementcharge: number;
   createdat: string;
   lastmodifieddate: string;
   lastmodifiedby: string;
@@ -91,8 +90,7 @@ export const FIELD_MAPPING: Record<string, string> = {
   minimumstocklevel: 'Minimum Stock Level',
   purchaseordernumber: 'Purchase Order Number',
   expectedlifespan: 'Expected Lifespan',
-  assettag: 'Asset Tag',
-  salvagevalue: 'Salvage Value',
+  annualmanagementcharge: 'Annual Management Charge (AMS)',
   createdat: 'Created At',
   lastmodifieddate: 'Last Modified',
   lastmodifiedby: 'Modified By',
@@ -172,9 +170,8 @@ export async function fetchAllInventoryData(): Promise<InventoryExportData[]> {
       status: item.status || '',
       minimumstocklevel: item.minimumstocklevel || 0,
       purchaseordernumber: item.purchaseordernumber || '',
-      expectedlifespan: item.expectedlifespan || '',
-      assettag: item.assettag || '',
-      salvagevalue: item.salvagevalue || 0,
+       expectedlifespan: item.expectedlifespan || '',
+      annualmanagementcharge: item.annualmanagementcharge || 0,
       createdat: item.createdat ? new Date(item.createdat).toLocaleString() : '',
       lastmodifieddate: item.lastmodifieddate ? new Date(item.lastmodifieddate).toLocaleString() : '',
       lastmodifiedby: item.lastmodifiedby || '',

@@ -21,8 +21,6 @@ export interface CreateLocationData {
   description?: string;
   address?: string;
   capacity?: number;
-  contactperson?: string;
-  contactnumber?: string;
   isactive?: boolean;
   createdby: string;
 }
@@ -32,8 +30,6 @@ export interface UpdateLocationData {
   description?: string;
   address?: string;
   capacity?: number;
-  contactperson?: string;
-  contactnumber?: string;
   isactive?: boolean;
 }
 

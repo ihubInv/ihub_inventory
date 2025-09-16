@@ -11,9 +11,23 @@ export const inventoryApi = createApi({
     // Get all inventory items
     getInventoryItems: builder.query<InventoryItem[], void>({
       queryFn: async () => {
-        const { data, error } = await supabase.from('inventory_items').select('*');
+        const { data, error } = await supabase
+          .from('inventory_items')
+          .select('*');
         if (error) throw new Error(error.message);
-        return { data: data as InventoryItem[] };
+        
+        // Sort by serial number (last part of uniqueid after final '/')
+        const sortedData = (data as InventoryItem[]).sort((a, b) => {
+          const getSerialNumber = (uniqueid: string) => {
+            const parts = uniqueid.split('/');
+            const serialPart = parts[parts.length - 1];
+            return parseInt(serialPart) || 0;
+          };
+          
+          return getSerialNumber(a.uniqueid) - getSerialNumber(b.uniqueid);
+        });
+        
+        return { data: sortedData };
       },
       providesTags: ['InventoryItem'],
     }),
@@ -85,7 +99,19 @@ export const inventoryApi = createApi({
         
         const { data, error } = await query;
         if (error) throw new Error(error.message);
-        return { data: data as InventoryItem[] };
+        
+        // Sort by serial number (last part of uniqueid after final '/')
+        const sortedData = (data as InventoryItem[]).sort((a, b) => {
+          const getSerialNumber = (uniqueid: string) => {
+            const parts = uniqueid.split('/');
+            const serialPart = parts[parts.length - 1];
+            return parseInt(serialPart) || 0;
+          };
+          
+          return getSerialNumber(a.uniqueid) - getSerialNumber(b.uniqueid);
+        });
+        
+        return { data: sortedData };
       },
       providesTags: ['InventoryItem'],
     }),

@@ -53,8 +53,6 @@ const LocationManagement: React.FC = () => {
     description: '',
     address: '',
     capacity: 50,
-    contactperson: '',
-    contactnumber: '',
     isactive: true
   });
 
@@ -92,8 +90,6 @@ const LocationManagement: React.FC = () => {
         description: '',
         address: '',
         capacity: 50,
-        contactperson: '',
-        contactnumber: '',
         isactive: true
       });
       setShowAddModal(false);
@@ -112,8 +108,6 @@ const LocationManagement: React.FC = () => {
       description: location.description,
       address: location.address,
       capacity: location.capacity,
-      contactperson: location.contactperson,
-      contactnumber: location.contactnumber,
       isactive: location.isactive
     });
     setShowAddModal(true);
@@ -135,8 +129,6 @@ const LocationManagement: React.FC = () => {
           description: '',
           address: '',
           capacity: 50,
-          contactperson: '',
-          contactnumber: '',
           isactive: true
         });
         setShowAddModal(false);
@@ -332,10 +324,6 @@ const LocationManagement: React.FC = () => {
                 <Package className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-600">Capacity: {location.capacity} items</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Contact: {location.contactperson}</span>
-              </div>
             </div>
 
 
@@ -435,27 +423,6 @@ const LocationManagement: React.FC = () => {
                     placeholder="Max items"
                   />
                 </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">Contact Person</label>
-                  <input
-                    type="text"
-                    value={newLocation.contactperson}
-                    onChange={(e) => setNewLocation(prev => ({ ...prev, contactperson: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Manager name"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Contact Number</label>
-                <input
-                  type="tel"
-                  value={newLocation.contactnumber}
-                  onChange={(e) => setNewLocation(prev => ({ ...prev, contactnumber: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="+91-XXXX-XXXX"
-                />
               </div>
 
               <div className="flex items-center">
@@ -547,17 +514,6 @@ const LocationManagement: React.FC = () => {
                 <div>
                   <label className="block mb-1 text-sm font-medium text-gray-700">Capacity</label>
                   <p className="text-sm text-gray-900">{viewingLocation.capacity} items</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">Contact Person</label>
-                  <p className="text-sm text-gray-900">{viewingLocation.contactperson}</p>
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">Contact Number</label>
-                  <p className="text-sm text-gray-900">{viewingLocation.contactnumber}</p>
                 </div>
               </div>
 

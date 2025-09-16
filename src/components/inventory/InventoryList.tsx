@@ -64,8 +64,7 @@ interface AddInventoryFormData {
   minimumstocklevel: number;
   purchaseordernumber: string | undefined;
   expectedlifespan: string | undefined;
-  assettag: string | undefined;
-  salvagevalue: number | undefined;
+  annualmanagementcharge: number | undefined;
   attachments: (File | Attachment)[] | undefined;
   createdby: string;
   lastmodifiedby?: string;
@@ -214,8 +213,7 @@ const InventoryList: React.FC = () => {
     minimumstocklevel: 5,
     purchaseordernumber: undefined,
     expectedlifespan: undefined,
-    assettag: undefined,
-    salvagevalue: undefined,
+    annualmanagementcharge: undefined,
     attachments: [],
     createdby: user?.id || 'unknown',
     lastmodifiedby: user?.id || 'unknown',
@@ -394,7 +392,7 @@ const InventoryList: React.FC = () => {
       minimumstocklevel: item.minimumstocklevel,
       purchaseordernumber: item.purchaseordernumber,
       expectedlifespan: item.expectedlifespan,
-      assettag: item.assettag,
+      annualmanagementcharge: item.annualmanagementcharge,
       salvagevalue: item.salvagevalue,
       attachments: item.attachments ?? undefined,
       createdby: item.createdby,
@@ -453,7 +451,7 @@ const InventoryList: React.FC = () => {
         minimumstocklevel: 5,
         purchaseordernumber: undefined,
         expectedlifespan: undefined,
-        assettag: undefined,
+        annualmanagementcharge: undefined,
         salvagevalue: undefined,
         attachments: [],
         createdby: user?.id || 'unknown',
@@ -513,7 +511,7 @@ const InventoryList: React.FC = () => {
         minimumstocklevel: 5,
         purchaseordernumber: undefined,
         expectedlifespan: undefined,
-        assettag: undefined,
+        annualmanagementcharge: undefined,
         salvagevalue: undefined,
         attachments: [],
         createdby: user?.id || 'unknown',

@@ -24,6 +24,7 @@ export interface InventoryItem {
   dateofentry: Date | null;
   invoicenumber: string;
   assetcategoryid: string;
+  assetid?: string; // Added to match database schema
   assetname: string;
   specification: string;
   makemodel: string;
@@ -51,6 +52,7 @@ export interface InventoryItem {
   expectedlifespan?: string;
   assettag?: string;
   salvagevalue?: number;
+  annualmanagementcharge?: number; // Added for AMS field
   attachments?: { name: string; url: string }[] | File[]; // Can be URLs from DB or Files during upload
   lastmodifiedby: string;
   lastmodifieddate: Date;
@@ -79,12 +81,19 @@ export interface Request {
   remarks?: string;
 }
 
+export interface CategoryAsset {
+  id: string;
+  assetname: string;
+  createdat?: Date;
+}
+
 export interface Category {
   id: string;
   name: string;
   type: 'major' | 'minor';
   description?: string;
-  assetnames?: string[]; // Array of asset names for this category
+  assets?: CategoryAsset[]; // Array of asset objects with IDs
+  assetnames?: (string | CategoryAsset)[]; // Can be strings or objects with id/assetname
   isactive: boolean;
   createdat: Date;
   updatedat: Date;

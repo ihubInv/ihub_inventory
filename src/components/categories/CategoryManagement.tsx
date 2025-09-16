@@ -18,7 +18,7 @@ import DateRangePicker from '../common/DateRangePicker';
 import { CategoryDistributionChart } from '../charts/ChartComponents';
 import CategoryTypeDropdown from '../common/CategoryTypeDropdown';
 import FilterDropdown, { categoryTypeFilters, statusFilters } from '../common/FilterDropdown';
-import AssetSelectionDropdown from '../common/AssetSelectionDropdown';
+import { Category } from '../../types';
 import { 
   FolderPlus, 
   Plus, 
@@ -39,7 +39,8 @@ import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 
 const CategoryManagement: React.FC = () => {
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: categories = [], error: categoriesError, isLoading: categoriesLoading } = useGetCategoriesQuery();
+  
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
@@ -63,7 +64,7 @@ const CategoryManagement: React.FC = () => {
 
   const [newCategory, setNewCategory] = useState({
     name: '',
-    assetnames: [] as string[],
+    assetnames: [] as (string | any)[],
     type: 'major' as const,
     description: '',
     isactive: true
@@ -99,12 +100,27 @@ const CategoryManagement: React.FC = () => {
 
   // Function to add asset name to the list
   const addAssetName = () => {
-    if (currentAssetName.trim() && !newCategory.assetnames.includes(currentAssetName.trim())) {
+    if (currentAssetName.trim()) {
+      const assetName = currentAssetName.trim();
+      
+      // Check if asset already exists (handle both string and object formats)
+      const alreadyExists = newCategory.assetnames.some(name => {
+        const displayName = typeof name === 'string' ? name : (name as any)?.assetname || (name as any)?.name || String(name);
+        return displayName === assetName;
+      });
+      
+      if (alreadyExists) {
+        toast.error('Asset name already exists in this category');
+        return;
+      }
+      
       setNewCategory(prev => ({
         ...prev,
-        assetnames: [...prev.assetnames, currentAssetName.trim()]
+        assetnames: [...prev.assetnames, assetName]
       }));
       setCurrentAssetName('');
+      
+      toast.success(`Asset "${assetName}" added to category`);
     }
   };
 
@@ -118,8 +134,14 @@ const CategoryManagement: React.FC = () => {
     
     setNewCategory(prev => ({
       ...prev,
-      assetnames: prev.assetnames.filter(name => name !== assetName)
+      assetnames: prev.assetnames.filter(name => {
+        // Handle both string and object formats
+        const displayName = typeof name === 'string' ? name : (name as any)?.assetname || (name as any)?.name || String(name);
+        return displayName !== assetName;
+      })
     }));
+    
+    toast.success(`Asset "${assetName}" removed from category`);
   };
 
   // Function to edit asset name in the list
@@ -127,7 +149,11 @@ const CategoryManagement: React.FC = () => {
     // Update the local state
     setNewCategory(prev => ({
       ...prev,
-      assetnames: prev.assetnames.map(name => name === oldName ? newName : name)
+      assetnames: prev.assetnames.map(name => {
+        // Handle both string and object formats
+        const displayName = typeof name === 'string' ? name : (name as any)?.assetname || (name as any)?.name || String(name);
+        return displayName === oldName ? newName : name;
+      })
     }));
     
     // Track the change for API call
@@ -396,7 +422,7 @@ const CategoryManagement: React.FC = () => {
     categories: ['Major', 'Minor'],
     counts: [stats.major, stats.minor],
   };
-console.log("viewingCategory",viewingCategory)
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -619,14 +645,18 @@ console.log("viewingCategory",viewingCategory)
                           <div className="max-w-xs">
                             {category.assetnames && category.assetnames.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
-                                {category.assetnames.slice(0, 3).map((assetName: string, index: number) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                                  >
-                                    {assetName}
-                                  </span>
-                                ))}
+                                {category.assetnames.slice(0, 3).map((assetName: any, index: number) => {
+                                  // Handle both string and object formats
+                                  const displayName = typeof assetName === 'string' ? assetName : assetName?.assetname || assetName?.name || String(assetName);
+                                  return (
+                                    <span
+                                      key={index}
+                                      className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                                    >
+                                      {displayName}
+                                    </span>
+                                  );
+                                })}
                                 {category.assetnames.length > 3 && (
                                   <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
                                     +{category.assetnames.length - 3} more
@@ -875,14 +905,18 @@ console.log("viewingCategory",viewingCategory)
                 <div className="p-3 rounded-lg bg-gray-50">
                   {viewingCategory.assetnames && viewingCategory.assetnames.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {viewingCategory.assetnames.map((assetName: string, index: number) => (
-                        <span
-                          key={index}
-                          className="inline-flex px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
-                        >
-                          {assetName}
-                        </span>
-                      ))}
+                      {viewingCategory.assetnames.map((assetName: any, index: number) => {
+                        // Handle both string and object formats
+                        const displayName = typeof assetName === 'string' ? assetName : assetName?.assetname || assetName?.name || String(assetName);
+                        return (
+                          <span
+                            key={index}
+                            className="inline-flex px-2 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
+                          >
+                            {displayName}
+                          </span>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-gray-900">No asset names provided</p>
@@ -1136,29 +1170,31 @@ const DeleteButtonWithWarning: React.FC<{
 
 // Helper component to show asset name with removal warning and edit functionality
 const AssetNameWithWarning: React.FC<{
-  assetName: string;
+  assetName: string | any;
   categoryId: string;
   onRemove: (name: string) => void;
   onEdit: (oldName: string, newName: string) => void;
   usedAssetNames: string[];
 }> = ({ assetName, categoryId, onRemove, onEdit, usedAssetNames }) => {
+  // Handle both string and object formats
+  const displayName = typeof assetName === 'string' ? assetName : assetName?.assetname || assetName?.name || String(assetName);
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editValue, setEditValue] = React.useState(assetName);
+  const [editValue, setEditValue] = React.useState(displayName);
   
   // Check if this specific asset name is used
-  const isAssetNameUsed = usedAssetNames.includes(assetName);
+  const isAssetNameUsed = usedAssetNames.includes(displayName);
   
   const handleSave = () => {
-    if (editValue.trim() && editValue.trim() !== assetName) {
-      onEdit(assetName, editValue.trim());
+    if (editValue.trim() && editValue.trim() !== displayName) {
+      onEdit(displayName, editValue.trim());
     }
     setIsEditing(false);
-    setEditValue(assetName);
+    setEditValue(displayName);
   };
   
   const handleCancel = () => {
     setIsEditing(false);
-    setEditValue(assetName);
+    setEditValue(displayName);
   };
   
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1205,7 +1241,7 @@ const AssetNameWithWarning: React.FC<{
     return (
       <SmartTooltip content="Cannot remove. This asset name is used in inventory items.">
         <span className="inline-flex items-center px-3 py-1 text-sm bg-orange-100 text-orange-800 rounded-full">
-          {assetName}
+          {displayName}
           <button
             type="button"
             onClick={() => setIsEditing(true)}
@@ -1224,7 +1260,7 @@ const AssetNameWithWarning: React.FC<{
 
   return (
     <span className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full">
-      {assetName}
+      {displayName}
       <button
         type="button"
         onClick={() => setIsEditing(true)}
@@ -1235,7 +1271,7 @@ const AssetNameWithWarning: React.FC<{
       </button>
       <button
         type="button"
-        onClick={() => onRemove(assetName)}
+        onClick={() => onRemove(displayName)}
         className="ml-1 text-blue-600 hover:text-blue-800"
         title="Remove asset name"
       >

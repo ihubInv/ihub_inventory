@@ -41,17 +41,11 @@ const AssetNameDropdown: React.FC<AssetNameDropdownProps> = ({
     filteredCategories
       .flatMap(category => category.assetnames || []) // Use assetnames array and flatten
       .filter(Boolean)
+      .map(assetName => {
+        // Handle both string and object formats
+        return typeof assetName === 'string' ? assetName : assetName?.assetname || assetName?.name || String(assetName);
+      })
   )];
-
-  // Debug logging
-  console.log('AssetNameDropdown Debug:', {
-    categoryType,
-    assetCategory,
-    categoriesCount: categories.length,
-    filteredCategoriesCount: filteredCategories.length,
-    filteredCategories: filteredCategories.map(c => ({ name: c.name, type: c.type, assetnames: c.assetnames })),
-    assetNames
-  });
 
   const options = assetNames.map(assetName => ({
     value: assetName,

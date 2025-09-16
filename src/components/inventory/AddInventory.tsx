@@ -87,8 +87,8 @@ const AddInventory: React.FC = () => {
     minimumstocklevel: 5,
     purchaseordernumber: '',
     expectedlifespan: '',
-    assettag: '',
     salvagevalue: 0,
+    annualmanagementcharge: 0,
     attachments: [] as File[],
   };
 
@@ -192,17 +192,16 @@ const AddInventory: React.FC = () => {
       }
 
       // Check if unique ID already exists in database
-      const { data: existingItem, error } = await supabase
+      const { data: existingItems, error } = await supabase
         .from('inventory_items')
         .select('uniqueid')
-        .eq('uniqueid', uniqueId)
-        .single();
+        .eq('uniqueid', uniqueId);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is what we want
+      if (error) {
         return { isValid: false, error: `Database error checking unique ID: ${error.message}` };
       }
 
-      if (existingItem) {
+      if (existingItems && existingItems.length > 0) {
         return { isValid: false, error: `Unique ID "${uniqueId}" already exists in database` };
       }
 
@@ -572,9 +571,9 @@ const handleFile = (file?: File) => {
       minimumstocklevel: 5,
       purchaseordernumber: '',
       expectedlifespan: '',
-      assettag: '',
-      salvagevalue: 0,
-      attachments: [] as File[],
+                      salvagevalue: 0,
+                      annualmanagementcharge: 0,
+                      attachments: [] as File[],
     });
 
     CRUDToasts.created('inventory item');
@@ -1277,15 +1276,21 @@ const handleFile = (file?: File) => {
 
               <div>
                 <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Asset Tag/Barcode
+                  Annual Management Charge (AMS) (₹)
                 </label>
                 <input
-                  type="text"
-                  name="assettag"
-                  value={formData.assettag}
+                  type="number"
+                  name="annualmanagementcharge"
+                  value={formData.annualmanagementcharge || ''}
                   onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., 5000.00"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  💰 Annual management and maintenance charges
+                </p>
               </div>
 
             </div>
@@ -1430,8 +1435,8 @@ const handleFile = (file?: File) => {
                       minimumstocklevel: 5,
                       purchaseordernumber: '',
                       expectedlifespan: '',
-                      assettag: '',
                       salvagevalue: 0,
+                      annualmanagementcharge: 0,
                       attachments: [],
                     });
                     clearSavedFormData();

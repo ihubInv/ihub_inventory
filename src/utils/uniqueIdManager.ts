@@ -76,22 +76,23 @@ export const validateUniqueIdFormat = (uniqueId: string): UniqueIdValidationResu
  */
 export const checkUniqueIdExists = async (uniqueId: string, excludeId?: string): Promise<boolean> => {
   try {
-    let query = supabase
+    // Use a more robust query approach to avoid URL encoding issues
+    const { data, error } = await supabase
       .from('inventory_items')
-      .select('id')
+      .select('id, uniqueid')
       .eq('uniqueid', uniqueId);
 
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
-    const { data, error } = await query.single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (error) {
+      console.error('Error checking unique ID existence:', error);
       throw new Error(`Database error: ${error.message}`);
     }
 
-    return !!data; // Returns true if item exists, false if not
+    // Filter out the excluded ID if provided
+    const filteredData = excludeId 
+      ? data?.filter(item => item.id !== excludeId)
+      : data;
+
+    return (filteredData?.length || 0) > 0;
   } catch (error) {
     console.error('Error checking unique ID existence:', error);
     throw error;

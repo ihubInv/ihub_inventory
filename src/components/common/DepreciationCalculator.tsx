@@ -45,6 +45,11 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
     return new Date();
   }, [purchaseDate]);
 
+  // Calculate purchase year for use in JSX
+  const purchaseYear = React.useMemo(() => {
+    return getValidYear(safePurchaseDate.getFullYear());
+  }, [safePurchaseDate]);
+
   // Validate other required props
   const isValidInput = React.useMemo(() => {
     return assetValue > 0 && usefulLife > 0 && salvageValue >= 0 && salvageValue < assetValue;
@@ -63,7 +68,7 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
     } else {
       setDepreciation(null);
     }
-  }, [assetValue, salvageValue, usefulLife, safePurchaseDate, method, isValidInput]);
+  }, [assetValue, salvageValue, usefulLife, safePurchaseDate, method, isValidInput, purchaseYear, currentYear]);
 
   const calculateDepreciation = (): DepreciationResult => {
     // Additional safety check
@@ -71,7 +76,6 @@ const DepreciationCalculator: React.FC<DepreciationCalculatorProps> = ({
       throw new Error('Invalid input parameters for depreciation calculation');
     }
 
-    const purchaseYear = getValidYear(safePurchaseDate.getFullYear());
     const yearsElapsed = currentYear - purchaseYear;
     
     let yearlyDepreciation = 0;

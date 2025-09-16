@@ -84,11 +84,11 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
   const getSizeClasses = () => {
     switch (size) {
       case 'sm':
-        return 'px-3 py-2 text-sm';
+        return 'px-2 sm:px-3 py-2 text-sm';
       case 'lg':
-        return 'px-5 py-4 text-lg';
+        return 'px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg';
       default:
-        return 'px-4 py-3';
+        return 'px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base';
     }
   };
 
@@ -130,22 +130,22 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
             ${isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''}
           `}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {icon && <span className="text-gray-400">{icon}</span>}
-              {selectedOption?.icon && <span className="text-gray-600">{selectedOption.icon}</span>}
-              <div className="flex flex-col">
-                <span className={selectedOption ? 'text-gray-900' : 'text-gray-500'}>
+          <div className="flex items-center justify-between min-w-0">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              {icon && <span className="text-gray-400 flex-shrink-0">{icon}</span>}
+              {selectedOption?.icon && <span className="text-gray-600 flex-shrink-0">{selectedOption.icon}</span>}
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className={`truncate ${selectedOption ? 'text-gray-900' : 'text-gray-500'}`}>
                   {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 {selectedOption?.description && (
-                  <span className="text-xs text-gray-400">{selectedOption.description}</span>
+                  <span className="text-xs text-gray-400 truncate">{selectedOption.description}</span>
                 )}
               </div>
             </div>
             <ChevronDown 
-              size={20} 
-              className={`text-gray-400 transition-transform duration-200 ${
+              size={18} 
+              className={`text-gray-400 transition-transform duration-200 flex-shrink-0 ${
                 isOpen ? 'rotate-180' : ''
               }`} 
             />
@@ -156,22 +156,22 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
         {isOpen && (
           <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
             {searchable && (
-              <div className="p-3 border-b border-gray-100">
+              <div className="p-2 sm:p-3 border-b border-gray-100">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
                   <input
                     ref={searchInputRef}
                     type="text"
                     placeholder="Search options..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             )}
             
-            <div className="max-h-64 overflow-y-auto">
+            <div className="max-h-48 sm:max-h-64 md:max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <button
@@ -180,7 +180,7 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
                     onClick={() => handleSelect(option.value)}
                     disabled={option.disabled}
                     className={`
-                      w-full px-4 py-3 text-left transition-colors duration-150 flex items-center justify-between
+                      w-full px-3 sm:px-4 py-2 sm:py-3 text-left transition-colors duration-150 flex items-center justify-between
                       ${option.disabled 
                         ? 'text-gray-400 cursor-not-allowed bg-gray-50' 
                         : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer'
@@ -188,22 +188,22 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
                       ${option.value === value ? 'bg-blue-50 text-blue-700' : ''}
                     `}
                   >
-                    <div className="flex items-center space-x-3">
-                      {option.icon && <span>{option.icon}</span>}
-                      <div className="flex flex-col">
-                        <span className="font-medium">{option.label}</span>
+                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                      {option.icon && <span className="flex-shrink-0">{option.icon}</span>}
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-medium text-sm sm:text-base truncate">{option.label}</span>
                         {option.description && (
-                          <span className="text-xs text-gray-500">{option.description}</span>
+                          <span className="text-xs text-gray-500 truncate">{option.description}</span>
                         )}
                       </div>
                     </div>
                     {option.value === value && (
-                      <Check size={16} className="text-green-500" />
+                      <Check size={14} className="text-green-500 flex-shrink-0" />
                     )}
                   </button>
                 ))
               ) : (
-                <div className="px-4 py-3 text-gray-500 text-center">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 text-gray-500 text-center text-sm">
                   No options found
                 </div>
               )}

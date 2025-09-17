@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { useUpdateUserProfileMutation, useGetCurrentUserQuery } from '../../store/api/authApi';
+import { setUser } from '../../store/slices/authSlice';
 import { 
   User, 
   Save, 
@@ -191,6 +192,10 @@ const Profile: React.FC = () => {
          updates: { profilepicture: imageUrl }
        }).unwrap();
 
+       // Update Redux store immediately for real-time updates across components
+       const updatedUserData = { ...user, profilepicture: imageUrl };
+       dispatch(setUser(updatedUserData));
+
        // Force immediate UI update
        setCurrentProfilePicture(imageUrl);
        setProfilePictureKey(prev => prev + 1);
@@ -249,6 +254,10 @@ const Profile: React.FC = () => {
        if (directUpdateError) {
          console.error('Direct database update failed:', directUpdateError);
        }
+       
+       // Update Redux store immediately for real-time updates across components
+       const updatedUserData = { ...user, profilepicture: null };
+       dispatch(setUser(updatedUserData));
        
        // Force immediate UI update
        setCurrentProfilePicture(null);
@@ -322,11 +331,15 @@ const Profile: React.FC = () => {
         bio: formData.bio.trim() || undefined
       };
 
-      await updateUserProfile({ id: user.id, updates }).unwrap();
-      
-      toast.dismiss(loadingToast);
-      CRUDToasts.updated('profile');
-      setIsEditing(false);
+       const updatedUser = await updateUserProfile({ id: user.id, updates }).unwrap();
+       
+       // Update Redux store immediately for real-time updates across components
+       const updatedUserData = { ...user, ...updates };
+       dispatch(setUser(updatedUserData));
+       
+       toast.dismiss(loadingToast);
+       CRUDToasts.updated('profile');
+       setIsEditing(false);
       
     } catch (error: any) {
       console.error('Profile update error:', error);

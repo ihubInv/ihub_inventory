@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { logoutUser } from '../../store/slices/authSlice';
 import { useGetUnreadCountQuery } from '../../store/api';
@@ -29,6 +29,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
+  const [profilePictureKey, setProfilePictureKey] = useState(0);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data: unreadCount = 0 } = useGetUnreadCountQuery(user?.id || '', {
@@ -36,6 +37,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
   });
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Force re-render when profile picture changes
+  useEffect(() => {
+    setProfilePictureKey(prev => prev + 1);
+  }, [user?.profilepicture]);
 
   if (!user) return null;
 
@@ -150,7 +156,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
               <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] overflow-hidden">
                 {user.profilepicture ? (
                   <img
-                    src={user.profilepicture}
+                    key={`sidebar-desktop-profile-${profilePictureKey}`}
+                    src={`${user.profilepicture}?t=${profilePictureKey}`}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
@@ -237,7 +244,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpen, onMo
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] overflow-hidden">
               {user.profilepicture ? (
                 <img
-                  src={user.profilepicture}
+                  key={`sidebar-mobile-profile-${profilePictureKey}`}
+                  src={`${user.profilepicture}?t=${profilePictureKey}`}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

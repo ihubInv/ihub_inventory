@@ -26,6 +26,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobileToggle, onOpenEmailSetup }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [profilePictureKey, setProfilePictureKey] = useState(0);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data: unreadCount = 0 } = useGetUnreadCountQuery(user?.id || '', {
@@ -50,6 +51,11 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isProfileMenuOpen]);
+
+  // Force re-render when profile picture changes
+  useEffect(() => {
+    setProfilePictureKey(prev => prev + 1);
+  }, [user?.profilepicture]);
 
   if (!user) return null;
 
@@ -177,7 +183,8 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
                 {user.profilepicture ? (
                   <img
-                    src={user.profilepicture}
+                    key={`header-profile-${profilePictureKey}`}
+                    src={`${user.profilepicture}?t=${profilePictureKey}`}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
@@ -204,7 +211,8 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
                       {user.profilepicture ? (
                         <img
-                          src={user.profilepicture}
+                          key={`header-dropdown-profile-${profilePictureKey}`}
+                          src={`${user.profilepicture}?t=${profilePictureKey}`}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />
@@ -296,7 +304,8 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle, mobileOpen, onMobi
                 <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${roleInfo.color} flex items-center justify-center overflow-hidden`}>
                   {user.profilepicture ? (
                     <img
-                      src={user.profilepicture}
+                      key={`header-mobile-profile-${profilePictureKey}`}
+                      src={`${user.profilepicture}?t=${profilePictureKey}`}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />

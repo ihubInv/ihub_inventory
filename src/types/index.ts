@@ -3,15 +3,15 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'stock-manager' | 'employee';
-  department?: string;
+  department?: string | null;
   isactive: boolean;
   createdat: Date;
-  lastlogin?: Date;
-  profilepicture?: string;
-  phone?: string;
-  address?: string;
-  location?: string;
-  bio?: string;
+  lastlogin?: Date | null;
+  profilepicture?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  location?: string | null;
+  bio?: string | null;
 }
 
 

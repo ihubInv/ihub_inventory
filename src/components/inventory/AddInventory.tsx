@@ -26,7 +26,6 @@ import DepartmentDropdown from '../common/DepartmentDropdown';
 import DepreciationMethodDropdown from '../common/DepreciationMethodDropdown';
 import BulkUpload from './BulkUpload';
 import { bulkUploadInventory } from '../../services/bulkUploadService';
-import { CRUDToasts } from '../../services/toastService';
 
 const AddInventory: React.FC = () => {
   const [createInventoryItem] = useCreateInventoryItemMutation();
@@ -57,7 +56,7 @@ const AddInventory: React.FC = () => {
   const defaultFormData = {
     uniqueid: '',
     financialyear: '2024-25',
-    dateofinvoice: COMPANY_INFO.MIN_INVENTORY_DATE,
+    dateofinvoice: new Date(), // Default to current date
     dateofentry: new Date(),
     invoicenumber: '',
     categorytype: '',
@@ -244,13 +243,13 @@ const AddInventory: React.FC = () => {
   // Handle bulk upload
   const handleBulkUpload = async (data: any[]) => {
     try {
-      const loadingToast = CRUDToasts.bulkUploading(data.length);
+      const loadingToast = toast.loading(`Uploading ${data.length} items...`);
       const result = await bulkUploadInventory(data);
       toast.dismiss(loadingToast);
       
       if (result.success) {
         // Show success message
-        CRUDToasts.bulkUploaded(result.successCount);
+        toast.success(`Successfully uploaded ${result.successCount} items!`);
         
         // Refresh the inventory items (assuming you have a refresh function in context)
         // You might want to call a refresh function here to update the inventory list
@@ -262,11 +261,11 @@ const AddInventory: React.FC = () => {
         if (result.errors.length > 0) {
           errorMessage += '\n\nErrors:\n' + result.errors.map(err => `Row ${err.row}: ${err.error}`).join('\n');
         }
-        CRUDToasts.bulkUploadError(errorMessage);
+        toast.error(`Upload failed: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Bulk upload error:', error);
-      CRUDToasts.bulkUploadError('An unexpected error occurred during bulk upload. Please try again.');
+      toast.error('An unexpected error occurred during bulk upload. Please try again.');
     }
   };
 
@@ -533,7 +532,7 @@ const handleFile = (file?: File) => {
 
   let loadingToast: string | undefined;
   try {
-    loadingToast = CRUDToasts.creating('inventory item');
+    loadingToast = toast.loading('Creating inventory item...');
     await createInventoryItem(payload).unwrap();
     toast.dismiss(loadingToast);
 
@@ -576,14 +575,14 @@ const handleFile = (file?: File) => {
                       attachments: [] as File[],
     });
 
-    CRUDToasts.created('inventory item');
+    toast.success('Inventory item created successfully!');
     
     // Clear saved form data after successful submission
     clearSavedFormData();
   } catch (error) {
     console.error(error);
     toast.dismiss(loadingToast);
-    CRUDToasts.createError('inventory item', 'Please try again');
+    toast.error('Failed to create inventory item. Please try again.');
   }
 
   setIsSubmitting(false);

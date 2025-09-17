@@ -27,7 +27,6 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
-import { CRUDToasts } from '../../services/toastService';
 import { uploadProfilePicture, deleteProfilePicture, generateDefaultProfilePicture } from '../../utils/storageUtils';
 import toast from 'react-hot-toast';
 import DepartmentDropdown from '../common/DepartmentDropdown';
@@ -176,7 +175,7 @@ const Profile: React.FC = () => {
      }
 
      setFileUploadState(prev => ({ ...prev, isUploading: true }));
-     const loadingToast = CRUDToasts.updating('profile picture');
+     const loadingToast = toast.loading('Uploading profile picture...');
 
      try {
        // Delete old profile picture if it exists
@@ -208,7 +207,7 @@ const Profile: React.FC = () => {
        await refetchUser();
        
        toast.dismiss(loadingToast);
-       CRUDToasts.updated('profile picture');
+       toast.success('Profile picture updated successfully!');
        
        // Reset state
        resetFileUploadState();
@@ -222,7 +221,7 @@ const Profile: React.FC = () => {
        } else if (error.message?.includes('storage')) {
          toast.error('Failed to upload image to storage. Please try again.');
        } else {
-         CRUDToasts.updateError('profile picture', error.message || 'Upload failed');
+         toast.error('Failed to upload profile picture. Please try again.');
        }
      } finally {
        setFileUploadState(prev => ({ ...prev, isUploading: false }));
@@ -237,7 +236,7 @@ const Profile: React.FC = () => {
      }
 
      setFileUploadState(prev => ({ ...prev, isDeleting: true, showDeleteConfirm: false }));
-     const loadingToast = CRUDToasts.updating('profile picture');
+     const loadingToast = toast.loading('Uploading profile picture...');
 
      try {
        // Delete from storage
@@ -271,7 +270,7 @@ const Profile: React.FC = () => {
        await refetchUser();
        
        toast.dismiss(loadingToast);
-       CRUDToasts.updated('profile picture');
+       toast.success('Profile picture updated successfully!');
        
        // Reset file input
        if (fileInputRef.current) {
@@ -285,7 +284,7 @@ const Profile: React.FC = () => {
        if (error.message?.includes('row-level security policy')) {
          toast.error('Profile update failed due to security policy. Please contact your administrator.');
        } else {
-         CRUDToasts.updateError('profile picture', error.message || 'Removal failed');
+         toast.error('Failed to remove profile picture. Please try again.');
        }
      } finally {
        setFileUploadState(prev => ({ ...prev, isDeleting: false }));
@@ -329,26 +328,34 @@ const Profile: React.FC = () => {
     }
 
     setIsSaving(true);
-    const loadingToast = CRUDToasts.updating('profile');
+    const loadingToast = toast.loading('Updating profile...');
     
     try {
       const updates = {
         name: formData.name.trim(),
-        department: formData.department.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        location: formData.location.trim() || undefined,
-        bio: formData.bio.trim() || undefined
+        department: formData.department.trim() || null,
+        phone: formData.phone.trim() || null,
+        address: formData.address.trim() || null,
+        location: formData.location.trim() || null,
+        bio: formData.bio.trim() || null
       };
 
+      console.log('🔍 Profile Update Debug:', {
+        originalFormData: formData,
+        updates: updates,
+        userId: user.id
+      });
+
        const updatedUser = await updateUserProfile({ id: user.id, updates }).unwrap();
+       
+       console.log('🔍 Profile Update Result:', updatedUser);
        
        // Update Redux store immediately for real-time updates across components
        const updatedUserData = { ...user, ...updates };
        dispatch(setUser(updatedUserData));
        
        toast.dismiss(loadingToast);
-       CRUDToasts.updated('profile');
+       toast.success('Profile updated successfully!');
        setIsEditing(false);
       
     } catch (error: any) {
@@ -360,7 +367,7 @@ const Profile: React.FC = () => {
       } else if (error.message?.includes('duplicate key')) {
         toast.error('A user with this information already exists.');
       } else {
-        CRUDToasts.updateError('profile', error.message || 'Update failed');
+        toast.error('Failed to update profile. Please try again.');
       }
     } finally {
       setIsSaving(false);

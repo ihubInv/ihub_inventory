@@ -47,19 +47,7 @@ const DashboardHome: React.FC = () => {
     skip: !user?.id
   });
   const navigate = useNavigate();
-  const stats = {
-    totalitems: inventoryItems.length,
-    availableitems: inventoryItems.filter(item => item.status === 'available').length,
-    issueditems: inventoryItems.filter(item => item.status === 'issued').length,
-    pendingrequests: requests.filter(req => req.status === 'pending').length,
-    approvedrequests: requests.filter(req => req.status === 'approved').length,
-    rejectedrequests: requests.filter(req => req.status === 'rejected').length,
-    lowstockitems: inventoryItems.filter(item => item.balancequantityinstock <= item.minimumstocklevel).length,
-    maintenanceitems: inventoryItems.filter(item => item.status === 'maintenance').length,
-    totalusers: users.length,
-    activeusers: users.filter((user: any) => user.isactive).length
-  };
-
+  
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -69,6 +57,31 @@ const DashboardHome: React.FC = () => {
 
   const isAdmin = user?.role === 'admin';
   const isStockManager = user?.role === 'stock-manager';
+  const isEmployee = user?.role === 'employee';
+
+  // Filter requests for current user if employee
+  const userRequests = isEmployee ? requests.filter(req => req.employeeid === user?.id) : requests;
+  
+  // Get issued items for current employee
+  const myIssuedItems = isEmployee ? inventoryItems
+    .filter(item => item.status === 'issued')
+    .filter(item => {
+      const issuedTo = item.issuedto || '';
+      return issuedTo === user?.name;
+    }) : [];
+
+  const stats = {
+    totalitems: isEmployee ? myIssuedItems.length : inventoryItems.length,
+    availableitems: isEmployee ? 0 : inventoryItems.filter(item => item.status === 'available').length,
+    issueditems: isEmployee ? myIssuedItems.length : inventoryItems.filter(item => item.status === 'issued').length,
+    pendingrequests: userRequests.filter(req => req.status === 'pending').length,
+    approvedrequests: userRequests.filter(req => req.status === 'approved').length,
+    rejectedrequests: userRequests.filter(req => req.status === 'rejected').length,
+    lowstockitems: isEmployee ? 0 : inventoryItems.filter(item => item.balancequantityinstock <= item.minimumstocklevel).length,
+    maintenanceitems: isEmployee ? 0 : inventoryItems.filter(item => item.status === 'maintenance').length,
+    totalusers: isEmployee ? 0 : users.length,
+    activeusers: isEmployee ? 0 : users.filter((user: any) => user.isactive).length
+  };
 
   // Generate dynamic chart data from actual inventory data
   const generateInventoryTrendData = () => {
@@ -238,7 +251,10 @@ const DashboardHome: React.FC = () => {
                 </div>
               </div>
               <p className="text-lg text-blue-100 max-w-2xl animate-slideInLeft" style={{ animationDelay: '0.4s' }}>
-                Here's a comprehensive overview of your inventory system with real-time analytics and insights.
+                {isEmployee 
+                  ? "Track your inventory requests and manage your issued items with real-time updates and insights."
+                  : "Here's a comprehensive overview of your inventory system with real-time analytics and insights."
+                }
               </p>
             </div>
             
@@ -246,15 +262,17 @@ const DashboardHome: React.FC = () => {
             <div className="hidden lg:flex space-x-4 animate-slideInRight" style={{ animationDelay: '0.6s' }}>
               <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
                 <div className="text-2xl font-bold text-white">{stats.totalitems}</div>
-                <div className="text-sm text-blue-100">Total Items</div>
+                <div className="text-sm text-blue-100">{isEmployee ? "My Items" : "Total Items"}</div>
               </div>
-              <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
-                <div className="text-2xl font-bold text-white">{stats.availableitems}</div>
-                <div className="text-sm text-blue-100">Available</div>
-              </div>
+              {!isEmployee && (
+                <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
+                  <div className="text-2xl font-bold text-white">{stats.availableitems}</div>
+                  <div className="text-sm text-blue-100">Available</div>
+                </div>
+              )}
               <div className="text-center p-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-sm">
                 <div className="text-2xl font-bold text-white">{stats.pendingrequests}</div>
-                <div className="text-sm text-blue-100">Pending</div>
+                <div className="text-sm text-blue-100">{isEmployee ? "My Pending" : "Pending"}</div>
               </div>
             </div>
           </div>
@@ -265,7 +283,7 @@ const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="animate-slideInUp" style={{ animationDelay: '0.1s' }}>
           <StatsCard
-            title="Total Inventory"
+            title={isEmployee ? "My Issued Items" : "Total Inventory"}
             value={stats.totalitems}
             icon={Package}
             color="blue"
@@ -273,19 +291,21 @@ const DashboardHome: React.FC = () => {
           />
         </div>
         
-        <div className="animate-slideInUp" style={{ animationDelay: '0.2s' }}>
-          <StatsCard
-            title="Available Items"
-            value={stats.availableitems}
-            icon={CheckCircle}
-            color="green"
-            trend={{ value: Math.round((stats.availableitems / Math.max(stats.totalitems, 1)) * 100), direction: 'up' }}
-          />
-        </div>
+        {!isEmployee && (
+          <div className="animate-slideInUp" style={{ animationDelay: '0.2s' }}>
+            <StatsCard
+              title="Available Items"
+              value={stats.availableitems}
+              icon={CheckCircle}
+              color="green"
+              trend={{ value: Math.round((stats.availableitems / Math.max(stats.totalitems, 1)) * 100), direction: 'up' }}
+            />
+          </div>
+        )}
         
         <div className="animate-slideInUp" style={{ animationDelay: '0.3s' }}>
           <StatsCard
-            title="Pending Requests"
+            title={isEmployee ? "My Pending Requests" : "Pending Requests"}
             value={stats.pendingrequests}
             icon={Clock}
             color="yellow"
@@ -293,27 +313,51 @@ const DashboardHome: React.FC = () => {
           />
         </div>
         
-        <div className="animate-slideInUp" style={{ animationDelay: '0.4s' }}>
-          {stats.lowstockitems > 0 ? (
-            <StatsCard
-              title="Low Stock Alert"
-              value={stats.lowstockitems}
-              icon={AlertTriangle}
-              color="red"
-              trend={{ value: 100, direction: 'up' }}
-            />
-          ) : (
-            <StatsCard
-              title="Stock Status"
-              value={0}
-              icon={CheckCircle}
-              color="green"
-              trend={{ value: 0, direction: 'down' }}
-            />
-          )}
-        </div>
+        {!isEmployee && (
+          <div className="animate-slideInUp" style={{ animationDelay: '0.4s' }}>
+            {stats.lowstockitems > 0 ? (
+              <StatsCard
+                title="Low Stock Alert"
+                value={stats.lowstockitems}
+                icon={AlertTriangle}
+                color="red"
+                trend={{ value: 100, direction: 'up' }}
+              />
+            ) : (
+              <StatsCard
+                title="Stock Status"
+                value={0}
+                icon={CheckCircle}
+                color="green"
+                trend={{ value: 0, direction: 'down' }}
+              />
+            )}
+          </div>
+        )}
 
-        {(isAdmin || isStockManager) && (
+        {isEmployee ? (
+          <>
+            <div className="animate-slideInUp" style={{ animationDelay: '0.4s' }}>
+              <StatsCard
+                title="My Approved Requests"
+                value={stats.approvedrequests}
+                icon={CheckCircle}
+                color="green"
+                trend={{ value: 15, direction: 'up' }}
+              />
+            </div>
+            
+            <div className="animate-slideInUp" style={{ animationDelay: '0.5s' }}>
+              <StatsCard
+                title="My Rejected Requests"
+                value={stats.rejectedrequests}
+                icon={XCircle}
+                color="red"
+                trend={{ value: 3, direction: 'down' }}
+              />
+            </div>
+          </>
+        ) : (
           <>
             <StatsCard
               title="Issued Items"
@@ -354,37 +398,39 @@ const DashboardHome: React.FC = () => {
 
       {/* Enhanced Charts Section */}
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
-        {/* Inventory Trend Chart */}
-        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.5s' }}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
-                <LineChart className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Inventory Trends</h3>
-                <p className="text-sm text-gray-500">Growth over time</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-blue-700">Last 6 months</span>
-            </div>
-          </div>
-          <div className="h-80">
-            {hasInventoryData ? (
-              <InventoryTrendChart data={inventoryTrendData} />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">No inventory data available</p>
-                  <p className="text-sm text-gray-400">Add some inventory items to see trends</p>
+        {/* Inventory Trend Chart - Hidden for employees */}
+        {!isEmployee && (
+          <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.5s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
+                  <LineChart className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Inventory Trends</h3>
+                  <p className="text-sm text-gray-500">Growth over time</p>
                 </div>
               </div>
-            )}
+              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-blue-700">Last 6 months</span>
+              </div>
+            </div>
+            <div className="h-80">
+              {hasInventoryData ? (
+                <InventoryTrendChart data={inventoryTrendData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500">No inventory data available</p>
+                    <p className="text-sm text-gray-400">Add some inventory items to see trends</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Request Status Chart */}
         <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.6s' }}>
@@ -394,7 +440,7 @@ const DashboardHome: React.FC = () => {
                 <PieChart className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Request Status</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{isEmployee ? "My Request Status" : "Request Status"}</h3>
                 <p className="text-sm text-gray-500">Current distribution</p>
               </div>
             </div>
@@ -407,96 +453,136 @@ const DashboardHome: React.FC = () => {
             <RequestStatusChart data={requestStatusData} />
           </div>
         </div>
+
+        {/* Monthly Activity Chart - For employees, show this parallel to Request Status */}
+        {isEmployee && (
+          <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.7s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">My Monthly Activity</h3>
+                  <p className="text-sm text-gray-500">My requests over time</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-700">Last 6 months</span>
+              </div>
+            </div>
+            <div className="h-80">
+              {userRequests.length > 0 ? (
+                <MonthlyActivityChart data={monthlyActivityData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500">No activity data available</p>
+                    <p className="text-sm text-gray-400">Submit requests to see activity</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Additional Charts Row */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        {/* Category Distribution */}
-        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.7s' }}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
-                <BarChart3 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Category Distribution</h3>
-                <p className="text-sm text-gray-500">By asset type</p>
-              </div>
-            </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
-          </div>
-          <div className="h-64">
-            {categoryData.categories.length > 0 ? (
-              <CategoryDistributionChart data={categoryData} />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500">No categories found</p>
-                  <p className="text-sm text-gray-400">Add inventory items to see distribution</p>
+        {/* Category Distribution - Hidden for employees */}
+        {!isEmployee && (
+          <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.7s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Category Distribution</h3>
+                  <p className="text-sm text-gray-500">By asset type</p>
                 </div>
               </div>
-            )}
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
+            </div>
+            <div className="h-64">
+              {categoryData.categories.length > 0 ? (
+                <CategoryDistributionChart data={categoryData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-500">No categories found</p>
+                    <p className="text-sm text-gray-400">Add inventory items to see distribution</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Asset Condition */}
-        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.8s' }}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Asset Condition</h3>
-                <p className="text-sm text-gray-500">By asset status</p>
-              </div>
-            </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
-          </div>
-          <div className="h-64">
-            {hasInventoryData ? (
-              <AssetConditionChart data={assetConditionData} />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500">No asset data available</p>
-                  <p className="text-sm text-gray-400">Add inventory items to see conditions</p>
+        {/* Asset Condition - Hidden for employees */}
+        {!isEmployee && (
+          <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.8s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Asset Condition</h3>
+                  <p className="text-sm text-gray-500">By asset status</p>
                 </div>
               </div>
-            )}
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
+            </div>
+            <div className="h-64">
+              {hasInventoryData ? (
+                <AssetConditionChart data={assetConditionData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-500">No asset data available</p>
+                    <p className="text-sm text-gray-400">Add inventory items to see conditions</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Monthly Activity */}
-        <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.9s' }}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">Monthly Activity</h3>
-                <p className="text-sm text-gray-500">Inventory & requests</p>
-              </div>
-            </div>
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
-          </div>
-          <div className="h-64">
-            {(hasInventoryData || requests.length > 0) ? (
-              <MonthlyActivityChart data={monthlyActivityData} />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500">No activity data available</p>
-                  <p className="text-sm text-gray-400">Add inventory items or requests to see activity</p>
+        {/* Monthly Activity - Only for non-employees (moved to main charts section for employees) */}
+        {!isEmployee && (
+          <div className="group p-8 bg-white border border-gray-100 shadow-lg rounded-3xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 animate-slideInUp" style={{ animationDelay: '0.9s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] rounded-2xl shadow-lg">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Monthly Activity</h3>
+                  <p className="text-sm text-gray-500">Inventory & requests</p>
                 </div>
               </div>
-            )}
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] animate-pulse"></div>
+            </div>
+            <div className="h-64">
+              {(hasInventoryData || requests.length > 0) ? (
+                <MonthlyActivityChart data={monthlyActivityData} />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Package className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-500">No activity data available</p>
+                    <p className="text-sm text-gray-400">Add inventory items or requests to see activity</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Recent Activity */}
@@ -532,14 +618,32 @@ const DashboardHome: React.FC = () => {
               </>
             )}
             
-            {user?.role === 'employee' && (
-              <button 
-                onClick={() => navigate('/employee/create-request')}
-                className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
-              >
-                <span className="font-medium">Create New Request</span>
-                <ClipboardList size={20} />
-              </button>
+            {isEmployee && (
+              <>
+                <button 
+                  onClick={() => navigate('/employee/create-request')}
+                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
+                >
+                  <span className="font-medium">Create New Request</span>
+                  <ClipboardList size={20} />
+                </button>
+                
+                <button 
+                  onClick={() => navigate('/employee/requests')}
+                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
+                >
+                  <span className="font-medium">View My Requests</span>
+                  <ClipboardList size={20} />
+                </button>
+                
+                <button 
+                  onClick={() => navigate('/employee/issued-items')}
+                  className="flex items-center justify-between w-full p-4 text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-[#0d559e] to-[#1a6bb8] hover:from-[#0a4a8a] hover:to-[#155a9e]"
+                >
+                  <span className="font-medium">View My Issued Items</span>
+                  <Package size={20} />
+                </button>
+              </>
             )}
             
             <button 

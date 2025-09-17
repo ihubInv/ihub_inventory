@@ -30,6 +30,8 @@ import { supabase } from '../../lib/supabaseClient';
 import { CRUDToasts } from '../../services/toastService';
 import { uploadProfilePicture, deleteProfilePicture, generateDefaultProfilePicture } from '../../utils/storageUtils';
 import toast from 'react-hot-toast';
+import DepartmentDropdown from '../common/DepartmentDropdown';
+import SimpleLocationDropdown from '../common/SimpleLocationDropdown';
 
 interface FileUploadState {
   isUploading: boolean;
@@ -46,6 +48,7 @@ interface FormData {
   department: string;
   phone: string;
   address: string;
+  location: string;
   bio: string;
 }
 
@@ -59,12 +62,13 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: user?.name || '',
-    email: user?.email || '',
-    department: user?.department || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    bio: user?.bio || ''
+    name: String(user?.name || ''),
+    email: String(user?.email || ''),
+    department: String(user?.department || ''),
+    phone: String(user?.phone || ''),
+    address: String(user?.address || ''),
+    location: String(user?.location || ''),
+    bio: String(user?.bio || '')
   });
 
   // File upload state
@@ -291,23 +295,28 @@ const Profile: React.FC = () => {
   // Form handlers
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: String(value) }));
+  }, []);
+
+  // Handle dropdown changes
+  const handleDropdownChange = useCallback((field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: String(value) }));
   }, []);
 
   const validateForm = useCallback((): boolean => {
-    if (!formData.name.trim()) {
+    if (!formData.name || !String(formData.name).trim()) {
       toast.error('Name is required');
       return false;
     }
-    if (formData.name.trim().length < 2) {
+    if (String(formData.name).trim().length < 2) {
       toast.error('Name must be at least 2 characters long');
       return false;
     }
-    if (formData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+    if (formData.phone && String(formData.phone).trim() && !/^[\+]?[1-9][\d]{0,15}$/.test(String(formData.phone).replace(/\s/g, ''))) {
       toast.error('Please enter a valid phone number');
       return false;
     }
-    if (formData.bio && formData.bio.length > 500) {
+    if (formData.bio && String(formData.bio).length > 500) {
       toast.error('Bio must be less than 500 characters');
       return false;
     }
@@ -328,6 +337,7 @@ const Profile: React.FC = () => {
         department: formData.department.trim() || undefined,
         phone: formData.phone.trim() || undefined,
         address: formData.address.trim() || undefined,
+        location: formData.location.trim() || undefined,
         bio: formData.bio.trim() || undefined
       };
 
@@ -359,12 +369,13 @@ const Profile: React.FC = () => {
 
   const handleCancel = useCallback(() => {
     setFormData({
-      name: user?.name || '',
-      email: user?.email || '',
-      department: user?.department || '',
-      phone: user?.phone || '',
-      address: user?.address || '',
-      bio: user?.bio || ''
+      name: String(user?.name || ''),
+      email: String(user?.email || ''),
+      department: String(user?.department || ''),
+      phone: String(user?.phone || ''),
+      address: String(user?.address || ''),
+      location: String(user?.location || ''),
+      bio: String(user?.bio || '')
     });
     setIsEditing(false);
     resetFileUploadState();
@@ -426,12 +437,13 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        department: user.department || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        bio: user.bio || ''
+        name: String(user.name || ''),
+        email: String(user.email || ''),
+        department: String(user.department || ''),
+        phone: String(user.phone || ''),
+        address: String(user.address || ''),
+        location: String(user.location || ''),
+        bio: String(user.bio || '')
       });
     }
   }, [user]);
@@ -869,13 +881,11 @@ const Profile: React.FC = () => {
                       Department
                     </label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        name="department"
+                      <DepartmentDropdown
                         value={formData.department}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 transition-all duration-200 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white"
-                        placeholder="Enter your department"
+                        onChange={(value) => handleDropdownChange('department', value)}
+                        placeholder="Select your department"
+                        searchable
                       />
                     ) : (
                       <div className="px-4 py-3 border border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
@@ -901,6 +911,28 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="px-4 py-3 border border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl">
                         <span className="font-medium text-gray-900">{formData.address || 'Not provided'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Location Row */}
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="flex items-center block mb-2 text-sm font-semibold text-gray-700">
+                      <MapPin size={16} className="mr-2 text-indigo-500" />
+                      Location
+                    </label>
+                    {isEditing ? (
+                      <SimpleLocationDropdown
+                        value={formData.location}
+                        onChange={(value) => handleDropdownChange('location', value)}
+                        placeholder="Select your location"
+                        searchable
+                      />
+                    ) : (
+                      <div className="px-4 py-3 border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                        <span className="font-medium text-gray-900">{formData.location || 'Not provided'}</span>
                       </div>
                     )}
                   </div>

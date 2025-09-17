@@ -10,6 +10,7 @@ export interface User {
   profilepicture?: string;
   phone?: string;
   address?: string;
+  location?: string;
   bio?: string;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { useUpdateUserProfileMutation, useGetCurrentUserQuery } from '../../store/api/authApi';
 import { 
@@ -20,27 +20,44 @@ import {
   CheckCircle,
   Star,
   TrendingUp,
-  Activity
+  Activity,
+  Eye,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { CRUDToasts } from '../../services/toastService';
 import { uploadProfilePicture, deleteProfilePicture, generateDefaultProfilePicture } from '../../utils/storageUtils';
 import toast from 'react-hot-toast';
 
+interface FileUploadState {
+  isUploading: boolean;
+  isDeleting: boolean;
+  showPreview: boolean;
+  showDeleteConfirm: boolean;
+  previewFile: File | null;
+  previewUrl: string | null;
+}
+
+interface FormData {
+  name: string;
+  email: string;
+  department: string;
+  phone: string;
+  address: string;
+  bio: string;
+}
+
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const [updateUserProfile] = useUpdateUserProfileMutation();
   const { refetch: refetchUser } = useGetCurrentUserQuery();
+  
+  // Form state
   const [isEditing, setIsEditing] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: user?.name || '',
     email: user?.email || '',
     department: user?.department || '',
@@ -49,294 +66,226 @@ const Profile: React.FC = () => {
     bio: user?.bio || ''
   });
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
+  // File upload state
+  const [fileUploadState, setFileUploadState] = useState<FileUploadState>({
+    isUploading: false,
+    isDeleting: false,
+    showPreview: false,
+    showDeleteConfirm: false,
+    previewFile: null,
+    previewUrl: null
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+   const [profilePictureKey, setProfilePictureKey] = useState(0);
+   const [currentProfilePicture, setCurrentProfilePicture] = useState<string | null>(user?.profilepicture || null);
+   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDroppedFile = async (file: File) => {
-    console.log('File dropped:', file);
-    
-    if (!user) {
-      toast.error('No user data available');
-      return;
-    }
-
-    // Validate file type
+  // File validation
+  const validateFile = useCallback((file: File): string | null => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file (JPG, PNG, GIF)');
-      return;
+      return 'Please select an image file (JPG, PNG, GIF, WebP)';
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
+      return 'Image size should be less than 5MB';
     }
-
-    console.log('Showing preview for dropped file:', file.name);
-    // Show preview instead of immediately uploading
-    const imageUrl = URL.createObjectURL(file);
-    setPreviewImage(imageUrl);
-    setPendingFile(file);
-    setShowImagePreview(true);
-  };
-
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    console.log('File selected:', file);
-    
-    if (!file) return;
-
-    if (!user) {
-      toast.error('No user data available');
-      return;
+    if (file.size < 1024) {
+      return 'Image is too small (minimum 1KB)';
     }
+    return null;
+  }, []);
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file (JPG, PNG, GIF)');
-      return;
+  // Reset file upload state
+  const resetFileUploadState = useCallback(() => {
+    if (fileUploadState.previewUrl) {
+      URL.revokeObjectURL(fileUploadState.previewUrl);
     }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    console.log('Showing preview for file:', file.name);
-    // Show preview instead of immediately uploading
-    const imageUrl = URL.createObjectURL(file);
-    setPreviewImage(imageUrl);
-    setPendingFile(file);
-    setShowImagePreview(true);
-  };
-
-  const confirmImageUpload = async () => {
-    if (!pendingFile) return;
-
-    console.log('Confirming upload for file:', pendingFile.name);
-    setShowImagePreview(false);
-    await performUpload(pendingFile);
-    
-    // Cleanup
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
-    setPreviewImage(null);
-    setPendingFile(null);
-  };
-
-  const cancelImageUpload = () => {
-    console.log('Canceling image upload');
-    setShowImagePreview(false);
-    
-    // Cleanup
-    if (previewImage) {
-      URL.revokeObjectURL(previewImage);
-    }
-    setPreviewImage(null);
-    setPendingFile(null);
-    
-    // Reset file input
+    setFileUploadState({
+      isUploading: false,
+      isDeleting: false,
+      showPreview: false,
+      showDeleteConfirm: false,
+      previewFile: null,
+      previewUrl: null
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, [fileUploadState.previewUrl]);
 
-  const performUpload = async (file: File) => {
-    if (!user) return;
-
-    setIsUploading(true);
-    const loadingToast = CRUDToasts.updating('profile picture');
-
-    try {
-      // Delete old profile picture if it exists
-      if (user.profilepicture) {
-        console.log('Deleting old profile picture:', user.profilepicture);
-        await deleteProfilePicture(user.id, user.profilepicture);
-      }
-
-      // Upload new image using utility function
-      console.log('Uploading new profile picture...');
-      const imageUrl = await uploadProfilePicture(user.id, file);
-
-      if (!imageUrl) {
-        throw new Error('Failed to upload image');
-      }
-
-      console.log('Updating user profile with new image URL:', imageUrl);
-      
-      // Update user profile
-      const updatedUser = await updateUserProfile({
-        id: user.id,
-        updates: {
-          profilepicture: imageUrl
-        }
-      }).unwrap();
-
-      console.log('Profile picture uploaded and user updated:', updatedUser);
-      toast.dismiss(loadingToast);
-      CRUDToasts.updated('profile picture');
-      
-      // Refresh user data to reflect the changes immediately
-      console.log('Refreshing user data after upload...');
-      const refreshResult = await refetchUser();
-      console.log('User data refresh result:', refreshResult);
-      
-      // Force immediate UI update
-      setTimeout(() => {
-        console.log('Forcing UI update after upload...');
-        // Trigger a re-render by updating form data
-        setFormData(prev => ({ ...prev }));
-        
-        // Force image refresh
-        const img = document.querySelector('img[alt*="profile"]') as HTMLImageElement;
-        if (img) {
-          img.src = `${imageUrl}?t=${Date.now()}`;
-          console.log('Image src updated to:', img.src);
-        }
-      }, 100);
-    } catch (error: any) {
-      console.error('Profile picture upload error:', error);
-      toast.dismiss(loadingToast);
-      
-      if (error.message?.includes('row-level security policy')) {
-        toast.error('Profile update failed due to security policy. Please contact your administrator.');
-      } else if (error.message?.includes('storage')) {
-        toast.error('Failed to upload image to storage. Please try again.');
-      } else {
-        CRUDToasts.updateError('profile picture', error.message || 'Upload failed');
-      }
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const removeProfilePicture = async () => {
-    console.log('Remove profile picture clicked');
-    console.log('User:', user);
-    console.log('User profile picture:', user?.profilepicture);
-    
-    if (!user?.profilepicture) {
-      toast.error('No profile picture to remove');
+  // Handle file selection (both click and drag-drop)
+  const handleFileSelect = useCallback((file: File) => {
+    if (!user) {
+      toast.error('No user data available');
       return;
     }
 
-    console.log('Showing delete confirmation dialog');
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteProfilePicture = async () => {
-    if (!user?.profilepicture) return;
-
-    console.log('Starting profile picture deletion for user:', user.id);
-    console.log('Current profile picture URL:', user.profilepicture);
-    
-    setShowDeleteConfirm(false);
-    const loadingToast = CRUDToasts.updating('profile picture');
-
-    try {
-      // Delete the image from storage
-      console.log('Deleting image from storage...');
-      const deleted = await deleteProfilePicture(user.id, user.profilepicture);
-      
-      if (!deleted) {
-        console.warn('Failed to delete image from storage, continuing with profile update');
-      } else {
-        console.log('Image deleted from storage successfully');
-      }
-
-      // Update user profile to remove the profile picture URL
-      console.log('Updating user profile to remove profile picture URL...');
-      const updatedUser = await updateUserProfile({
-        id: user.id,
-        updates: {
-          profilepicture: undefined
-        }
-      }).unwrap();
-
-      console.log('User profile updated successfully:', updatedUser);
-      
-      // Check if the update was successful
-      if (updatedUser && updatedUser.profilepicture) {
-        console.log('Profile picture still exists, trying with empty string...');
-        try {
-          await updateUserProfile({
-            id: user.id,
-            updates: {
-              profilepicture: ''
-            }
-          }).unwrap();
-        } catch (emptyStringError) {
-          console.warn('Empty string update failed, trying direct database update:', emptyStringError);
-        }
-      }
-      
-      // Final fallback: Direct database update
-      console.log('Performing direct database update as fallback...');
-      const { error: directUpdateError } = await supabase
-        .from('users')
-        .update({ profilepicture: null })
-        .eq('id', user.id);
-        
-      if (directUpdateError) {
-        console.error('Direct database update failed:', directUpdateError);
-      } else {
-        console.log('Direct database update successful');
-      }
-      
-      toast.dismiss(loadingToast);
-      CRUDToasts.updated('profile picture');
-      
-      // Refresh user data to reflect the changes
-      console.log('Refreshing user data...');
-      const refreshResult = await refetchUser();
-      console.log('User data refresh result after deletion:', refreshResult);
-      
-      // Force immediate UI update
-      setTimeout(() => {
-        console.log('Forcing UI update after deletion...');
-        // Trigger a re-render by updating form data
-        setFormData(prev => ({ ...prev }));
-        
-        // Force component re-render
-        const profilePicDiv = document.querySelector('[key*="profile-pic"]') as HTMLElement;
-        if (profilePicDiv) {
-          profilePicDiv.setAttribute('key', `profile-pic-${Date.now()}`);
-        }
-      }, 100);
-      
-      // Reset file input after successful deletion
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      console.error('Profile picture removal error:', error);
-      toast.dismiss(loadingToast);
-      
-      if (error.message?.includes('row-level security policy')) {
-        toast.error('Profile update failed due to security policy. Please contact your administrator.');
-      } else if (error.message?.includes('No user data returned')) {
-        toast.error('User profile not found. Please refresh the page and try again.');
-      } else {
-        CRUDToasts.updateError('profile picture', error.message || 'Removal failed');
-      }
+    const validationError = validateFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
-  };
 
-  const validateForm = () => {
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setFileUploadState(prev => ({
+      ...prev,
+      previewFile: file,
+      previewUrl,
+      showPreview: true
+    }));
+  }, [user, validateFile]);
+
+  // Handle file input change
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  }, [handleFileSelect]);
+
+  // Handle drag and drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  }, [handleFileSelect]);
+
+   // Upload file to server
+   const performFileUpload = useCallback(async () => {
+     if (!fileUploadState.previewFile || !user) {
+       return;
+     }
+
+     setFileUploadState(prev => ({ ...prev, isUploading: true }));
+     const loadingToast = CRUDToasts.updating('profile picture');
+
+     try {
+       // Delete old profile picture if it exists
+       if (user.profilepicture) {
+         await deleteProfilePicture(user.id, user.profilepicture);
+       }
+
+       // Upload new image
+       const imageUrl = await uploadProfilePicture(user.id, fileUploadState.previewFile);
+       if (!imageUrl) {
+         throw new Error('Failed to upload image');
+       }
+
+       // Update user profile in database
+       const updatedUser = await updateUserProfile({
+         id: user.id,
+         updates: { profilepicture: imageUrl }
+       }).unwrap();
+
+       // Force immediate UI update
+       setCurrentProfilePicture(imageUrl);
+       setProfilePictureKey(prev => prev + 1);
+       
+       // Refresh user data
+       await refetchUser();
+       
+       toast.dismiss(loadingToast);
+       CRUDToasts.updated('profile picture');
+       
+       // Reset state
+       resetFileUploadState();
+       
+     } catch (error: any) {
+       console.error('Profile picture upload error:', error);
+       toast.dismiss(loadingToast);
+       
+       if (error.message?.includes('row-level security policy')) {
+         toast.error('Profile update failed due to security policy. Please contact your administrator.');
+       } else if (error.message?.includes('storage')) {
+         toast.error('Failed to upload image to storage. Please try again.');
+       } else {
+         CRUDToasts.updateError('profile picture', error.message || 'Upload failed');
+       }
+     } finally {
+       setFileUploadState(prev => ({ ...prev, isUploading: false }));
+     }
+   }, [fileUploadState.previewFile, user, updateUserProfile, refetchUser, resetFileUploadState]);
+
+   // Delete profile picture
+   const performFileDelete = useCallback(async () => {
+     if (!user?.profilepicture) {
+       toast.error('No profile picture to remove');
+       return;
+     }
+
+     setFileUploadState(prev => ({ ...prev, isDeleting: true, showDeleteConfirm: false }));
+     const loadingToast = CRUDToasts.updating('profile picture');
+
+     try {
+       // Delete from storage
+       await deleteProfilePicture(user.id, user.profilepicture);
+
+       // Update user profile to remove picture reference
+       const updatedUser = await updateUserProfile({
+         id: user.id,
+         updates: { profilepicture: undefined }
+       }).unwrap();
+
+       // Fallback: Direct database update
+       const { error: directUpdateError } = await supabase
+         .from('users')
+         .update({ profilepicture: null as any })
+         .eq('id', user.id);
+       
+       if (directUpdateError) {
+         console.error('Direct database update failed:', directUpdateError);
+       }
+       
+       // Force immediate UI update
+       setCurrentProfilePicture(null);
+       setProfilePictureKey(prev => prev + 1);
+       
+       // Refresh user data
+       await refetchUser();
+       
+       toast.dismiss(loadingToast);
+       CRUDToasts.updated('profile picture');
+       
+       // Reset file input
+       if (fileInputRef.current) {
+         fileInputRef.current.value = '';
+       }
+       
+     } catch (error: any) {
+       console.error('Profile picture removal error:', error);
+       toast.dismiss(loadingToast);
+       
+       if (error.message?.includes('row-level security policy')) {
+         toast.error('Profile update failed due to security policy. Please contact your administrator.');
+       } else {
+         CRUDToasts.updateError('profile picture', error.message || 'Removal failed');
+       }
+     } finally {
+       setFileUploadState(prev => ({ ...prev, isDeleting: false }));
+     }
+   }, [user, updateUserProfile, refetchUser]);
+
+  // Form handlers
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const validateForm = useCallback((): boolean => {
     if (!formData.name.trim()) {
       toast.error('Name is required');
       return false;
@@ -354,15 +303,10 @@ const Profile: React.FC = () => {
       return false;
     }
     return true;
-  };
+  }, [formData]);
 
-  const handleSave = async () => {
-    if (!user) {
-      toast.error('No user data available');
-      return;
-    }
-
-    if (!validateForm()) {
+  const handleSave = useCallback(async () => {
+    if (!user || !validateForm()) {
       return;
     }
 
@@ -378,14 +322,12 @@ const Profile: React.FC = () => {
         bio: formData.bio.trim() || undefined
       };
 
-      await updateUserProfile({
-        id: user.id,
-        updates
-      }).unwrap();
+      await updateUserProfile({ id: user.id, updates }).unwrap();
       
       toast.dismiss(loadingToast);
       CRUDToasts.updated('profile');
       setIsEditing(false);
+      
     } catch (error: any) {
       console.error('Profile update error:', error);
       toast.dismiss(loadingToast);
@@ -400,9 +342,9 @@ const Profile: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [user, formData, validateForm, updateUserProfile]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setFormData({
       name: user?.name || '',
       email: user?.email || '',
@@ -412,6 +354,15 @@ const Profile: React.FC = () => {
       bio: user?.bio || ''
     });
     setIsEditing(false);
+    resetFileUploadState();
+  }, [user, resetFileUploadState]);
+
+  // Utility functions
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   const getRoleConfig = (role: string) => {
@@ -450,35 +401,31 @@ const Profile: React.FC = () => {
     }
   };
 
-  const roleConfig = getRoleConfig(user?.role || '');
-  const RoleIcon = roleConfig.icon || User;
-
-  // Cleanup preview image on unmount
+  // Effects
   useEffect(() => {
     return () => {
-      if (previewImage) {
-        URL.revokeObjectURL(previewImage);
+      if (fileUploadState.previewUrl) {
+        URL.revokeObjectURL(fileUploadState.previewUrl);
       }
     };
-  }, [previewImage]);
+  }, [fileUploadState.previewUrl]);
 
-  // Force re-render when user profile picture changes
   useEffect(() => {
-    console.log('Profile picture changed, forcing re-render:', user?.profilepicture);
-    // Force component to re-render by updating a dummy state
-    setFormData(prev => ({ ...prev }));
-  }, [user?.profilepicture]);
-
-  // Handle real-time updates after profile picture operations
-  useEffect(() => {
-    if (user?.profilepicture) {
-      console.log('Profile picture detected, updating UI:', user.profilepicture);
-      // Force image refresh by updating the src with timestamp
-      const img = document.querySelector('img[alt*="profile"]') as HTMLImageElement;
-      if (img) {
-        img.src = `${user.profilepicture}?t=${Date.now()}`;
-      }
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        department: user.department || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        bio: user.bio || ''
+      });
     }
+  }, [user]);
+
+  // Update current profile picture when user changes
+  useEffect(() => {
+    setCurrentProfilePicture(user?.profilepicture || null);
   }, [user?.profilepicture]);
 
   if (!user) {
@@ -491,6 +438,9 @@ const Profile: React.FC = () => {
       </div>
     );
   }
+
+  const roleConfig = getRoleConfig(user?.role || '');
+  const RoleIcon = roleConfig.icon || User;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
@@ -549,7 +499,7 @@ const Profile: React.FC = () => {
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={isSaving || isUploading}
+                      disabled={isSaving || fileUploadState.isUploading}
                       className="flex items-center px-6 py-3 space-x-2 font-semibold text-white transition-all duration-200 transform bg-green-500 rounded-xl hover:bg-green-600 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       <Save size={18} className="text-white" />
@@ -576,202 +526,169 @@ const Profile: React.FC = () => {
               </h3>
               
               <div className="text-center">
-                {/* Profile Picture */}
-                <div className="relative inline-block mb-4" key={`profile-pic-${user.profilepicture || 'default'}`}>
-                  {user.profilepicture ? (
-                    <div className="relative group">
-                      <img
-                        src={`${user.profilepicture}?t=${Date.now()}`}
-                        alt={`${user.name}'s profile`}
-                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
-                        onError={(e) => {
-                          console.error('Profile picture failed to load:', user.profilepicture);
-                          e.currentTarget.style.display = 'none';
-                          // Show fallback
-                          const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (fallbackDiv) {
-                            fallbackDiv.style.display = 'flex';
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log('Profile picture loaded successfully');
-                        }}
-                      />
-                      {/* Hidden fallback div */}
-                      <div 
-                        className="hidden items-center justify-center w-32 h-32 mx-auto border-4 border-white rounded-full shadow-lg bg-gradient-to-br from-gray-200 to-gray-300"
-                        style={{ position: 'absolute', top: 0, left: 0 }}
-                      >
-                        <User size={48} className="text-gray-500" />
-                      </div>
-                      
-                      {/* Hover overlay for actions - Fixed positioning */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200 z-10">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                          {isEditing ? (
-                            <div className="flex flex-col space-y-2">
-                              <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg z-20"
-                                title="Change picture"
-                              >
-                                <Camera size={16} />
-                              </button>
-                              <button
-                                onClick={removeProfilePicture}
-                                className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg z-20"
-                                title="Remove picture"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setIsEditing(true)}
-                              className="p-2 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors shadow-lg z-20"
-                              title="Edit profile"
-                            >
-                              <Edit3 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                 {/* Profile Picture Display */}
+                 <div className="flex flex-col items-center mb-4" key={`profile-pic-${profilePictureKey}`}>
+                   <div className="relative">
+                     {currentProfilePicture ? (
+                       <div className="relative group">
+                         <img
+                           src={`${currentProfilePicture}?t=${profilePictureKey}`}
+                           alt={`${user.name}'s profile`}
+                           className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
+                           onError={(e) => {
+                             console.error('Profile picture failed to load:', currentProfilePicture);
+                             e.currentTarget.style.display = 'none';
+                             const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                             if (fallbackDiv) {
+                               fallbackDiv.style.display = 'flex';
+                             }
+                           }}
+                           onLoad={() => console.log('Profile picture loaded successfully')}
+                         />
+                         {/* Fallback for broken images */}
+                         <div 
+                           className="hidden items-center justify-center w-32 h-32 border-4 border-white rounded-full shadow-lg bg-gradient-to-br from-gray-200 to-gray-300"
+                           style={{ position: 'absolute', top: 0, left: 0 }}
+                         >
+                           <User size={48} className="text-gray-500" />
+                         </div>
+                         
+                         {/* Hover overlay for quick actions */}
+                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200">
+                           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                             {isEditing ? (
+                               <div className="flex space-x-2">
+                                 <button
+                                   onClick={() => fileInputRef.current?.click()}
+                                   className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
+                                   title="Change picture"
+                                 >
+                                   <Camera size={16} />
+                                 </button>
+                                 <button
+                                   onClick={() => setFileUploadState(prev => ({ ...prev, showDeleteConfirm: true }))}
+                                   className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                                   title="Remove picture"
+                                 >
+                                   <Trash2 size={16} />
+                                 </button>
+                               </div>
+                             ) : (
+                               <button
+                                 onClick={() => setIsEditing(true)}
+                                 className="p-2 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors shadow-lg"
+                                 title="Edit profile"
+                               >
+                                 <Edit3 size={16} />
+                               </button>
+                             )}
+                           </div>
+                         </div>
+                       </div>
+                     ) : (
+                       <div className="relative group">
+                         <img
+                           src={generateDefaultProfilePicture(user.name, 128)}
+                           alt={`${user.name}'s default profile`}
+                           className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
+                         />
+                         
+                         {/* Hover overlay for quick actions */}
+                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200">
+                           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                             {isEditing ? (
+                               <button
+                                 onClick={() => fileInputRef.current?.click()}
+                                 className="p-3 text-white bg-green-500 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+                                 title="Add profile picture"
+                               >
+                                 <Camera size={20} />
+                               </button>
+                             ) : (
+                               <button
+                                 onClick={() => setIsEditing(true)}
+                                 className="p-3 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors shadow-lg"
+                                 title="Add profile picture"
+                               >
+                                 <Camera size={20} />
+                               </button>
+                             )}
+                           </div>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                   
+                   {/* Status indicator */}
+                   <div className="mt-2 text-center">
+                     {currentProfilePicture ? (
+                       <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-green-600 bg-green-100 rounded-full">
+                         <CheckCircle size={12} className="mr-1" />
+                         Custom Avatar
+                       </span>
+                     ) : (
+                       <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                         <User size={12} className="mr-1" />
+                         Default Avatar
+                       </span>
+                     )}
+                   </div>
+                 </div>
 
-                      {/* Status indicator */}
-                      {/* <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div> */}
-                    </div>
-                  ) : (
-                    <div className="relative group">
-                      <img
-                        src={generateDefaultProfilePicture(user.name, 128)}
-                        alt={`${user.name}'s default profile`}
-                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
-                      />
-                      
-                      {/* Hover overlay for actions */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          {isEditing ? (
-                            <button
-                              onClick={() => fileInputRef.current?.click()}
-                              className="p-3 text-white bg-green-500 rounded-full hover:bg-green-600 transition-colors"
-                              title="Add profile picture"
-                            >
-                              <Camera size={20} />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => setIsEditing(true)}
-                              className="p-3 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors"
-                              title="Add profile picture"
-                            >
-                              <Camera size={20} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                 {/* File Upload Controls */}
+                 {isEditing && (
+                   <div className="mt-6 space-y-4">
+                     {/* Upload Buttons */}
+                     <div className="grid grid-cols-1 gap-3">
+                       <button
+                         onClick={() => fileInputRef.current?.click()}
+                         disabled={fileUploadState.isUploading || fileUploadState.isDeleting}
+                         className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                       >
+                         <Camera size={18} />
+                         <span>
+                           {fileUploadState.isUploading ? 'Uploading...' : 
+                            currentProfilePicture ? 'Change Picture' : 'Add Picture'}
+                         </span>
+                       </button>
 
-                      {/* Default avatar indicator */}
-                      {/* <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-400 border-2 border-white rounded-full flex items-center justify-center">
-                        <User size={12} className="text-white" />
-                      </div> */}
-
-                      {isEditing && (
-                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                          <div className="px-3 py-1 text-xs font-medium text-gray-600 bg-white rounded-full shadow-md border">
-                            Click to add photo
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Always visible remove button when profile picture exists */}
-                {user.profilepicture && (
-                  <div className="mt-4">
-                    <button
-                      onClick={removeProfilePicture}
-                      className="flex items-center justify-center w-full px-4 py-2 space-x-2 text-sm font-medium text-red-600 transition-all duration-200 border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700"
-                    >
-                      <X size={16} className="text-red-500" />
-                      <span>Remove Profile Picture</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Upload Controls */}
-                {isEditing && (
-                  <div className="space-y-4">
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-1 gap-2">
-                      {user.profilepicture ? (
-                        <>
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploading}
-                            className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-                          >
-                            <Camera size={18} className="text-white" />
-                            <span>{isUploading ? 'Uploading...' : 'Change Picture'}</span>
-                          </button>
-                          <button
-                            onClick={removeProfilePicture}
-                            disabled={isUploading}
-                            className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-                          >
-                            <X size={18} className="text-white" />
-                            <span>Remove Picture</span>
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-                        >
-                          <Camera size={18} className="text-white" />
-                          <span>{isUploading ? 'Uploading...' : 'Add Profile Picture'}</span>
-                        </button>
-                      )}
-                    </div>
+                       {currentProfilePicture && (
+                         <button
+                           onClick={() => setFileUploadState(prev => ({ ...prev, showDeleteConfirm: true }))}
+                           disabled={fileUploadState.isUploading || fileUploadState.isDeleting}
+                           className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                         >
+                           {fileUploadState.isDeleting ? (
+                             <>
+                               <RefreshCw size={18} className="animate-spin" />
+                               <span>Removing...</span>
+                             </>
+                           ) : (
+                             <>
+                               <Trash2 size={18} />
+                               <span>Remove Picture</span>
+                             </>
+                           )}
+                         </button>
+                       )}
+                     </div>
 
                     {/* Drag & Drop Area */}
                     {/* <div 
                       className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.add('border-indigo-400', 'bg-indigo-50');
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove('border-indigo-400', 'bg-indigo-50');
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove('border-indigo-400', 'bg-indigo-50');
-                        const files = e.dataTransfer.files;
-                        if (files.length > 0) {
-                          const file = files[0];
-                          if (file.type.startsWith('image/')) {
-                            handleDroppedFile(file);
-                          } else {
-                            toast.error('Please drop an image file');
-                          }
-                        }
-                      }}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
                     >
                       <div className="space-y-2">
                         <Upload size={32} className="mx-auto text-gray-400" />
                         <div>
                           <p className="text-sm font-medium text-gray-700">
-                            {user.profilepicture ? 'Drop a new image here' : 'Drop an image here or click to browse'}
+                            Drop an image here or click to browse
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Drag and drop your image, or click to select
+                            Supports JPG, PNG, GIF, WebP up to 5MB
                           </p>
                         </div>
                       </div>
@@ -782,39 +699,28 @@ const Profile: React.FC = () => {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleProfilePictureUpload}
+                      onChange={handleFileInputChange}
                       className="hidden"
                     />
 
-                    {/* File Requirements */}
+                    {/* Requirements Info */}
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-center">
-                        <p className="text-xs font-medium text-gray-700 mb-1">File Requirements</p>
-                        <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center">
-                            <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-                            JPG, PNG, GIF
-                          </span>
-                          <span className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
-                            Max 5MB
-                          </span>
-                          <span className="flex items-center">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full mr-1"></div>
-                            Max 2048x2048px
-                          </span>
-                        </div>
+                      <p className="text-xs font-medium text-gray-700 mb-1 text-center">Requirements</p>
+                      <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                          Image formats
+                        </span>
+                        <span className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+                          Max 5MB
+                        </span>
+                        <span className="flex items-center">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full mr-1"></div>
+                          Min 1KB
+                        </span>
                       </div>
                     </div>
-
-                    {/* Help Text */}
-                    {!user.profilepicture && (
-                      <div className="text-center">
-                        <p className="text-xs text-gray-500">
-                          💡 <strong>Tip:</strong> A profile picture helps others recognize you and makes your account more personal!
-                        </p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -1041,36 +947,37 @@ const Profile: React.FC = () => {
                   <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
                 </div>
                 
-                                 <div>
-                   <label className="flex items-center block mb-2 text-sm font-semibold text-gray-700">
-                     <Clock size={16} className="mr-2 text-indigo-500" />
-                     Last Login
-                   </label>
-                   <div className="px-4 py-3 border border-yellow-100 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl">
-                     <span className="font-medium text-gray-900">
-                       {user.lastlogin ? new Date(user.lastlogin).toLocaleDateString() : 'Never logged in'}
-                     </span>
-                   </div>
-                 </div>
+                <div>
+                  <label className="flex items-center block mb-2 text-sm font-semibold text-gray-700">
+                    <Clock size={16} className="mr-2 text-indigo-500" />
+                    Last Login
+                  </label>
+                  <div className="px-4 py-3 border border-yellow-100 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl">
+                    <span className="font-medium text-gray-900">
+                      {user.lastlogin ? new Date(user.lastlogin).toLocaleDateString() : 'Never logged in'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Image Preview Modal */}
-      {showImagePreview && previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+      {/* File Preview Modal */}
+      {fileUploadState.showPreview && fileUploadState.previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl transform transition-all duration-200">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-center">
+                <Eye size={20} className="mr-2 text-indigo-600" />
                 Preview Profile Picture
               </h3>
               
               {/* Preview Image */}
               <div className="relative inline-block mb-6">
                 <img
-                  src={previewImage}
+                  src={fileUploadState.previewUrl}
                   alt="Profile picture preview"
                   className="object-cover w-48 h-48 border-4 border-gray-200 rounded-full shadow-lg mx-auto"
                 />
@@ -1079,25 +986,31 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              {/* File Info */}
-              {pendingFile && (
+              {/* File Information */}
+              {fileUploadState.previewFile && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                    <div className="text-left">
                       <span className="font-medium text-gray-700">File Name:</span>
-                      <p className="text-gray-600 truncate">{pendingFile.name}</p>
+                      <p className="text-gray-600 truncate" title={fileUploadState.previewFile.name}>
+                        {fileUploadState.previewFile.name}
+                      </p>
                     </div>
-                    <div>
+                    <div className="text-left">
                       <span className="font-medium text-gray-700">File Size:</span>
-                      <p className="text-gray-600">{(pendingFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      <p className="text-gray-600">
+                        {(fileUploadState.previewFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
                     </div>
-                    <div>
+                    <div className="text-left">
                       <span className="font-medium text-gray-700">File Type:</span>
-                      <p className="text-gray-600">{pendingFile.type}</p>
+                      <p className="text-gray-600">{fileUploadState.previewFile.type}</p>
                     </div>
-                    <div>
+                    <div className="text-left">
                       <span className="font-medium text-gray-700">Last Modified:</span>
-                      <p className="text-gray-600">{new Date(pendingFile.lastModified).toLocaleDateString()}</p>
+                      <p className="text-gray-600">
+                        {new Date(fileUploadState.previewFile.lastModified).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1106,17 +1019,28 @@ const Profile: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex space-x-3">
                 <button
-                  onClick={cancelImageUpload}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={resetFileUploadState}
+                  disabled={fileUploadState.isUploading}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={confirmImageUpload}
-                  disabled={isUploading}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={performFileUpload}
+                  disabled={fileUploadState.isUploading}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                 >
-                  {isUploading ? 'Uploading...' : 'Upload Picture'}
+                  {fileUploadState.isUploading ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={16} />
+                      <span>Upload Picture</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1125,12 +1049,12 @@ const Profile: React.FC = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+      {fileUploadState.showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all duration-200">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <X size={24} className="text-red-600" />
+                <Trash2 size={24} className="text-red-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Remove Profile Picture
@@ -1138,18 +1062,43 @@ const Profile: React.FC = () => {
               <p className="text-sm text-gray-500 mb-6">
                 Are you sure you want to remove your profile picture? This action cannot be undone and you'll see your default avatar instead.
               </p>
+              
+               {/* Current profile picture preview */}
+               {currentProfilePicture && (
+                 <div className="mb-6">
+                   <img
+                     src={currentProfilePicture}
+                     alt="Current profile"
+                     className="object-cover w-16 h-16 border-2 border-gray-200 rounded-full mx-auto opacity-75"
+                   />
+                   <p className="text-xs text-gray-400 mt-2">Current picture will be removed</p>
+                 </div>
+               )}
+
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => setFileUploadState(prev => ({ ...prev, showDeleteConfirm: false }))}
+                  disabled={fileUploadState.isDeleting}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={confirmDeleteProfilePicture}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors"
+                  onClick={performFileDelete}
+                  disabled={fileUploadState.isDeleting}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
-                  Remove Picture
+                  {fileUploadState.isDeleting ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span>Removing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>Remove Picture</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

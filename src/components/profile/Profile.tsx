@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { useUpdateUserMutation } from '../../store/api';
+import { useUpdateUserProfileMutation, useGetCurrentUserQuery } from '../../store/api/authApi';
 import { 
   User, 
   Save, 
@@ -24,15 +24,21 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { CRUDToasts } from '../../services/toastService';
-import { uploadProfilePicture, deleteProfilePicture } from '../../utils/storageUtils';
+import { uploadProfilePicture, deleteProfilePicture, generateDefaultProfilePicture } from '../../utils/storageUtils';
 import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const [updateUser] = useUpdateUserMutation();
+  const [updateUserProfile] = useUpdateUserProfileMutation();
+  const { refetch: refetchUser } = useGetCurrentUserQuery();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -58,13 +64,17 @@ const Profile: React.FC = () => {
     }));
   };
 
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleDroppedFile = async (file: File) => {
+    console.log('File dropped:', file);
+    
+    if (!user) {
+      toast.error('No user data available');
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error('Please select an image file (JPG, PNG, GIF)');
       return;
     }
 
@@ -74,19 +84,93 @@ const Profile: React.FC = () => {
       return;
     }
 
+    console.log('Showing preview for dropped file:', file.name);
+    // Show preview instead of immediately uploading
+    const imageUrl = URL.createObjectURL(file);
+    setPreviewImage(imageUrl);
+    setPendingFile(file);
+    setShowImagePreview(true);
+  };
+
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    console.log('File selected:', file);
+    
+    if (!file) return;
+
+    if (!user) {
+      toast.error('No user data available');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (JPG, PNG, GIF)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    console.log('Showing preview for file:', file.name);
+    // Show preview instead of immediately uploading
+    const imageUrl = URL.createObjectURL(file);
+    setPreviewImage(imageUrl);
+    setPendingFile(file);
+    setShowImagePreview(true);
+  };
+
+  const confirmImageUpload = async () => {
+    if (!pendingFile) return;
+
+    console.log('Confirming upload for file:', pendingFile.name);
+    setShowImagePreview(false);
+    await performUpload(pendingFile);
+    
+    // Cleanup
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
+    }
+    setPreviewImage(null);
+    setPendingFile(null);
+  };
+
+  const cancelImageUpload = () => {
+    console.log('Canceling image upload');
+    setShowImagePreview(false);
+    
+    // Cleanup
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
+    }
+    setPreviewImage(null);
+    setPendingFile(null);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const performUpload = async (file: File) => {
+    if (!user) return;
+
     setIsUploading(true);
     const loadingToast = CRUDToasts.updating('profile picture');
 
     try {
       // Delete old profile picture if it exists
-      if (user?.profilepicture) {
+      if (user.profilepicture) {
         console.log('Deleting old profile picture:', user.profilepicture);
         await deleteProfilePicture(user.id, user.profilepicture);
       }
 
       // Upload new image using utility function
       console.log('Uploading new profile picture...');
-      const imageUrl = await uploadProfilePicture(user?.id || '', file);
+      const imageUrl = await uploadProfilePicture(user.id, file);
 
       if (!imageUrl) {
         throw new Error('Failed to upload image');
@@ -94,121 +178,227 @@ const Profile: React.FC = () => {
 
       console.log('Updating user profile with new image URL:', imageUrl);
       
-      try {
-        // Update user profile
-        await updateUser({
-          id: user!.id,
-          updates: {
-            profilepicture: imageUrl
-          }
-        }).unwrap();
-
-        toast.dismiss(loadingToast);
-        CRUDToasts.updated('profile picture');
-      } catch (updateError: any) {
-        console.error('Profile update failed:', updateError);
-        
-        // Handle different types of errors
-        if (updateError.message?.includes('No user data returned')) {
-          console.log('Attempting to create user record...');
-          try {
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (authUser) {
-              const newUserData = {
-                id: authUser.id,
-                email: authUser.email,
-                name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-                role: 'employee',
-                department: '',
-                isactive: true,
-                createdat: new Date().toISOString(),
-                lastlogin: new Date().toISOString(),
-                profilepicture: imageUrl
-              };
-              
-              const { error: createError } = await supabase
-                .from('users')
-                .insert([newUserData]);
-              
-              if (createError) {
-                throw createError;
-              }
-              
-              console.log('User record created successfully');
-              toast.dismiss(loadingToast);
-              CRUDToasts.updated('profile picture');
-            }
-          } catch (createError) {
-            console.error('Failed to create user record:', createError);
-            throw createError;
-          }
-        } else if (updateError.message?.includes('row-level security policy')) {
-          console.error('RLS Policy Error:', updateError);
-          toast.dismiss(loadingToast);
-          toast.error('Profile update failed due to security policy. Please contact your administrator to fix the database permissions.');
-          throw new Error('RLS policy violation - database permissions need to be updated');
-        } else {
-          throw updateError;
+      // Update user profile
+      const updatedUser = await updateUserProfile({
+        id: user.id,
+        updates: {
+          profilepicture: imageUrl
         }
-      }
+      }).unwrap();
+
+      console.log('Profile picture uploaded and user updated:', updatedUser);
+      toast.dismiss(loadingToast);
+      CRUDToasts.updated('profile picture');
+      
+      // Refresh user data to reflect the changes immediately
+      console.log('Refreshing user data after upload...');
+      const refreshResult = await refetchUser();
+      console.log('User data refresh result:', refreshResult);
+      
+      // Force immediate UI update
+      setTimeout(() => {
+        console.log('Forcing UI update after upload...');
+        // Trigger a re-render by updating form data
+        setFormData(prev => ({ ...prev }));
+        
+        // Force image refresh
+        const img = document.querySelector('img[alt*="profile"]') as HTMLImageElement;
+        if (img) {
+          img.src = `${imageUrl}?t=${Date.now()}`;
+          console.log('Image src updated to:', img.src);
+        }
+      }, 100);
     } catch (error: any) {
       console.error('Profile picture upload error:', error);
       toast.dismiss(loadingToast);
-      CRUDToasts.updateError('profile picture', error.message || 'Upload failed');
+      
+      if (error.message?.includes('row-level security policy')) {
+        toast.error('Profile update failed due to security policy. Please contact your administrator.');
+      } else if (error.message?.includes('storage')) {
+        toast.error('Failed to upload image to storage. Please try again.');
+      } else {
+        CRUDToasts.updateError('profile picture', error.message || 'Upload failed');
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
   const removeProfilePicture = async () => {
+    console.log('Remove profile picture clicked');
+    console.log('User:', user);
+    console.log('User profile picture:', user?.profilepicture);
+    
+    if (!user?.profilepicture) {
+      toast.error('No profile picture to remove');
+      return;
+    }
+
+    console.log('Showing delete confirmation dialog');
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteProfilePicture = async () => {
     if (!user?.profilepicture) return;
 
+    console.log('Starting profile picture deletion for user:', user.id);
+    console.log('Current profile picture URL:', user.profilepicture);
+    
+    setShowDeleteConfirm(false);
     const loadingToast = CRUDToasts.updating('profile picture');
 
     try {
       // Delete the image from storage
-      await deleteProfilePicture(user.id, user.profilepicture);
+      console.log('Deleting image from storage...');
+      const deleted = await deleteProfilePicture(user.id, user.profilepicture);
+      
+      if (!deleted) {
+        console.warn('Failed to delete image from storage, continuing with profile update');
+      } else {
+        console.log('Image deleted from storage successfully');
+      }
 
       // Update user profile to remove the profile picture URL
-      await updateUser({
+      console.log('Updating user profile to remove profile picture URL...');
+      const updatedUser = await updateUserProfile({
         id: user.id,
         updates: {
           profilepicture: undefined
         }
       }).unwrap();
 
+      console.log('User profile updated successfully:', updatedUser);
+      
+      // Check if the update was successful
+      if (updatedUser && updatedUser.profilepicture) {
+        console.log('Profile picture still exists, trying with empty string...');
+        try {
+          await updateUserProfile({
+            id: user.id,
+            updates: {
+              profilepicture: ''
+            }
+          }).unwrap();
+        } catch (emptyStringError) {
+          console.warn('Empty string update failed, trying direct database update:', emptyStringError);
+        }
+      }
+      
+      // Final fallback: Direct database update
+      console.log('Performing direct database update as fallback...');
+      const { error: directUpdateError } = await supabase
+        .from('users')
+        .update({ profilepicture: null })
+        .eq('id', user.id);
+        
+      if (directUpdateError) {
+        console.error('Direct database update failed:', directUpdateError);
+      } else {
+        console.log('Direct database update successful');
+      }
+      
       toast.dismiss(loadingToast);
       CRUDToasts.updated('profile picture');
+      
+      // Refresh user data to reflect the changes
+      console.log('Refreshing user data...');
+      const refreshResult = await refetchUser();
+      console.log('User data refresh result after deletion:', refreshResult);
+      
+      // Force immediate UI update
+      setTimeout(() => {
+        console.log('Forcing UI update after deletion...');
+        // Trigger a re-render by updating form data
+        setFormData(prev => ({ ...prev }));
+        
+        // Force component re-render
+        const profilePicDiv = document.querySelector('[key*="profile-pic"]') as HTMLElement;
+        if (profilePicDiv) {
+          profilePicDiv.setAttribute('key', `profile-pic-${Date.now()}`);
+        }
+      }, 100);
+      
+      // Reset file input after successful deletion
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error: any) {
       console.error('Profile picture removal error:', error);
       toast.dismiss(loadingToast);
-      CRUDToasts.updateError('profile picture', error.message || 'Removal failed');
+      
+      if (error.message?.includes('row-level security policy')) {
+        toast.error('Profile update failed due to security policy. Please contact your administrator.');
+      } else if (error.message?.includes('No user data returned')) {
+        toast.error('User profile not found. Please refresh the page and try again.');
+      } else {
+        CRUDToasts.updateError('profile picture', error.message || 'Removal failed');
+      }
     }
   };
 
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
+      return false;
+    }
+    if (formData.name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters long');
+      return false;
+    }
+    if (formData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+      toast.error('Please enter a valid phone number');
+      return false;
+    }
+    if (formData.bio && formData.bio.length > 500) {
+      toast.error('Bio must be less than 500 characters');
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async () => {
-    if (user) {
-      const loadingToast = CRUDToasts.updating('profile');
+    if (!user) {
+      toast.error('No user data available');
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSaving(true);
+    const loadingToast = CRUDToasts.updating('profile');
+    
+    try {
+      const updates = {
+        name: formData.name.trim(),
+        department: formData.department.trim() || undefined,
+        phone: formData.phone.trim() || undefined,
+        address: formData.address.trim() || undefined,
+        bio: formData.bio.trim() || undefined
+      };
+
+      await updateUserProfile({
+        id: user.id,
+        updates
+      }).unwrap();
       
-      try {
-        await updateUser({
-          id: user.id,
-          updates: {
-            name: formData.name,
-            department: formData.department,
-            phone: formData.phone,
-            address: formData.address,
-            bio: formData.bio
-          }
-        }).unwrap();
-        
-        toast.dismiss(loadingToast);
-        CRUDToasts.updated('profile');
-        setIsEditing(false);
-      } catch (error: any) {
-        toast.dismiss(loadingToast);
+      toast.dismiss(loadingToast);
+      CRUDToasts.updated('profile');
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      toast.dismiss(loadingToast);
+      
+      if (error.message?.includes('row-level security policy')) {
+        toast.error('Profile update failed due to security policy. Please contact your administrator.');
+      } else if (error.message?.includes('duplicate key')) {
+        toast.error('A user with this information already exists.');
+      } else {
         CRUDToasts.updateError('profile', error.message || 'Update failed');
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -263,6 +453,34 @@ const Profile: React.FC = () => {
   const roleConfig = getRoleConfig(user?.role || '');
   const RoleIcon = roleConfig.icon || User;
 
+  // Cleanup preview image on unmount
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [previewImage]);
+
+  // Force re-render when user profile picture changes
+  useEffect(() => {
+    console.log('Profile picture changed, forcing re-render:', user?.profilepicture);
+    // Force component to re-render by updating a dummy state
+    setFormData(prev => ({ ...prev }));
+  }, [user?.profilepicture]);
+
+  // Handle real-time updates after profile picture operations
+  useEffect(() => {
+    if (user?.profilepicture) {
+      console.log('Profile picture detected, updating UI:', user.profilepicture);
+      // Force image refresh by updating the src with timestamp
+      const img = document.querySelector('img[alt*="profile"]') as HTMLImageElement;
+      if (img) {
+        img.src = `${user.profilepicture}?t=${Date.now()}`;
+      }
+    }
+  }, [user?.profilepicture]);
+
   if (!user) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -301,6 +519,14 @@ const Profile: React.FC = () => {
                   <div className="px-3 py-1 text-sm rounded-full bg-white/20">
                     {user.email}
                   </div>
+                  {!user.profilepicture && (
+                    <div className="px-3 py-1 text-sm rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                      <span className="flex items-center space-x-1">
+                        <Camera size={14} />
+                        <span>Using default avatar</span>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -323,10 +549,11 @@ const Profile: React.FC = () => {
                     </button>
                     <button
                       onClick={handleSave}
-                      className="flex items-center px-6 py-3 space-x-2 font-semibold text-white transition-all duration-200 transform bg-green-500 rounded-xl hover:bg-green-600 hover:shadow-lg hover:scale-105"
+                      disabled={isSaving || isUploading}
+                      className="flex items-center px-6 py-3 space-x-2 font-semibold text-white transition-all duration-200 transform bg-green-500 rounded-xl hover:bg-green-600 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      <Save size={18} className="text-green-500" />
-                      <span>Save Changes</span>
+                      <Save size={18} className="text-white" />
+                      <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
                     </button>
                   </div>
                 )}
@@ -350,46 +577,207 @@ const Profile: React.FC = () => {
               
               <div className="text-center">
                 {/* Profile Picture */}
-                <div className="relative inline-block mb-4">
+                <div className="relative inline-block mb-4" key={`profile-pic-${user.profilepicture || 'default'}`}>
                   {user.profilepicture ? (
-                    <div className="relative">
+                    <div className="relative group">
                       <img
-                        src={user.profilepicture}
-                        alt="Profile"
-                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg"
+                        src={`${user.profilepicture}?t=${Date.now()}`}
+                        alt={`${user.name}'s profile`}
+                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
                         onError={(e) => {
                           console.error('Profile picture failed to load:', user.profilepicture);
                           e.currentTarget.style.display = 'none';
+                          // Show fallback
+                          const fallbackDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallbackDiv) {
+                            fallbackDiv.style.display = 'flex';
+                          }
+                        }}
+                        onLoad={() => {
+                          console.log('Profile picture loaded successfully');
                         }}
                       />
-                      {isEditing && (
-                        <button
-                          onClick={removeProfilePicture}
-                          className="absolute p-2 text-white transition-all duration-200 bg-red-500 rounded-full shadow-lg -top-2 -right-2 hover:bg-red-600"
-                          title="Remove profile picture"
-                        >
-                          <X size={16} className="text-red-500" />
-                        </button>
-                      )}
+                      {/* Hidden fallback div */}
+                      <div 
+                        className="hidden items-center justify-center w-32 h-32 mx-auto border-4 border-white rounded-full shadow-lg bg-gradient-to-br from-gray-200 to-gray-300"
+                        style={{ position: 'absolute', top: 0, left: 0 }}
+                      >
+                        <User size={48} className="text-gray-500" />
+                      </div>
+                      
+                      {/* Hover overlay for actions - Fixed positioning */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200 z-10">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          {isEditing ? (
+                            <div className="flex flex-col space-y-2">
+                              <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg z-20"
+                                title="Change picture"
+                              >
+                                <Camera size={16} />
+                              </button>
+                              <button
+                                onClick={removeProfilePicture}
+                                className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg z-20"
+                                title="Remove picture"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setIsEditing(true)}
+                              className="p-2 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors shadow-lg z-20"
+                              title="Edit profile"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Status indicator */}
+                      {/* <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div> */}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center w-32 h-32 mx-auto border-4 border-white rounded-full shadow-lg bg-gradient-to-br from-gray-200 to-gray-300">
-                      <User size={48} className="text-gray-500" />
+                    <div className="relative group">
+                      <img
+                        src={generateDefaultProfilePicture(user.name, 128)}
+                        alt={`${user.name}'s default profile`}
+                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg transition-all duration-200 group-hover:shadow-xl"
+                      />
+                      
+                      {/* Hover overlay for actions */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-200">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {isEditing ? (
+                            <button
+                              onClick={() => fileInputRef.current?.click()}
+                              className="p-3 text-white bg-green-500 rounded-full hover:bg-green-600 transition-colors"
+                              title="Add profile picture"
+                            >
+                              <Camera size={20} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setIsEditing(true)}
+                              className="p-3 text-white bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors"
+                              title="Add profile picture"
+                            >
+                              <Camera size={20} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Default avatar indicator */}
+                      {/* <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-400 border-2 border-white rounded-full flex items-center justify-center">
+                        <User size={12} className="text-white" />
+                      </div> */}
+
+                      {isEditing && (
+                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                          <div className="px-3 py-1 text-xs font-medium text-gray-600 bg-white rounded-full shadow-md border">
+                            Click to add photo
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
+                {/* Always visible remove button when profile picture exists */}
+                {user.profilepicture && (
+                  <div className="mt-4">
+                    <button
+                      onClick={removeProfilePicture}
+                      className="flex items-center justify-center w-full px-4 py-2 space-x-2 text-sm font-medium text-red-600 transition-all duration-200 border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                    >
+                      <X size={16} className="text-red-500" />
+                      <span>Remove Profile Picture</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Upload Controls */}
                 {isEditing && (
-                  <div className="space-y-3">
-                    <button
+                  <div className="space-y-4">
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 gap-2">
+                      {user.profilepicture ? (
+                        <>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                          >
+                            <Camera size={18} className="text-white" />
+                            <span>{isUploading ? 'Uploading...' : 'Change Picture'}</span>
+                          </button>
+                          <button
+                            onClick={removeProfilePicture}
+                            disabled={isUploading}
+                            className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                          >
+                            <X size={18} className="text-white" />
+                            <span>Remove Picture</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="flex items-center justify-center w-full px-4 py-3 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                        >
+                          <Camera size={18} className="text-white" />
+                          <span>{isUploading ? 'Uploading...' : 'Add Profile Picture'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Drag & Drop Area */}
+                    {/* <div 
+                      className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="flex items-center justify-center w-full px-4 py-2 space-x-2 font-medium text-white transition-all duration-200 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add('border-indigo-400', 'bg-indigo-50');
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-indigo-400', 'bg-indigo-50');
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('border-indigo-400', 'bg-indigo-50');
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                          const file = files[0];
+                          if (file.type.startsWith('image/')) {
+                            handleDroppedFile(file);
+                          } else {
+                            toast.error('Please drop an image file');
+                          }
+                        }
+                      }}
                     >
-                      <Upload size={16} className="text-blue-500" />
-                      <span>{isUploading ? 'Uploading...' : 'Upload Picture'}</span>
-                    </button>
+                      <div className="space-y-2">
+                        <Upload size={32} className="mx-auto text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {user.profilepicture ? 'Drop a new image here' : 'Drop an image here or click to browse'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Drag and drop your image, or click to select
+                          </p>
+                        </div>
+                      </div>
+                    </div> */}
+
+                    {/* File Input */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -397,9 +785,36 @@ const Profile: React.FC = () => {
                       onChange={handleProfilePictureUpload}
                       className="hidden"
                     />
-                    <p className="text-xs text-gray-500">
-                      JPG, PNG, GIF • Max 5MB
-                    </p>
+
+                    {/* File Requirements */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-gray-700 mb-1">File Requirements</p>
+                        <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center">
+                            <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                            JPG, PNG, GIF
+                          </span>
+                          <span className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+                            Max 5MB
+                          </span>
+                          <span className="flex items-center">
+                            <div className="w-2 h-2 bg-purple-400 rounded-full mr-1"></div>
+                            Max 2048x2048px
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Help Text */}
+                    {!user.profilepicture && (
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">
+                          💡 <strong>Tip:</strong> A profile picture helps others recognize you and makes your account more personal!
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -579,14 +994,23 @@ const Profile: React.FC = () => {
                     Bio
                   </label>
                   {isEditing ? (
-                    <textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      rows={4}
-                      className="w-full px-4 py-3 transition-all duration-200 border border-gray-200 resize-none rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white"
-                      placeholder="Tell us about yourself, your experience, and what you bring to the team..."
-                    />
+                    <div className="space-y-2">
+                      <textarea
+                        name="bio"
+                        value={formData.bio}
+                        onChange={handleInputChange}
+                        rows={4}
+                        maxLength={500}
+                        className="w-full px-4 py-3 transition-all duration-200 border border-gray-200 resize-none rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50 focus:bg-white"
+                        placeholder="Tell us about yourself, your experience, and what you bring to the team..."
+                      />
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Maximum 500 characters</span>
+                        <span className={formData.bio.length > 450 ? 'text-orange-500' : 'text-gray-500'}>
+                          {formData.bio.length}/500
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100 min-h-[100px]">
                       <span className="font-medium text-gray-900">
@@ -633,6 +1057,105 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {showImagePreview && previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Preview Profile Picture
+              </h3>
+              
+              {/* Preview Image */}
+              <div className="relative inline-block mb-6">
+                <img
+                  src={previewImage}
+                  alt="Profile picture preview"
+                  className="object-cover w-48 h-48 border-4 border-gray-200 rounded-full shadow-lg mx-auto"
+                />
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 border-2 border-white rounded-full flex items-center justify-center">
+                  <Camera size={16} className="text-white" />
+                </div>
+              </div>
+
+              {/* File Info */}
+              {pendingFile && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">File Name:</span>
+                      <p className="text-gray-600 truncate">{pendingFile.name}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">File Size:</span>
+                      <p className="text-gray-600">{(pendingFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">File Type:</span>
+                      <p className="text-gray-600">{pendingFile.type}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Last Modified:</span>
+                      <p className="text-gray-600">{new Date(pendingFile.lastModified).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelImageUpload}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmImageUpload}
+                  disabled={isUploading}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isUploading ? 'Uploading...' : 'Upload Picture'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <X size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Remove Profile Picture
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to remove your profile picture? This action cannot be undone and you'll see your default avatar instead.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteProfilePicture}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Remove Picture
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

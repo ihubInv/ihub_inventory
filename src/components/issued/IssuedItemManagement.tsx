@@ -87,10 +87,27 @@ const IssuedItemManagement: React.FC = () => {
     // Use actual database columns instead of parsing description
     const issuedTo = item.issuedto || 'Unknown';
     const issuedBy = item.issuedby || 'Unknown';
-    const issueDate = item.issueddate?.toISOString() || 
-                     item.dateofissue?.toISOString() || 
-                     (item.lastmodifieddate ? new Date(item.lastmodifieddate).toISOString() : new Date().toISOString());
-    const expectedReturn = item.expectedreturndate?.toISOString();
+    const issueDate = (() => {
+      if (item.issueddate) {
+        return item.issueddate instanceof Date ? 
+          item.issueddate.toISOString() : 
+          new Date(item.issueddate).toISOString();
+      }
+      if (item.dateofissue) {
+        return item.dateofissue instanceof Date ? 
+          item.dateofissue.toISOString() : 
+          new Date(item.dateofissue).toISOString();
+      }
+      if (item.lastmodifieddate) {
+        return new Date(item.lastmodifieddate).toISOString();
+      }
+      return new Date().toISOString();
+    })();
+    const expectedReturn = item.expectedreturndate ? 
+      (item.expectedreturndate instanceof Date ? 
+        item.expectedreturndate.toISOString() : 
+        new Date(item.expectedreturndate).toISOString()) : 
+      undefined;
     
     // Parse purpose from description as fallback (for backward compatibility)
     const description = item.description || '';
@@ -132,9 +149,22 @@ const IssuedItemManagement: React.FC = () => {
     // Use actual database columns instead of parsing description
     const issuedTo = item.issuedto || 'Unknown';
     const issuedBy = item.issuedby || 'Unknown';
-    const issueDate = item.issueddate?.toISOString() || 
-                     item.dateofissue?.toISOString() || 
-                     (item.lastmodifieddate ? new Date(item.lastmodifieddate).toISOString() : new Date().toISOString());
+    const issueDate = (() => {
+      if (item.issueddate) {
+        return item.issueddate instanceof Date ? 
+          item.issueddate.toISOString() : 
+          new Date(item.issueddate).toISOString();
+      }
+      if (item.dateofissue) {
+        return item.dateofissue instanceof Date ? 
+          item.dateofissue.toISOString() : 
+          new Date(item.dateofissue).toISOString();
+      }
+      if (item.lastmodifieddate) {
+        return new Date(item.lastmodifieddate).toISOString();
+      }
+      return new Date().toISOString();
+    })();
     
     const matchesSearch = item.assetname.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.locationofitem.toLowerCase().includes(searchTerm.toLowerCase()) ||

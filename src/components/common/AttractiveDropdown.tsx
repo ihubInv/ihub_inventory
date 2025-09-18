@@ -65,6 +65,16 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
   }, [isOpen, searchable]);
 
   const selectedOption = options.find(option => option.value === value);
+  
+  // Debug: Log the value and selected option
+  React.useEffect(() => {
+    console.log('🔍 AttractiveDropdown Debug:', {
+      label: label,
+      value: value,
+      selectedOption: selectedOption,
+      options: options
+    });
+  }, [value, selectedOption, label, options]);
 
   const filteredOptions = searchable 
     ? options.filter(option => 
@@ -154,7 +164,7 @@ const AttractiveDropdown: React.FC<AttractiveDropdownProps> = ({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="absolute z-[60] w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
             {searchable && (
               <div className="p-2 sm:p-3 border-b border-gray-100">
                 <div className="relative">

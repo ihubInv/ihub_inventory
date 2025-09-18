@@ -9,7 +9,6 @@ import { useAppSelector } from '../../store/hooks';
 import { Users, Plus, Edit, Trash2, Search, Filter, UserCheck, UserX, X, Save, Eye, EyeOff, Shield, UserCog, User as UserIcon, Building2, CheckCircle, XCircle } from 'lucide-react';
 import AttractiveDropdown from '../common/AttractiveDropdown';
 import { supabase } from '../../lib/supabaseClient';
-import { CRUDToasts } from '../../services/toastService';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../utils/validation';
@@ -83,7 +82,8 @@ interface FormData {
   email: string;
   password: string;
   role: string;
-  department:string
+  department: string;
+  location: string;
 }
 const UserManagement: React.FC = () => {
   const { data: users = [] } = useGetUsersQuery();
@@ -106,14 +106,19 @@ const [formData, setFormData] = useState<FormData>({
         email: '',
         password: '',
         role: 'employee',
-        department:""
-       
+        department: '',
+        location: ''
       });
   const [showPassword, setShowPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Debug: Log formData changes
+  React.useEffect(() => {
+    console.log('🔍 FormData Debug - Current Form Data:', formData);
+  }, [formData]);
   const roleOptions = [
     { 
       value: 'employee', 
@@ -195,18 +200,61 @@ const [formData, setFormData] = useState<FormData>({
     }
   ];
 
+  const locationOptions = [
+    { 
+      value: '', 
+      label: 'No Location',
+      icon: <Building2 size={16} />,
+      description: 'No specific location assigned'
+    },
+    { 
+      value: 'Mandi', 
+      label: 'Mandi',
+      icon: <Building2 size={16} />,
+      description: 'Mandi location'
+    },
+    { 
+      value: 'Delhi', 
+      label: 'Delhi',
+      icon: <Building2 size={16} />,
+      description: 'Delhi location'
+    },
+    { 
+      value: 'Bangalore', 
+      label: 'Bangalore',
+      icon: <Building2 size={16} />,
+      description: 'Bangalore location'
+    },
+    { 
+      value: 'Mumbai', 
+      label: 'Mumbai',
+      icon: <Building2 size={16} />,
+      description: 'Mumbai location'
+    }
+  ];
+
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.department?.toLowerCase().includes(searchTerm.toLowerCase());
+                         user.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.location?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesStatus = filterStatus === 'all' || 
                          (filterStatus === 'active' && user.isactive) ||
                          (filterStatus === 'inactive' && !user.isactive);
     
-    return matchesSearch && matchesRole && matchesStatus;
+    // Role-based visibility: Admins see all, Stock Managers see all except other admins, Employees see only themselves
+    let matchesVisibility = true;
+    if (currentUser?.role === 'stock-manager') {
+      matchesVisibility = user.role !== 'admin'; // Stock managers can't see admin accounts
+    } else if (currentUser?.role === 'employee') {
+      matchesVisibility = user.id === currentUser.id; // Employees can only see themselves
+    }
+    // Admins can see all users (matchesVisibility remains true)
+    
+    return matchesSearch && matchesRole && matchesStatus && matchesVisibility;
   });
 
   const getRoleColor = (role: string) => {
@@ -228,11 +276,29 @@ const [formData, setFormData] = useState<FormData>({
       : 'bg-red-100 text-red-800';
   };
 
-  const handleToggleStatus = (userId: string, currentStatus: boolean) => {
-    updateUser({
-      id: userId,
-      updates: { isactive: !currentStatus }
-    });
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      const loadingToast = toast.loading('Updating user status...');
+      
+      const { error } = await supabase
+        .from('users')
+        .update({ 
+          isactive: !currentStatus,
+          lastlogin: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast.dismiss(loadingToast);
+      toast.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+      
+      // Refresh the users list
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Status update error:', error);
+      toast.error('Failed to update user status. Please try again.');
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -294,7 +360,7 @@ const [formData, setFormData] = useState<FormData>({
     let loadingToast: string | undefined;
   
     try {
-      loadingToast = CRUDToasts.creating('employee account');
+      loadingToast = toast.loading('Creating employee account...');
       
       // Check if user already exists in the current users list
       const existingUser = users.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
@@ -322,7 +388,7 @@ const [formData, setFormData] = useState<FormData>({
       await createUser(newUser).unwrap();
   
       toast.dismiss(loadingToast);
-      CRUDToasts.created('employee account');
+      toast.success('Employee account created successfully!');
       
       // Close modal and reset form
       setShowAddModal(false);
@@ -331,7 +397,8 @@ const [formData, setFormData] = useState<FormData>({
         email: '',
         password: '',
         role: 'employee',
-        department: ''
+        department: '',
+        location: ''
       });
       setErrors({});
   
@@ -347,7 +414,7 @@ const [formData, setFormData] = useState<FormData>({
         errorMessage = 'An account with this email already exists.';
       }
       
-      CRUDToasts.createError('employee account', errorMessage);
+      toast.error(`Failed to create employee account: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -364,12 +431,13 @@ const handleUpdateUser = async (userId: string, updatedData: Partial<{
   name: string;
   role: string;
   department: string;
+  location: string;
   isactive: boolean;
 }>) => {
   
   try {
     console.log('Updating user:', userId, updatedData);
-    const loadingToast = CRUDToasts.updating('user');
+    const loadingToast = toast.loading('Updating user...');
     const { error } = await supabase
       .from('users')
       .update({
@@ -381,25 +449,43 @@ const handleUpdateUser = async (userId: string, updatedData: Partial<{
     if (error) throw error;
 
     toast.dismiss(loadingToast);
-    CRUDToasts.updated('user');
+    toast.success('User updated successfully!');
+    
+    // Refresh the users list
+    window.location.reload();
   } catch (error: any) {
     console.error('Update error:', error);
-    toast.dismiss(loadingToast);
-    CRUDToasts.updateError('user', error.message || 'Something went wrong.');
+    toast.error('Failed to update user. Please try again.');
   }
 };
 
 
 
 const handleUserUpdate = (user:any) => {
+  // Debug: Log the user data to see what's available
+  console.log('🔍 User Update Debug - User Data:', {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    department: user.department,
+    location: user.location,
+    fullUser: user
+  });
+
   // Load selected user data into formData for editing
-  setFormData({
+  const formDataToSet = {
     name: user.name || '',
     email: user.email || '',
     password: '', // Do not prefill password for security
     role: user.role || 'employee',
-    department: user.department || ''
-  });
+    department: user.department || '',
+    location: user.location || ''
+  };
+
+  console.log('🔍 User Update Debug - Form Data to Set:', formDataToSet);
+
+  setFormData(formDataToSet);
   setEditingCategory(user);
   setUpdateModel(true);
 }
@@ -562,6 +648,7 @@ const handleUserUpdate = (user:any) => {
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">User</th>
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Role</th>
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Department</th>
+                  <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Location</th>
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Status</th>
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Last Login</th>
                   <th className="px-4 py-4 text-xs font-medium tracking-wider text-left text-gray-500 uppercase sm:px-6">Actions</th>
@@ -593,6 +680,9 @@ const handleUserUpdate = (user:any) => {
                     <td className="px-4 py-4 text-sm text-gray-900 sm:px-6 whitespace-nowrap">
                       {user.department || 'N/A'}
                     </td>
+                    <td className="px-4 py-4 text-sm text-gray-900 sm:px-6 whitespace-nowrap">
+                      {user.location || 'N/A'}
+                    </td>
                     <td className="px-4 py-4 sm:px-6 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.isactive)}`}>
                         {user.isactive ? 'Active' : 'Inactive'}
@@ -603,33 +693,33 @@ const handleUserUpdate = (user:any) => {
                     </td>
                     <td className="px-4 py-4 text-sm font-medium sm:px-6 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleToggleStatus(user.id, user.isactive)}
-                          className={`p-1 rounded transition-colors ${
-                            user.isactive 
-                              ? 'text-orange-600 hover:text-orange-900' 
-                              : 'text-green-600 hover:text-green-900'
-                          }`}
-                          title={user.isactive ? 'Deactivate' : 'Activate'}
-                        >
-                          {user.isactive ? <UserX size={16} className="text-red-500" /> : <UserCheck size={16} className="text-green-500" />}
-                        </button>
-                        {currentUser?.role === 'admin' && (
+                        {(currentUser?.role === 'admin' || (currentUser?.role === 'stock-manager' && user.role !== 'admin')) && (
+                          <button
+                            onClick={() => handleToggleStatus(user.id, user.isactive)}
+                            className={`p-1 rounded transition-colors ${
+                              user.isactive 
+                                ? 'text-orange-600 hover:text-orange-900' 
+                                : 'text-green-600 hover:text-green-900'
+                            }`}
+                            title={user.isactive ? 'Deactivate' : 'Activate'}
+                          >
+                            {user.isactive ? <UserX size={16} className="text-red-500" /> : <UserCheck size={16} className="text-green-500" />}
+                          </button>
+                        )}
+                        {(currentUser?.role === 'admin' || (currentUser?.role === 'stock-manager' && user.role !== 'admin')) && (
                           <>
                             <button 
-                          
-                            onClick={() => {
-                      
-                              handleUserUpdate(user);
-                              
-                            }}
-                            className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900">
+                              onClick={() => handleUserUpdate(user)}
+                              className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900"
+                              title="Edit User"
+                            >
                               <Edit size={16} className="text-blue-500" />
                             </button>
-                            {user.id !== currentUser.id && (
+                            {currentUser?.role === 'admin' && user.id !== currentUser.id && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
                                 className="p-1 text-red-600 transition-colors rounded hover:text-red-900"
+                                title="Delete User"
                               >
                                 <Trash2 size={16} className="text-red-500" />
                               </button>
@@ -655,11 +745,11 @@ const handleUserUpdate = (user:any) => {
 
 {showAddModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
-    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
+    <div className="w-full max-w-4xl max-h-[90vh] p-8 bg-white rounded-2xl shadow-xl">
       <h3 className="mb-6 text-2xl font-semibold text-gray-900">
         Add New Employes 
       </h3>
-
+      <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -730,7 +820,21 @@ const handleUserUpdate = (user:any) => {
           />
         </div>
 
-        {/* Row 3 - Role Dropdown */}
+        {/* Row 3 - Column 1 */}
+        <div>
+          <AttractiveDropdown
+            label="Location"
+            options={locationOptions}
+            value={formData.location}
+            onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+            placeholder="Select location"
+            size="sm"
+            searchable
+            variant="bordered"
+          />
+        </div>
+
+        {/* Row 4 - Role Dropdown */}
         <div className="md:col-span-2">
           <AttractiveDropdown
             label="Role"
@@ -756,7 +860,8 @@ const handleUserUpdate = (user:any) => {
                   email: '',
                   password: '',
                   role: 'employee',
-                  department: ''
+                  department: '',
+                  location: ''
                 });
                 setErrors({});
               }
@@ -786,6 +891,7 @@ const handleUserUpdate = (user:any) => {
           </button>
         </div>
       </form>
+      </div>
     </div>
   </div>
 )}
@@ -794,10 +900,11 @@ const handleUserUpdate = (user:any) => {
 
 {updateModel && (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black bg-opacity-50">
-    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 bg-white rounded-2xl shadow-xl">
+    <div className="w-full max-w-4xl max-h-[90vh] p-8 bg-white rounded-2xl shadow-xl">
       <h3 className="mb-6 text-2xl font-semibold text-gray-900">
   Update User Details
       </h3>
+      <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
 <form
   onSubmit={(e) => {
     e.preventDefault();
@@ -806,9 +913,9 @@ const handleUserUpdate = (user:any) => {
       handleUpdateUser(editingCategory.id, {
         name: formData.name,
         email: formData.email,
-        password: formData.password, // Password should be handled securely
         role: formData.role,
-        department: formData.department
+        department: formData.department,
+        location: formData.location
       });
       setUpdateModel(false);
     }
@@ -856,7 +963,7 @@ const handleUserUpdate = (user:any) => {
     />
   </div> */}
 
-  {/* Row 2 - Column 2 */}
+  {/* Row 2 - Column 1 */}
   <div>
     <AttractiveDropdown
       label="Department"
@@ -864,6 +971,20 @@ const handleUserUpdate = (user:any) => {
       value={formData.department}
       onChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
       placeholder="Select department"
+      size="sm"
+      searchable
+      variant="bordered"
+    />
+  </div>
+
+  {/* Row 2 - Column 2 */}
+  <div>
+    <AttractiveDropdown
+      label="Location"
+      options={locationOptions}
+      value={formData.location}
+      onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+      placeholder="Select location"
       size="sm"
       searchable
       variant="bordered"
@@ -904,7 +1025,7 @@ const handleUserUpdate = (user:any) => {
     </button>
   </div>
 </form>
-
+      </div>
     </div>
   </div>
 )}

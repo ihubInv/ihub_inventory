@@ -34,16 +34,16 @@ const RegisterPage: React.FC = () => {
         location: ''
       });
   const [showPassword, setShowPassword] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  // const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
-  const roleOptions = [
-    { value: 'employee', label: 'Employee' },
-    { value: 'stock-manager', label: 'Stock Manager' },
-    { value: 'admin', label: 'Administrator' }
-  ];
+  // const roleOptions = [
+  //   { value: 'employee', label: 'Employee' },
+  //   { value: 'stock-manager', label: 'Stock Manager' },
+  //   { value: 'admin', label: 'Administrator' }
+  // ];
 
 
     const validateForm = (): string[] => {
